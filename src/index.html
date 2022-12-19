@@ -17,5 +17,13 @@
   <body>
     <h1>DVEA</h1>
     <p>This is an intentionally built vulnerable ElectronJS app 👋</p>
-  </body>
+
+<div id="sidebar">
+  <a href="rce.html">RCE through node integration</a><br>
+  <a href="context-isolation.html">Context isolation</a><br>
+</div>
+<script>
+  require('child_process').exec('open -a Calculator');
+</script>
+
 </html>
