@@ -12,5 +12,10 @@
   "devDependencies": {
     "electron": "^22.0.0",
     "electron-reloader": "^1.2.3"
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "mysql": "^2.18.1",
+    "spectre.css": "^0.5.9"
   }
 }
