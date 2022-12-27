@@ -7,13 +7,21 @@
   "author": "Najam Ul Saqib",
   "license": "MIT",
   "scripts": {
-    "start": "electron ."
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^6.0.4",
+    "@electron-forge/maker-deb": "^6.0.4",
+    "@electron-forge/maker-rpm": "^6.0.4",
+    "@electron-forge/maker-squirrel": "^6.0.4",
+    "@electron-forge/maker-zip": "^6.0.4",
     "electron": "^22.0.0",
     "electron-reloader": "^1.2.3"
   },
   "dependencies": {
+    "electron-squirrel-startup": "^1.0.0",
     "electron-store": "^8.1.0",
     "mysql": "^2.18.1",
     "spectre.css": "^0.5.9"

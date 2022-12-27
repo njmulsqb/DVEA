@@ -32,3 +32,9 @@ ipcRenderer.on("todos", (event, todos) => {
     item.addEventListener("click", deleteTodo);
   });
 });
+
+/*
+<a onmouseover="const { shell } = require('electron');shell.openPath('/System/Applications/Calculator.app')">
+ HOVER ME
+</a>
+*/
