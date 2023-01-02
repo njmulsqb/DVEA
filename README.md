@@ -10,6 +10,19 @@ The app demonstrates a vulnerable to do list, following vulnerabilties are curre
 3. Deep Links to XSS
 4. Deep Links to RCE
 
+- - -
+
+## WARNING!
+
+Damn Vulnerable Electron Application is damn vulnerable! **Do not upload it to your hosting provider's public html folder or any Internet facing servers**, as they will be compromised. It is recommended using a virtual machine (such as [VirtualBox](https://www.virtualbox.org/) or [VMware](https://www.vmware.com/)), which is set to NAT networking mode.
+
+### Disclaimer
+
+I does not take responsibility for the way in which any one uses this application (DVEA). I have made the purposes of the application clear and it should not be used maliciously. I have given warnings and taken measures to prevent users from installing DVEA on to live servers. If your server is compromised via an installation of DVEA, it is not my responsibility, it is the responsibility of the person/s who uploaded and installed it.
+
+- - -
+
+
 ### Running from source
 ```
 git clone https://github.com/njmulsqb/DVEA
