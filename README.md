@@ -1,4 +1,5 @@
-# DVEA (In Progress)
+# DVEA
+### NOTE: This App Is Vulnerable, DO NOT RUN IN PRODUCTION ENVIRONMENT
 Damn Vulnerable ElectronJS App (DVEA) is a purposely built vulnerable ElectronJS app for developers and security engineer.
 
 It contains major vulnerabilities that are specific to ElectronJS environment.
@@ -18,7 +19,7 @@ electron .
 
 ```
 
-### This App Is Vulnerable, DO NOT RUN IN PRODUCTION ENVIRONMENT
+
 
 ### Credits
 The app is built on https://github.com/CodeDraken/electron-todo
