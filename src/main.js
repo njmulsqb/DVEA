@@ -15,7 +15,7 @@ function main() {
   let mainWindow = new Window({
     file: path.join("src/renderer", "index.html"),
   });
-
+console.log(app.getPath('userData'))
   //Setting deep link to add task to the list
   app.setAsDefaultProtocolClient("dvea");
 
