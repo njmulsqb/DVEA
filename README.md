@@ -19,3 +19,6 @@ electron .
 ```
 
 ### This App Is Vulnerable, DO NOT RUN IN PRODUCTION ENVIRONMENT
+
+### Credits
+The app is built on https://github.com/CodeDraken/electron-todo
