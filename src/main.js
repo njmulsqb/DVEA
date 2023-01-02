@@ -23,7 +23,7 @@ function main() {
     event.preventDefault();
 
     // Extract the add parameter from the deep link
-    const value = deepLink.split("add=")[1];
+    const value = decodeURI(deepLink.split("add=")[1]);
     const updatedTodos = todosData.addTodo(value).todos;
 // dvea://task?add=text
     mainWindow.send("todos", updatedTodos);
