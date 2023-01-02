@@ -9,4 +9,13 @@ The app demonstrates a vulnerable to do list, following vulnerabilties are curre
 3. Deep Links to XSS
 4. Deep Links to RCE
 
+### Running from source
+```
+git clone https://github.com/njmulsqb/DVEA
+cd DVEA
+npm i
+electron .
+
+```
+
 ### This App Is Vulnerable, DO NOT RUN IN PRODUCTION ENVIRONMENT
