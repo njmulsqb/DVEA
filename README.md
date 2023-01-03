@@ -21,8 +21,6 @@ Damn Vulnerable Electron Application is damn vulnerable! **Do not upload it to y
 I does not take responsibility for the way in which any one uses this application (DVEA). I have made the purposes of the application clear and it should not be used maliciously. I have given warnings and taken measures to prevent users from installing DVEA on to live servers. If your server is compromised via an installation of DVEA, it is not my responsibility, it is the responsibility of the person/s who uploaded and installed it.
 
 - - -
-
-- - -
 ### Download
 Get your copy of DVEA from the github releases section here: https://github.com/njmulsqb/DVEA/releases/latest
 The binaries are available for Linux, MacOS and Windows.
@@ -36,8 +34,11 @@ npm i
 electron .
 
 ```
-
-
+---
+### Contributing
+DVEA is always open for PRs!
+ 
+---
 
 ### Credits
 The app is built on https://github.com/CodeDraken/electron-todo
