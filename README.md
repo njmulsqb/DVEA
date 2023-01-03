@@ -22,6 +22,11 @@ I does not take responsibility for the way in which any one uses this applicatio
 
 - - -
 
+- - -
+### Download
+Get your copy of DVEA from the github releases section here: https://github.com/njmulsqb/DVEA/releases/latest
+The binaries are available for Linux, MacOS and Windows.
+- - -
 
 ### Running from source
 ```
