@@ -1,6 +1,6 @@
 {
   "name": "DVEA",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Damn Vulnerable ElectronJS App",
   "main": "src/main.js",
   "repository": "https://github.com/njmulsqb/DVEA",
