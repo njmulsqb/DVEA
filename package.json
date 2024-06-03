@@ -22,7 +22,7 @@
     "electron-reloader": "^1.2.3"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.0",
+    "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^8.1.0",
     "spectre.css": "^0.5.9"
   }
