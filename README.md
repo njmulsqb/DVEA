@@ -15,16 +15,6 @@ The app demonstrates a vulnerable to do list, following vulnerabilties are curre
 
 ---
 
-## WARNING!
-
-Damn Vulnerable Electron Application is damn vulnerable! **Do not upload it to your hosting provider's public html folder or any Internet facing servers**, as they will be compromised. It is recommended using a virtual machine (such as [VirtualBox](https://www.virtualbox.org/) or [VMware](https://www.vmware.com/)), which is set to NAT networking mode.
-
-### Disclaimer
-
-I do not take responsibility for the way in which any one uses this application (DVEA). I have made the purposes of the application clear and it should not be used maliciously. I have given warnings and taken measures to prevent users from installing DVEA on to live servers. If your server is compromised via an installation of DVEA, it is not my responsibility, it is the responsibility of the person/s who uploaded and installed it.
-
----
-
 ### Download
 
 Get your copy of DVEA from the github releases section here: https://github.com/njmulsqb/DVEA/releases/latest
@@ -43,6 +33,20 @@ electron .
 ```
 
 ---
+
+### Walkthrough
+
+The walkthrough of this app can be seen at [walkthrough.md](./walkthrough.md)
+
+---
+
+## WARNING!
+
+Damn Vulnerable Electron Application is damn vulnerable! **Do not upload it to your hosting provider's public html folder or any Internet facing servers**, as they will be compromised. It is recommended using a virtual machine (such as [VirtualBox](https://www.virtualbox.org/) or [VMware](https://www.vmware.com/)), which is set to NAT networking mode.
+
+### Disclaimer
+
+I do not take responsibility for the way in which any one uses this application (DVEA). I have made the purposes of the application clear and it should not be used maliciously. I have given warnings and taken measures to prevent users from installing DVEA on to live servers. If your server is compromised via an installation of DVEA, it is not my responsibility, it is the responsibility of the person/s who uploaded and installed it.
 
 ### Contributing
 

