@@ -2,7 +2,7 @@ Here's the brief walkthrough of security vulnerabilities in DVEA:
 
 # Cross-site Scripting
 
-A simple XSS payload of `<img src=1 onerror='alert("DVEA")'/>` will do perform XSS on the application when put in the to-do item section
+A simple XSS payload of `<img src=1 onerror='alert("DVEA")'/>` will perform XSS on the application when put in the to-do item section
 
 # XSS to RCE
 
