@@ -1,6 +1,6 @@
 "use strict";
 
-const Store = require("electron-store");
+const Store = require('electron-store').default;
 
 class DataStore extends Store {
   constructor(settings) {
