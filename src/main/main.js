@@ -4,8 +4,8 @@
 const path = require("path");
 const { app, ipcMain } = require("electron");
 
-const Window = require("./Window");
-const DataStore = require("./DataStore");
+const Window = require("../main/core/Window");
+const DataStore = require("./core/DataStore");
 
 // create a new todo store name "Todos Main"
 const todosData = new DataStore({ name: "Todos Main" });
