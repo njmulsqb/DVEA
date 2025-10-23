@@ -6,8 +6,14 @@ class DataStore extends Store {
   constructor(settings) {
     super(settings);
 
-    // initialize with todos or empty array
-    this.todos = this.get("todos") || [];
+    // clear saved data every time app launches
+    this.clear();
+
+    // start fresh
+    this.todos = [];
+
+    // initialize with todos or empty array (helps to keep data persistent)
+    // this.todos = this.get("todos") || [];
   }
 
   saveTodos() {
