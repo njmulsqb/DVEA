@@ -4,8 +4,8 @@
 const path = require("path");
 const { app, ipcMain } = require("electron");
 
-const Window = require("../main/core/Window");
-const DataStore = require("./core/DataStore");
+const Window = require("../main/windows/Window");
+const DataStore = require("../main/datastore/DataStore");
 
 // create a new todo store name "Todos Main"
 const todosData = new DataStore({ name: "Todos Main" });
@@ -13,7 +13,7 @@ const todosData = new DataStore({ name: "Todos Main" });
 function main() {
   // todo list window
   let mainWindow = new Window({
-    file: path.join("src/renderer", "index.html"),
+    file: path.join("src/renderer/pages", "index.html"),
   });
 console.log(app.getPath('userData'))
   //Setting deep link to add task to the list
@@ -45,7 +45,7 @@ console.log(app.getPath('userData'))
     if (!addTodoWin) {
       // create a new add todo window
       addTodoWin = new Window({
-        file: path.join("src/renderer", "add.html"),
+        file: path.join("src/renderer/pages", "add.html"),
         width: 400,
         height: 400,
         // close with the main window
