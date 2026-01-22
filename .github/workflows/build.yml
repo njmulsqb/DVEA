@@ -1,6 +1,11 @@
 name: Build/release
 
-on: push
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
 
 jobs:
   release:
@@ -12,10 +17,10 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v6
 
       - name: Install Node.js, NPM and Yarn
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v6
         with:
           node-version: 22
 
