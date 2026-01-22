@@ -27,7 +27,8 @@ The binaries are available for Linux, MacOS and Windows.
 ```
 git clone https://github.com/njmulsqb/DVEA
 cd DVEA
-npm i
+npm i -g yarn
+yarn install
 electron .
 
 ```
