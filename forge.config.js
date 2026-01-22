@@ -20,4 +20,17 @@ module.exports = {
       platforms: ['linux'],
     },
   ],
+  publishers: [
+  {
+    name: '@electron-forge/publisher-github',
+    config: {
+      repository: {
+        owner: 'njmulsqb',
+        name: 'DVEA',
+      },
+      draft: true,
+      prerelease: false,
+    },
+  },
+],
 };
