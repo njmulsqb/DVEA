@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+
   push:
     branches:
       - main
@@ -12,12 +13,7 @@ on:
 
 jobs:
   release:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
@@ -32,12 +28,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Build artifacts (runs on main AND tag)
+      # Build artifacts (PRs + main pushes)
       - name: Build app (Electron Forge)
         run: npm run make
 
       # Publish ONLY for version tags
-      - name: Publish release (GitHub)
+      - name: Publish release (GitHub – AppImage only)
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
