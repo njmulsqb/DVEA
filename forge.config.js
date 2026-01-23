@@ -1,23 +1,18 @@
 module.exports = {
-  packagerConfig: {},
-  rebuildConfig: {},
   makers: [
     {
-      name: '@electron-forge/maker-appimage',
+      name: '@electron-forge/maker-deb',
+      platforms: ['linux'],
       config: {},
     },
   ],
+
   publishers: [
-  {
-    name: '@electron-forge/publisher-github',
-    config: {
-      repository: {
-        owner: 'njmulsqb',
-        name: 'DVEA',
+    {
+      name: '@electron-forge/publisher-github',
+      config: {
+        draft: true,
       },
-      draft: true,
-      prerelease: false,
     },
-  },
-],
+  ],
 };
