@@ -1,4 +1,9 @@
 module.exports = {
+  repository: {
+    owner: 'njmulsqb',
+    name: 'DVEA',
+  },
+
   makers: [
     {
       name: '@electron-forge/maker-deb',
