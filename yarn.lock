@@ -94,13 +94,22 @@
     fs-extra "^10.0.0"
     which "^2.0.2"
 
-"@electron-forge/maker-deb@^7.10.2":
-  version "7.10.2"
-  resolved "https://registry.npmjs.org/@electron-forge/maker-deb/-/maker-deb-7.10.2.tgz"
-  integrity sha512-4MPr9NW5UbEUbf9geZn5R/0O/QVIiy2EgUXOYOeKkA7oR8U6I1I3+BytYFHYcxbY6+PGhi1H1VTLJLITbHGVWw==
+"@electron-forge/maker-base@7.11.1":
+  version "7.11.1"
+  resolved "https://registry.npmjs.org/@electron-forge/maker-base/-/maker-base-7.11.1.tgz"
+  integrity sha512-yhZrCGoN6bDeiB5DHFaueZ1h84AReElEj+f0hl2Ph4UbZnO0cnLpbx+Bs+XfMLAiA+beC8muB5UDK5ysfuT9BQ==
   dependencies:
-    "@electron-forge/maker-base" "7.10.2"
-    "@electron-forge/shared-types" "7.10.2"
+    "@electron-forge/shared-types" "7.11.1"
+    fs-extra "^10.0.0"
+    which "^2.0.2"
+
+"@electron-forge/maker-deb@^7.11.1":
+  version "7.11.1"
+  resolved "https://registry.npmjs.org/@electron-forge/maker-deb/-/maker-deb-7.11.1.tgz"
+  integrity sha512-QTYiryQLYPDkq6pIfBmx0GQ6D8QatUkowH7rTlW5MnCUa0uumX0Xu7yGIjesuwW37fxT3Lv4xi+FSXMCm2eC1w==
+  dependencies:
+    "@electron-forge/maker-base" "7.11.1"
+    "@electron-forge/shared-types" "7.11.1"
   optionalDependencies:
     electron-installer-debian "^3.2.0"
 

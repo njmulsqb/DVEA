@@ -33,7 +33,7 @@ jobs:
         run: npm run make
 
       # Publish ONLY for version tags
-      - name: Publish release (GitHub – AppImage only)
+      - name: Publish release (GitHub Publisher)
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
