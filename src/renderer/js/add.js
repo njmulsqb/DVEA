@@ -1,7 +1,5 @@
 "use strict";
 
-const { ipcRenderer } = require("electron");
-
 document.getElementById("todoForm").addEventListener("submit", (evt) => {
   // prevent default refresh functionality of forms
   evt.preventDefault();
@@ -10,7 +8,7 @@ document.getElementById("todoForm").addEventListener("submit", (evt) => {
   const input = evt.target[0];
 
   // send todo to main process
-  ipcRenderer.send("add-todo", input.value);
+  window.todoAPI.addTodo(input.value);
 
   // reset input
   input.value = "";

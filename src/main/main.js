@@ -133,3 +133,7 @@ app.on("window-all-closed", () => {
 try {
   require("electron-reloader")(module);
 } catch {}
+
+ipcMain.handle("todo:ping", () => {
+  return "pong";
+});
