@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 const Store = require('electron-store').default;
 
@@ -11,12 +11,12 @@ class DataStore extends Store {
   }
 
   saveTodos() {
-    this.set("todos", this.todos);
+    this.set('todos', this.todos);
     return this;
   }
 
   getTodos() {
-    this.todos = this.get("todos") || [];
+    this.todos = this.get('todos') || [];
 
     return this;
   }
