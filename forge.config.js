@@ -1,23 +1,26 @@
 module.exports = {
-  repository: {
-    owner: 'njmulsqb',
-    name: 'DVEA',
-  },
-
+  packagerConfig: {},
+  rebuildConfig: {},
   makers: [
+
     {
       name: '@electron-forge/maker-deb',
       platforms: ['linux'],
-      config: {},
+      
     },
+   
   ],
-
   publishers: [
-    {
-      name: '@electron-forge/publisher-github',
-      config: {
-        draft: true,
+  {
+    name: '@electron-forge/publisher-github',
+    config: {
+      repository: {
+        owner: 'njmulsqb',
+        name: 'DVEA',
       },
+      draft: true,
+      prerelease: false,
     },
-  ],
+  },
+],
 };
