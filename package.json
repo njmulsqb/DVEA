@@ -1,9 +1,9 @@
 {
-  "name": "DVEA",
+  "name": "dvea",
   "version": "1.0.2",
   "description": "Damn Vulnerable ElectronJS App",
   "main": "src/main/main.js",
-  "repository": "https://github.com/njmulsqb/DVEA",
+  "repository": "https://github.com/njmulsqb/dvea",
   "author": "Najam Ul Saqib",
   "license": "MIT",
   "scripts": {
