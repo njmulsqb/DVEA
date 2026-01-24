@@ -1,8 +1,18 @@
 "use strict";
 // This is the main process file, main process's responsibility is to create/manage application windows using BrowserWindow module
 //const connection = require('../db');
+require('dotenv').config();
 const path = require("path");
 const { app, ipcMain } = require("electron");
+
+if (process.env.NODE_ENV === 'development') {
+  require('electron-reload')(
+    path.join(__dirname, '..'), // watch src/
+    {
+      hardResetMethod: 'exit'
+    }
+  );
+}
 
 const Window = require("../main/windows/Window");
 const DataStore = require("../main/datastore/DataStore");
@@ -134,6 +144,4 @@ try {
   require("electron-reloader")(module);
 } catch {}
 
-ipcMain.handle("todo:ping", () => {
-  return "pong";
-});
+

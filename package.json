@@ -20,9 +20,11 @@
     "@electron-forge/publisher-github": "^7.11.1",
     "electron": "^38.4.0",
     "electron-builder": "^26.0.12",
+    "electron-reload": "^2.0.0-alpha.1",
     "electron-reloader": "^1.2.3"
   },
   "dependencies": {
+    "dotenv": "^17.2.3",
     "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^11.0.2",
     "spectre.css": "^0.5.9"

@@ -1,7 +1,6 @@
 const { BrowserWindow } = require("electron");
 const path = require("path");
 
-
 // default window settings
 const defaultProps = {
   width: 500,
