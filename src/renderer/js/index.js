@@ -1,16 +1,11 @@
 "use strict";
 
-// delete todo by its text value
 const deleteTodo = (e) => {
   window.todoAPI.deleteTodo(e.target.textContent);
 };
-
-// create add todo window button
 document.getElementById("createTodoBtn").addEventListener("click", () => {
   window.todoAPI.openAddWindow();
 });
-
-// on receive todos
 window.todoAPI.onTodos((event, todos) => {
   const todoList = document.getElementById("todoList");
 

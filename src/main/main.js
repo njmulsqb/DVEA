@@ -1,6 +1,4 @@
 "use strict";
-// This is the main process file, main process's responsibility is to create/manage application windows using BrowserWindow module
-//const connection = require('../db');
 require('dotenv').config();
 const path = require("path");
 const { app, ipcMain } = require("electron");
@@ -42,7 +40,7 @@ console.log(app.getPath('userData'))
   // add todo window
   let addTodoWin;
 
-  // TODO: put these events into their own file
+  // ...existing code...
 
   // initialize with todos
   mainWindow.once("show", () => {
@@ -84,55 +82,7 @@ console.log(app.getPath('userData'))
   });
 }
 
-// const createWindow = () => {
-//   const win = new BrowserWindow({
-//     width: 800,
-//     height: 600,
-//     webPreferences:{
-//         nodeIntegration: true,
-//         //preload: 'preload.js' //This code is executed in a renderer process before its web contents are loaded and has access to the NodeJS APIs.
-//       }
-//   }
-//  );
-// // Add an input field and a button to the window.
-// win.webContents.on('did-finish-load', () => {
-//   win.webContents.executeJavaScript(`
-//     document.body.innerHTML = \`
-//       <input id="file-name" type="text" placeholder="Enter file name">
-//       <button id="read-file">Read file</button>
-//     \`
-//   `)
-// })
-
-// // Handle the button click event.
-// win.webContents.on('dom-ready', () => {
-//   win.webContents.executeJavaScript(`
-//     document.getElementById('read-file').addEventListener('click', () => {
-//       const fileName = document.getElementById('file-name').value
-//       // Read the file and display its contents in an alert.
-//       fs.readFile(fileName, 'utf8', (err, data) => {
-//         if (err) {
-//           alert(err)
-//           return
-//         }
-//         alert(data)
-//       })
-//     })
-//   `)
-// })
-
-//   win.loadFile('src/index.html');
-// };
-
-// app.whenReady().then(() => {
-//   createWindow();
-
-//   app.on('activate', () => {
-//     if (BrowserWindow.getAllWindows().length === 0) {
-//       createWindow();
-//     }
-//   });
-// });
+// ...existing code...
 app.on("ready", main);
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
