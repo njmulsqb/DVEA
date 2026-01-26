@@ -20,11 +20,17 @@
             </div>
 
             <button class="btn">Add Todo</button>
+            <button type="button" class="btn btn-link float-right" id="closeBtn">Close</button>
           </form>
         </div>
       </div>
     </div>
 
     <script src="../js/add.js"></script>
+    <script>
+      document.getElementById('closeBtn').addEventListener('click', () => {
+        window.close();
+      });
+    </script>
   </body>
 </html>

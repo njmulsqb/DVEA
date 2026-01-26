@@ -2,6 +2,7 @@
 require('dotenv').config();
 const path = require('path');
 const { app, ipcMain } = require('electron');
+const { registerTodoIPC } = require('./ipc/todo.ipc');
 
 if (process.env.NODE_ENV === 'development') {
   require('electron-reload')(
@@ -37,35 +38,30 @@ function main() {
 
   let addTodoWin;
 
+  function openAddTodoWindow() {
+    if (addTodoWin) {
+      addTodoWin.focus();
+      return;
+    }
+    addTodoWin = new Window({
+      file: path.join('src/renderer/pages', 'add.html'),
+      width: 400,
+      height: 300,
+      parent: mainWindow,
+      modal: true,
+    });
+    addTodoWin.on('closed', () => {
+      addTodoWin = null;
+    });
+  }
+
   mainWindow.once('show', () => {
     mainWindow.webContents.send('todos', todosData.todos);
   });
-
-  ipcMain.on('add-todo-window', () => {
-    if (!addTodoWin) {
-      addTodoWin = new Window({
-        file: path.join('src/renderer/pages', 'add.html'),
-        width: 400,
-        height: 400,
-        parent: mainWindow,
-      });
-
-      addTodoWin.on('closed', () => {
-        addTodoWin = null;
-      });
-    }
-  });
-
-  ipcMain.on('add-todo', (event, todo) => {
-    const updatedTodos = todosData.addTodo(todo).todos;
-
-    mainWindow.send('todos', updatedTodos);
-  });
-
-  ipcMain.on('delete-todo', (event, todo) => {
-    const updatedTodos = todosData.deleteTodo(todo).todos;
-
-    mainWindow.send('todos', updatedTodos);
+  registerTodoIPC({
+    todosData,
+    mainWindow,
+    createAddTodoWindow: openAddTodoWindow,
   });
 }
 app.on('ready', main);
