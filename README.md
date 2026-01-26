@@ -39,8 +39,9 @@ A walkthrough of this application is available in [walkthrough.md](./walkthrough
 
 ---
 
+
 ## Contributing
 
-Contributions are welcome! Please submit pull requests to help improve DVEA.
+Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on how to contribute to DVEA.
 
 ---
