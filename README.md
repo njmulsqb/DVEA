@@ -44,7 +44,3 @@ A walkthrough of this application is available in [walkthrough.md](./walkthrough
 Contributions are welcome! Please submit pull requests to help improve DVEA.
 
 ---
-
-## Credits
-
-This application is based on [electron-todo](https://github.com/CodeDraken/electron-todo).
