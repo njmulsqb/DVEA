@@ -1,60 +1,50 @@
 # DVEA
 
-### NOTE: This App Is Vulnerable, DO NOT RUN IN PRODUCTION ENVIRONMENT
+Damn Vulnerable ElectronJS App (DVEA) is a deliberately vulnerable ElectronJS application designed for developers and security engineers to learn about and test Electron-specific security issues.
 
-Damn Vulnerable ElectronJS App (DVEA) is a purposely built vulnerable ElectronJS app for developers and security engineer.
+## Features
 
-It contains major vulnerabilities that are specific to ElectronJS environment.
+DVEA demonstrates a vulnerable to-do list application and currently includes the following vulnerabilities:
 
-The app demonstrates a vulnerable to do list, following vulnerabilties are currently added to the app:
-
-1. Cross Site Scripting
-2. XSS to RCE
+1. Cross-Site Scripting (XSS)
+2. XSS to Remote Code Execution (RCE)
 3. Deep Links to XSS
 4. Deep Links to RCE
 
 ---
 
-### Download
+## Download
 
-Get your copy of DVEA from the github releases section here: https://github.com/njmulsqb/DVEA/releases/latest
-The binaries are available for Linux, MacOS and Windows.
+Pre-built binaries for Linux (Debian) are available from the [GitHub releases page](https://github.com/njmulsqb/DVEA/releases/latest).
+
+For macOS and Windows, please build the application from source (see below).
 
 ---
 
-### Running from source
+## Running from Source
+
 
 ```
 git clone https://github.com/njmulsqb/DVEA
 cd DVEA
-npm i -g yarn
-yarn install
-electron .
-
+npm install
+npm run start
 ```
 
 ---
 
-### Walkthrough
+## Walkthrough
 
-The walkthrough of this app can be seen at [walkthrough.md](./walkthrough.md)
-
----
-
-## WARNING!
-
-Damn Vulnerable Electron Application is damn vulnerable! **Do not upload it to your hosting provider's public html folder or any Internet facing servers**, as they will be compromised. It is recommended using a virtual machine (such as [VirtualBox](https://www.virtualbox.org/) or [VMware](https://www.vmware.com/)), which is set to NAT networking mode.
-
-### Disclaimer
-
-I do not take responsibility for the way in which any one uses this application (DVEA). I have made the purposes of the application clear and it should not be used maliciously. I have given warnings and taken measures to prevent users from installing DVEA on to live servers. If your server is compromised via an installation of DVEA, it is not my responsibility, it is the responsibility of the person/s who uploaded and installed it.
-
-### Contributing
-
-DVEA is always open for PRs!
+A walkthrough of this application is available in [walkthrough.md](./walkthrough.md).
 
 ---
 
-### Credits
+## Contributing
 
-The app is built on https://github.com/CodeDraken/electron-todo
+Contributions are welcome! Please submit pull requests to help improve DVEA.
+
+---
+
+## Credits
+
+This application is based on [electron-todo](https://github.com/CodeDraken/electron-todo).
