@@ -8,14 +8,34 @@
   </head>
 
   <body>
-    <div class="container">
-      <div class="columns">
-        <div class="column col-10">
-          <h1 class="text-center">Todos</h1>
-          <button id="createTodoBtn" type="button" class="btn">Create a New Todo</button>
-          <ul id="todoList"></ul>
+
+    <div class="container grid-lg">
+      <header class="navbar">
+        <section class="navbar-section">
+          <h1 class="text-bold">📝 DVEA Todo List</h1>
+        </section>
+        <section class="navbar-section">
+          <button id="createTodoBtn" type="button" class="btn btn-primary">+ Add Todo</button>
+        </section>
+      </header>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="btn-group btn-group-block">
+            <button id="filterAll" class="btn btn-sm">All</button>
+            <button id="filterActive" class="btn btn-sm">Active</button>
+            <button id="filterCompleted" class="btn btn-sm">Completed</button>
+          </div>
+        </div>
+        <ul id="todoList" class="panel-body"></ul>
+        <div class="panel-footer text-right">
+          <span id="todoCount">0 left</span>
         </div>
       </div>
+
+      <footer class="text-center text-gray mt-4">
+        <small>Damn Vulnerable Electron App &copy; 2026</small>
+      </footer>
     </div>
 
     <script src="../js/index.js"></script>
