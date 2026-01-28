@@ -1,26 +1,25 @@
 {
-  "name": "DVEA",
+  "name": "dvea",
   "version": "1.0.2",
   "description": "Damn Vulnerable ElectronJS App",
   "main": "src/main/main.js",
-  "repository": "https://github.com/njmulsqb/DVEA",
+  "repository": "https://github.com/njmulsqb/dvea",
   "author": "Najam Ul Saqib",
   "license": "MIT",
   "scripts": {
     "start": "electron-forge start",
     "publish": "electron-forge publish",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+    "format": "prettier --write 'src/**/*.{js,css,html}'"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.10.2",
     "@electron-forge/maker-deb": "^7.11.1",
-    "@electron-forge/maker-rpm": "^7.10.2",
-    "@electron-forge/maker-squirrel": "^7.10.2",
-    "@electron-forge/maker-zip": "^7.10.2",
     "@electron-forge/publisher-github": "^7.11.1",
-    "electron": "^38.4.0",
-    "electron-builder": "^26.0.12",
-    "electron-reloader": "^1.2.3"
+    "dotenv": "^17.2.3",
+    "electron": "^40.0.0",
+    "electron-reload": "^2.0.0-alpha.1",
+    "prettier": "^3.8.1"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",

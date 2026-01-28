@@ -1,4 +1,5 @@
-const { BrowserWindow } = require("electron");
+const { BrowserWindow } = require('electron');
+const path = require('path');
 
 // default window settings
 const defaultProps = {
@@ -8,8 +9,7 @@ const defaultProps = {
 
   // update for electron V5+
   webPreferences: {
-    nodeIntegration: true,
-    contextIsolation:false
+    preload: path.join(__dirname, '../preload.js'),
   },
 };
 
@@ -23,7 +23,7 @@ class Window extends BrowserWindow {
     // this.webContents.openDevTools() //For opening dev tools on launch
 
     // gracefully show when ready to prevent flickering
-    this.once("ready-to-show", () => {
+    this.once('ready-to-show', () => {
       this.show();
     });
   }
