@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Renderer XSS</title>
+    <link rel="stylesheet" href="../styles/style.css" />
+  </head>
+  <body>
+    <h2>Renderer XSS</h2>
+    <p>This demo shows a classic XSS vulnerability in the renderer.</p>
+    <form id="xssForm">
+      <label>Message:</label>
+      <input type="text" id="xssInput" placeholder="<img src=x onerror=alert(1)>" />
+      <button type="submit">Show Message</button>
+    </form>
+    <div id="xssOutput"></div>
+    <br />
+    <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
+    <script src="../js/vuln-xss.js"></script>
+  </body>
+</html>

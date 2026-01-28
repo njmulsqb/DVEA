@@ -2,8 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>DVEA – Damn Vulnerable Electron App</title>
-    <link rel="stylesheet" href="../../node_modules/spectre.css/dist/spectre.min.css" />
+    <title>DVEA – Vulnerabilities</title>
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
 
@@ -12,32 +11,25 @@
     <div class="container grid-lg">
       <header class="navbar">
         <section class="navbar-section">
-          <h1 class="text-bold">📝 DVEA Todo List</h1>
-        </section>
-        <section class="navbar-section">
-          <button id="createTodoBtn" type="button" class="btn btn-primary">+ Add Todo</button>
+          <h1 class="text-bold">🛡️ DVEA – Vulnerabilities</h1>
         </section>
       </header>
 
       <div class="panel">
         <div class="panel-header">
-          <div class="btn-group btn-group-block">
-            <button id="filterAll" class="btn btn-sm">All</button>
-            <button id="filterActive" class="btn btn-sm">Active</button>
-            <button id="filterCompleted" class="btn btn-sm">Completed</button>
-          </div>
+          <h2 class="text-center">Choose a vulnerability to explore:</h2>
         </div>
-        <ul id="todoList" class="panel-body"></ul>
-        <div class="panel-footer text-right">
-          <span id="todoCount">0 left</span>
-        </div>
+        <ul class="panel-body">
+          <li><a href="vuln-redirect.html">Open Redirect via Deep Link</a></li>
+          <li><a href="vuln-xss.html">Renderer XSS</a></li>
+          <li><a href="vuln-ipc.html">Unsafe IPC Handler</a></li>
+          <li><a href="vuln-node.html">NodeIntegration Abuse</a></li>
+        </ul>
       </div>
 
       <footer class="text-center text-gray mt-4">
         <small>Damn Vulnerable Electron App &copy; 2026</small>
       </footer>
     </div>
-
-    <script src="../js/index.js"></script>
   </body>
 </html>

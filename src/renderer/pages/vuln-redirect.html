@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Open Redirect via Deep Link</title>
+    <link rel="stylesheet" href="../styles/style.css" />
+  </head>
+  <body>
+    <h2>Open Redirect via Deep Link</h2>
+    <p>This demo shows how deep links can be abused for open redirects.</p>
+    <form id="redirectForm">
+      <label>Destination URL:</label>
+      <input type="text" id="destUrl" placeholder="https://evil.com" />
+      <button type="submit">Open Deep Link</button>
+    </form>
+    <br />
+    <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
+    <script src="../js/vuln-redirect.js"></script>
+  </body>
+</html>
