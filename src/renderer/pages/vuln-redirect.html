@@ -5,13 +5,13 @@
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
   <body>
-    <h2>Open Redirect via Deep Link</h2>
-    <p>This demo shows how deep links can be abused for open redirects.</p>
-    <form id="redirectForm">
-      <label>Destination URL:</label>
-      <input type="text" id="destUrl" placeholder="https://evil.com" />
-      <button type="submit">Open Deep Link</button>
-    </form>
+    <h1>Open Redirect via Deep Link</h1>
+    <p>
+      <strong>Vulnerability:</strong> This demo shows how an Electron app can be vulnerable to open redirects when handling deep links. If a deep link contains a redirect URL, the app will redirect to it without validation, allowing attackers to send users to malicious sites.<br><br>
+      <strong>How to invoke:</strong> Use a deep link in the format <code>dvea://?redirect=https://example.com</code> to trigger the redirect. The app will automatically redirect to the specified URL when opened via this deep link.<br><br>
+      <strong>Example:</strong> <code>dvea://?redirect=https://evil.com</code>
+    </p>
+    <button id="simulate">Simulate Redirect</button>
     <br />
     <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
     <script src="../js/vuln-redirect.js"></script>

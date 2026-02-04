@@ -22,18 +22,57 @@ function main() {
   let mainWindow = new Window({
     file: path.join('src/renderer/pages', 'index.html'),
   });
-  console.log(app.getPath('userData'));
-  //Setting deep link to add task to the list
-  app.setAsDefaultProtocolClient('dvea');
+
+  // Register custom protocol for deep links
+  if (!app.isDefaultProtocolClient('dvea')) {
+    app.setAsDefaultProtocolClient('dvea');
+  }
+
+  // ---- HANDLE DEEP LINKS (macOS / Linux) ----
+  app.on('open-url', (event, url) => {
+    event.preventDefault();
+    handleDeepLink(url);
+  });
+
+  // ---- HANDLE DEEP LINKS (Windows) ----
+  app.on('second-instance', (event, argv) => {
+    const deepLink = argv.find(arg => arg.startsWith('dvea://'));
+    if (deepLink) handleDeepLink(deepLink);
+  });
+
+  function handleDeepLink(url) {
+    try {
+      const parsed = new URL(url);
+      const redirect = parsed.searchParams.get('redirect');
+      if (redirect && mainWindow) {
+        // 🚨 INTENTIONAL VULNERABILITY
+        // Load vuln-redirect.html, then send redirect message
+        mainWindow.loadFile(path.join('src/renderer/pages', 'vuln-redirect.html')).then(() => {
+          mainWindow.webContents.send('deeplink-redirect', redirect);
+        });
+      }
+    } catch (err) {
+      console.error('Invalid deep link:', err);
+    }
+  }
+
+  // Required for Windows deep links
+  const gotTheLock = app.requestSingleInstanceLock();
+  if (!gotTheLock) {
+    app.quit();
+  }
 
   app.on('open-url', (event, deepLink) => {
     event.preventDefault();
-
-    // Extract the add parameter from the deep link
-    const value = decodeURI(deepLink.split('add=')[1]);
-    const updatedTodos = todosData.addTodo(value).todos;
-    // dvea://task?add=text
-    mainWindow.send('todos', updatedTodos);
+    if (deepLink.startsWith('dvea://redirect?target=')) {
+      // Just open vuln-redirect.html, let renderer handle deep link
+      Window.create('vuln-redirect.html');
+    } else if (deepLink.includes('add=')) {
+      // Existing todo deep link
+      const value = decodeURI(deepLink.split('add=')[1]);
+      const updatedTodos = todosData.addTodo(value).todos;
+      mainWindow.send('todos', updatedTodos);
+    }
   });
 
   let addTodoWin;
