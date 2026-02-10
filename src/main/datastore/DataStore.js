@@ -7,9 +7,6 @@ class DataStore extends Store {
     super(settings);
 
     this.clear();
-      t.id === numId ? { ...t, text: newText } : t
-    );
-    return this.saveTodos();
   }
 }
 
