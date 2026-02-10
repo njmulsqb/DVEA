@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head>
+    <title>XSS: System APIs Exposed</title>
+    <link rel="stylesheet" href="../styles/style.css" />
+  </head>
+  <body>
+    <h2>XSS: System APIs Exposed</h2>
+    <p>This page demonstrates an XSS vulnerability in the renderer process <strong>with privileged Node.js or Electron APIs exposed</strong>.</p>
+    <form id="xssForm2">
+      <label>Message:</label>
+      <input type="text" id="xssInput2" placeholder="<img src=x onerror=alert('pwnd')>" />
+      <button type="submit">Show Message</button>
+    </form>
+    <div id="xssOutput2" class="xss-output"></div>
+    <div class="xss-explanation">
+      <strong>Explanation:</strong> This is a reflected XSS vulnerability, but in this case, the renderer has access to Node.js or Electron APIs (such as <code>require('fs')</code> or <code>window.electron</code>). An attacker can execute arbitrary JavaScript and also access the file system, OS, or main process APIs, leading to full system compromise.
+      <br><strong>Impact:</strong> The attacker can go beyond browser-like attacks and perform actions like reading/writing files, executing system commands, or exfiltrating sensitive data from the user's machine.
+    </div>
+    <br />
+    <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
+    <script src="../js/xss-system-api.js"></script>
+  </body>
+</html>

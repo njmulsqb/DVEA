@@ -1,4 +1,7 @@
+
 const { contextBridge, ipcRenderer } = require('electron');
+
+
 
 contextBridge.exposeInMainWorld('todoAPI', {
   addTodo: (text) => ipcRenderer.send('add-todo', text),
@@ -8,6 +11,7 @@ contextBridge.exposeInMainWorld('todoAPI', {
   openAddWindow: () => ipcRenderer.send('add-todo-window'),
   onTodos: (callback) => ipcRenderer.on('todos', callback),
 });
+
 
 contextBridge.exposeInMainWorld('ipc', {
   onRedirect: (cb) => ipcRenderer.on('deeplink-redirect', cb),

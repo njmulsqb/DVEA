@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head>
+    <title>XSS: No Privileged APIs</title>
+    <link rel="stylesheet" href="../styles/style.css" />
+  </head>
+  <body>
+    <h2>XSS: No Privileged APIs Exposed</h2>
+    <p>This page demonstrates a classic XSS vulnerability in the renderer process, with no privileged Node.js or IPC APIs exposed.</p>
+    <form id="xssForm1">
+      <label>Message:</label>
+      <input type="text" id="xssInput1" placeholder="<img src=x onerror=alert(1)>" />
+      <button type="submit">Show Message</button>
+    </form>
+    <div id="xssOutput1" class="xss-output"></div>
+    <div class="xss-explanation">
+      <strong>Explanation:</strong> This is a classic reflected XSS vulnerability. User input is directly injected into the DOM using <code>innerHTML</code> without sanitization. However, since no privileged Node.js or IPC APIs are exposed to the renderer, the attacker is limited to what the browser context allows (e.g., stealing cookies, defacing the UI, or phishing).
+      <br><strong>Impact:</strong> The attacker can execute arbitrary JavaScript in the renderer, but cannot access the file system, OS, or Electron main process APIs. The risk is similar to a web browser XSS.
+    </div>
+    <br />
+    <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
+    <script src="../js/xss-no-priv.js"></script>
+  </body>
+</html>

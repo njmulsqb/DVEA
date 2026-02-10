@@ -21,7 +21,13 @@
         </div>
         <ul class="panel-body">
           <li><a href="vuln-redirect.html">Open Redirect</a> <span class="text-small text-gray">(can be invoked via deep link)</span></li>
-          <li><a href="vuln-xss.html">Renderer XSS</a></li>
+          <li>
+            Renderer XSS
+            <ul>
+              <li><a href="xss-no-priv.html">XSS: No Privileged APIs Exposed</a></li>
+              <li><a href="xss-system-api.html">XSS: System APIs Exposed</a></li>
+            </ul>
+          </li>
           <li><a href="vuln-ipc.html">Unsafe IPC Handler</a></li>
           <li><a href="vuln-node.html">NodeIntegration Abuse</a></li>
         </ul>
