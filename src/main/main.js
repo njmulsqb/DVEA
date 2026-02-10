@@ -51,16 +51,10 @@ function main() {
     }
   }
 
-  // Required for Windows deep links
-  const gotTheLock = app.requestSingleInstanceLock();
-  if (!gotTheLock) {
-    app.quit();
-  }
 
   app.on('open-url', (event, deepLink) => {
     event.preventDefault();
     if (deepLink.startsWith('dvea://redirect?target=')) {
-      // Just open vuln-redirect.html, let renderer handle deep link
       Window.create('vuln-redirect.html');
     }
   });
