@@ -1,4 +1,3 @@
-
 // --- UI State ---
 let allTodos = [];
 let filter = 'all'; // all | active | completed
@@ -7,8 +6,8 @@ function renderTodos() {
   const todoList = document.getElementById('todoList');
   todoList.innerHTML = '';
   let filtered = allTodos;
-  if (filter === 'active') filtered = allTodos.filter(t => !t.completed);
-  if (filter === 'completed') filtered = allTodos.filter(t => t.completed);
+  if (filter === 'active') filtered = allTodos.filter((t) => !t.completed);
+  if (filter === 'completed') filtered = allTodos.filter((t) => t.completed);
 
   filtered.forEach((todo) => {
     const li = document.createElement('li');
@@ -49,7 +48,8 @@ function renderTodos() {
   });
 
   // Update count
-  document.getElementById('todoCount').textContent = `${allTodos.filter(t => !t.completed).length} left`;
+  document.getElementById('todoCount').textContent =
+    `${allTodos.filter((t) => !t.completed).length} left`;
 }
 
 function confirmDelete(id) {
@@ -66,9 +66,18 @@ function editTodoPrompt(todo) {
 }
 
 // Filter buttons
-document.getElementById('filterAll').addEventListener('click', () => { filter = 'all'; renderTodos(); });
-document.getElementById('filterActive').addEventListener('click', () => { filter = 'active'; renderTodos(); });
-document.getElementById('filterCompleted').addEventListener('click', () => { filter = 'completed'; renderTodos(); });
+document.getElementById('filterAll').addEventListener('click', () => {
+  filter = 'all';
+  renderTodos();
+});
+document.getElementById('filterActive').addEventListener('click', () => {
+  filter = 'active';
+  renderTodos();
+});
+document.getElementById('filterCompleted').addEventListener('click', () => {
+  filter = 'completed';
+  renderTodos();
+});
 
 document.getElementById('createTodoBtn').addEventListener('click', () => {
   window.todoAPI.openAddWindow();

@@ -31,7 +31,7 @@ function main() {
 
   // ---- HANDLE DEEP LINKS (Windows) ----
   app.on('second-instance', (event, argv) => {
-    const deepLink = argv.find(arg => arg.startsWith('dvea://'));
+    const deepLink = argv.find((arg) => arg.startsWith('dvea://'));
     if (deepLink) handleDeepLink(deepLink);
   });
 
@@ -64,8 +64,6 @@ function main() {
       Window.create('vuln-redirect.html');
     }
   });
-
-
 }
 app.on('ready', main);
 app.on('window-all-closed', () => {
