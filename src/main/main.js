@@ -19,6 +19,8 @@ function main() {
     file: path.join('src/renderer/pages', 'index.html'),
   });
 
+  const fs = require('fs');
+
   // (Removed) XSS-RCE Direct: create new window for demo
 
   // XSS-RCE Direct: handle code execution
@@ -30,6 +32,10 @@ function main() {
     } catch (err) {
       return 'Error: ' + err.message;
     }
+  });
+
+  ipcMain.handle('save-file', async (event, data) => {
+    await fs.promises.writeFile(data.path, data.content);
   });
 
   // Register custom protocol for deep links
