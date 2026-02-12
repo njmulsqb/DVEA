@@ -1,8 +1,3 @@
-git clone https://github.com/njmulsqb/DVEA
-cd DVEA
-npm install
-npm run start
-
 # DVEA
 
 Damn Vulnerable Electron App (DVEA) is a deliberately vulnerable ElectronJS application for learning and testing Electron-specific security issues. It is designed for developers, security engineers, and trainers.
