@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>XSS to RCE (Direct)</title>
+  <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
+  <h1>XSS to RCE (Direct)</h1>
+  <section class="panel">
+        <div class="panel-body">
+          <b>Security Feature Checklist:</b>
+          <ul>
+            <li>NodeIntegration: <b>false</b> ✅</li>
+            <li>ContextIsolation: <b>true</b> ✅</li>
+            <li>Sandbox: <b>true</b> ✅</li>
+          </ul>
+        </div>
+    <div class="panel-header">
+      <h2>Guide: What is happening?</h2>
+    </div>
+    <div class="panel-body">
+      <p>
+        This demo shows how a renderer XSS vulnerability can be escalated to Remote Code Execution (RCE) in Electron apps. Here, user input from the renderer is sent to the main process via IPC, and the main process <b>executes the input as code</b> using <code>eval</code>.<br>
+        <b>No sandbox is disabled</b> and <b>no new window is created</b>—the code is executed directly in the main window context.<br>
+        <br>
+        <b>Example payloads:</b>
+        <ul>
+          <li><code>require('os').platform()</code> <span class="text-small text-gray">(returns OS platform)</span></li>
+          <li><code>require('child_process').execSync('whoami').toString()</code> <span class="text-small text-gray">(runs OS command)</span></li>
+          <li><code>process.env</code> <span class="text-small text-gray">(shows environment variables)</span></li>
+        </ul>
+        <b>Warning:</b> This is an intentional vulnerability for demonstration purposes. Never use <code>eval</code> on user input in production.
+      </p>
+    </div>
+  </section>
+  <form id="rce-form">
+    <label for="code-input">Enter code to execute:</label>
+    <input type="text" id="code-input" name="code-input" value="require('os').platform()" placeholder="e.g., require('os').platform()">
+    <button type="submit">Execute</button>
+  </form>
+  <div id="result"></div>
+  <script src="../js/xss-rce-direct.js"></script>
+</body>
+</html>

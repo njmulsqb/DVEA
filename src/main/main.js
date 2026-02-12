@@ -19,6 +19,19 @@ function main() {
     file: path.join('src/renderer/pages', 'index.html'),
   });
 
+  // (Removed) XSS-RCE Direct: create new window for demo
+
+  // XSS-RCE Direct: handle code execution
+  ipcMain.handle('xss-rce-direct', async (event, code) => {
+    try {
+      // 🚨 INTENTIONAL VULNERABILITY: eval user input
+      const result = eval(code);
+      return String(result);
+    } catch (err) {
+      return 'Error: ' + err.message;
+    }
+  });
+
   // Register custom protocol for deep links
   if (!app.isDefaultProtocolClient('dvea')) {
     app.setAsDefaultProtocolClient('dvea');

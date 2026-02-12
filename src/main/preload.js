@@ -1,3 +1,4 @@
+
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('ipc', {
@@ -6,4 +7,9 @@ contextBridge.exposeInMainWorld('ipc', {
 
 contextBridge.exposeInMainWorld('api', {
   openSystemXSS: () => ipcRenderer.send('open-system-xss'),
+  openXSSRCE: () => ipcRenderer.send('open-xss-rce-direct'),
+});
+
+contextBridge.exposeInMainWorld('systemapi', {
+  executeCode: (code) => ipcRenderer.invoke('xss-rce-direct', code),
 });
