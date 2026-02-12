@@ -12,10 +12,18 @@ const defaultProps = {
 };
 
 class Window extends BrowserWindow {
-  constructor({ file, ...windowSettings }) {
-    super({ ...defaultProps, ...windowSettings });
+  constructor({ file, webPreferences = {}, ...windowSettings }) {
+    super({
+      ...defaultProps,
+      ...windowSettings,
+      webPreferences: {
+        ...defaultProps.webPreferences,
+        ...webPreferences, // 🔥 deep merge here
+      },
+    });
+
     this.loadFile(file);
-    // this.webContents.openDevTools() //For opening dev tools on launch
+    this.webContents.openDevTools();
     this.once('ready-to-show', () => {
       this.show();
     });

@@ -12,6 +12,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const Window = require('../main/windows/Window');
+const { sandboxed, contextIsolated } = require('process');
 
 function main() {
   let mainWindow = new Window({
@@ -51,6 +52,16 @@ function main() {
     }
   }
 
+function openSystemXSSWindow() {
+  new Window({
+    file: path.join('src/renderer/pages', 'xss-system-api.html'),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload-systemapi.js'),
+      sandbox: false,
+    },
+  });
+}
+ipcMain.on('open-system-xss', openSystemXSSWindow);
 
   app.on('open-url', (event, deepLink) => {
     event.preventDefault();
@@ -68,3 +79,5 @@ app.on('window-all-closed', () => {
 try {
   require('electron-reloader')(module);
 } catch {}
+
+
