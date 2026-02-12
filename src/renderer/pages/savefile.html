@@ -29,9 +29,6 @@
 Content: Hello from DVEA!</code></pre> <span class="text-small text-gray">(creates or overwrites a file)</span></li>
       </ul>
     </div>
-    <div class="xss-explanation">
-      <strong>Impact:</strong> Overwrite or create sensitive files anywhere the app has write access (e.g., <code>~/.bashrc</code>, <code>package.json</code>, <code>/tmp/evil.js</code>). Drop malicious scripts, modify app config files, or gain persistence if the app runs with higher privileges.
-    </div>
     <form id="savefile-form">
       <label for="filepath">File Path:</label>
       <input type="text" id="filepath" name="filepath" value="/tmp/dvea-demo.txt" placeholder="/tmp/test.txt" required style="width: 100%"><br><br>

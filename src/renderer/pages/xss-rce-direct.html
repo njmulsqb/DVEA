@@ -32,9 +32,6 @@
       </ul>
     </div>
     <div class="xss-explanation">
-      <strong>Warning:</strong> This is an intentional vulnerability for demonstration purposes. Never use <code>eval</code> on user input in production.
-    </div>
-    <div class="xss-explanation">
       <strong>Impact:</strong> An attacker can execute arbitrary JavaScript and escalate to full Remote Code Execution in the main process, allowing actions like reading/writing files, executing system commands, or exfiltrating sensitive data from the user's machine.<br><br>
       <strong>Note:</strong> This demonstrates why <b>never</b> pass unsanitized user input to privileged code execution APIs, even with Electron's security features enabled.
     </div>
