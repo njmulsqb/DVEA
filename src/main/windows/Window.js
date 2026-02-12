@@ -18,7 +18,7 @@ class Window extends BrowserWindow {
       ...windowSettings,
       webPreferences: {
         ...defaultProps.webPreferences,
-        ...webPreferences, // 🔥 deep merge here
+        ...webPreferences,
       },
     });
 

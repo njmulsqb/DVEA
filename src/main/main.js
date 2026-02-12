@@ -4,7 +4,7 @@ const path = require('path');
 const { app, ipcMain } = require('electron');
 if (process.env.NODE_ENV === 'development') {
   require('electron-reload')(
-    path.join(__dirname, '..'), // watch src/
+    path.join(__dirname, '..'),
     {
       hardResetMethod: 'exit',
     },
@@ -22,7 +22,6 @@ function main() {
 
   const fs = require('fs');
 
-  // XSS-RCE Direct: handle code execution
   ipcMain.handle('xss-rce-direct', async (event, code) => {
     try {
       const result = eval(code);
@@ -40,18 +39,15 @@ function main() {
     await fs.promises.writeFile(data.path, data.content);
   });
 
-  // Register custom protocol for deep links
   if (!app.isDefaultProtocolClient('dvea')) {
     app.setAsDefaultProtocolClient('dvea');
   }
 
-  // ---- HANDLE DEEP LINKS (macOS / Linux) ----
   app.on('open-url', (event, url) => {
     event.preventDefault();
     handleDeepLink(url);
   });
 
-  // ---- HANDLE DEEP LINKS (Windows) ----
   app.on('second-instance', (event, argv) => {
     const deepLink = argv.find((arg) => arg.startsWith('dvea://'));
     if (deepLink) handleDeepLink(deepLink);
@@ -62,8 +58,7 @@ function main() {
       const parsed = new URL(url);
       const redirect = parsed.searchParams.get('redirect');
       if (redirect && mainWindow) {
-        // 🚨 INTENTIONAL VULNERABILITY
-        // Load vuln-redirect.html, then send redirect message
+        
         mainWindow.loadFile(path.join('src/renderer/pages', 'vuln-redirect.html')).then(() => {
           mainWindow.webContents.send('deeplink-redirect', redirect);
         });

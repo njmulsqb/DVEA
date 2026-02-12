@@ -1,4 +1,3 @@
-// Listen for deep link redirects from main
 
 window.ipc.onRedirect((_, redirectUrl) => {
   console.log('[DVEA] Redirecting to:', redirectUrl);
