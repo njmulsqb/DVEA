@@ -1,15 +1,25 @@
+git clone https://github.com/njmulsqb/DVEA
+cd DVEA
+npm install
+npm run start
+
 # DVEA
 
-Damn Vulnerable ElectronJS App (DVEA) is a deliberately vulnerable ElectronJS application designed for developers and security engineers to learn about and test Electron-specific security issues.
+Damn Vulnerable Electron App (DVEA) is a deliberately vulnerable ElectronJS application for learning and testing Electron-specific security issues. It is designed for developers, security engineers, and trainers.
 
-## Features
+## Vulnerabilities Demonstrated
 
-DVEA demonstrates a vulnerable to-do list application and currently includes the following vulnerabilities:
+DVEA includes realistic, intentionally insecure implementations of common Electron vulnerabilities:
 
-1. Cross-Site Scripting (XSS)
-2. XSS to Remote Code Execution (RCE)
-3. Deep Links to XSS
-4. Deep Links to RCE
+- **Open Redirect** (deep link abuse)
+- **Renderer XSS**
+	- XSS: No Privileged APIs Exposed
+	- XSS: Overprivileged ContextBridge
+	- XSS to RCE (Direct, main window)
+- **Insecure File Write (IPC Abuse)**
+- **openExternal Abuse (Protocol Handling)**
+
+All vulnerabilities are accessible from the main menu. Each has a dedicated page with a guide, security checklist, and example payloads.
 
 ---
 
@@ -23,8 +33,7 @@ For macOS and Windows, please build the application from source (see below).
 
 ## Running from Source
 
-
-```
+```sh
 git clone https://github.com/njmulsqb/DVEA
 cd DVEA
 npm install
@@ -33,9 +42,9 @@ npm run start
 
 ---
 
-## Walkthrough
+## Documentation
 
-A walkthrough of this application is available in [walkthrough.md](./walkthrough.md).
+All documentation and walkthroughs are now provided inline within the app UI for each vulnerability demo.
 
 ---
 
