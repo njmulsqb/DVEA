@@ -10,6 +10,7 @@ if (process.env.NODE_ENV === 'development') {
     },
   );
 }
+      const { shell } = require('electron');
 
 const Window = require('../main/windows/Window');
 const { sandboxed, contextIsolated } = require('process');
@@ -21,17 +22,18 @@ function main() {
 
   const fs = require('fs');
 
-  // (Removed) XSS-RCE Direct: create new window for demo
-
   // XSS-RCE Direct: handle code execution
   ipcMain.handle('xss-rce-direct', async (event, code) => {
     try {
-      // 🚨 INTENTIONAL VULNERABILITY: eval user input
       const result = eval(code);
       return String(result);
     } catch (err) {
       return 'Error: ' + err.message;
     }
+  });
+
+  ipcMain.handle('open-external', (event, url) => {
+    shell.openExternal(url);
   });
 
   ipcMain.handle('save-file', async (event, data) => {

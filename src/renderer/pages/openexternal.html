@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>openExternal Abuse (Protocol Handling)</title>
+  <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
+  <h1>openExternal Abuse (Protocol Handling)</h1>
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Guide: What is happening?</h2>
+    </div>
+    <div class="panel-body">
+      <p>
+        This demo shows how unvalidated use of <code>shell.openExternal</code> can allow the renderer to open any URL or protocol handler on the system. The form below lets you specify any URL. When you click "Open Link", the URL is sent to the main process, which opens it using the system handler <b>without any validation or restriction</b>.<br><br>
+        <b>How can this be exploited?</b>
+        <ul>
+          <li>Trigger the user's browser to open a phishing or malware site.</li>
+          <li>Abuse custom protocol handlers (e.g., <code>mailto:</code>, <code>tel:</code>, <code>slack://</code>, <code>vscode://</code>).</li>
+          <li>Exploit OS-level protocol handler vulnerabilities.</li>
+        </ul>
+        <b>Try it:</b> The field below is prefilled for a quick test. Change the URL as you wish.<br>
+        <b>Example URL:</b> <code>https://example.com</code> or <code>mailto:attacker@example.com</code>
+      </p>
+      <form id="openexternal-form">
+          <label for="url">URL:</label>
+          <input type="text" id="url" name="url" value="file:///etc/passwd" placeholder="file:///etc/passwd" required style="width: 100%"><br><br>
+        <button type="submit">Open Link</button>
+      </form>
+    </div>
+  </section>
+  <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
+  <script>
+    const form = document.getElementById('openexternal-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = document.getElementById('url').value;
+      try {
+        await window.api.openExternal(url);
+      } catch (err) {
+        alert('Error: ' + (err && err.message ? err.message : err));
+      }
+    });
+  </script>
+</body>
+</html>
