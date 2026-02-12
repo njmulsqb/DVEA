@@ -29,6 +29,10 @@
         <button type="submit">Open Link</button>
       </form>
     </div>
+    <div class="xss-explanation">
+      <strong>Impact:</strong> An attacker can open arbitrary URLs or system protocol handlers, potentially triggering phishing, malware, or OS-level exploits. This can also be used to open local files or abuse custom handlers for further attacks.<br><br>
+      <strong>Note:</strong> Always validate and restrict URLs passed to <code>shell.openExternal</code> to avoid abuse.
+    </div>
   </section>
   <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
   <script>
