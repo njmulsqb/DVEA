@@ -1,57 +1,166 @@
 
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+  min-height: 100vh;
+  margin: 0;
+  color: #222;
 }
 
 .navbar {
   margin-bottom: 2rem;
+  background: #5755d9;
+  color: #fff;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 2px 8px rgba(87, 85, 217, 0.08);
+  padding: 1.5rem 0 1rem 0;
+}
+
+.navbar-section h1 {
+  margin: 0;
+  font-size: 2.1rem;
+  letter-spacing: 1px;
 }
 
 .panel {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(87, 85, 217, 0.10);
+  border-radius: 14px;
   background: #fff;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  padding: 2rem 2.5rem;
+  border: 1px solid #e0e7ff;
 }
 
-.todo-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
-  border-radius: 6px;
-  background: #f4f4ff;
-  transition: background 0.2s;
-  font-size: 1.1rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+.panel-header h2 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  color: #5755d9;
+  text-align: center;
 }
 
-.todo-item.completed .todo-text {
-  text-decoration: line-through;
-  color: #aaa;
-  opacity: 0.7;
+.panel-body ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-.todo-item:hover {
-  background: #e0e7ff;
+.panel-body li {
+  margin-bottom: 1.1rem;
+  font-size: 1.13rem;
 }
 
-.todo-checkbox {
-  margin-right: 1rem;
+.panel-body a {
+  color: #5755d9;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.panel-body a:hover {
+  color: #3b379c;
+  text-decoration: underline;
 }
 
-.todo-text {
-  flex: 1;
-  margin-right: 1rem;
+form {
+  margin: 1.5rem 0 0 0;
 }
-
-.todo-edit, .todo-delete {
-  margin-left: 0.25rem;
+label {
+  font-weight: 500;
+  color: #5755d9;
+  margin-bottom: 0.3rem;
+  display: block;
 }
-
-.btn-group .btn.active {
-  background: #5755d9;
+input[type="text"],
+input[type="password"],
+textarea {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: 1px solid #c7d2fe;
+  border-radius: 7px;
+  font-size: 1.08rem;
+  margin-bottom: 1.1rem;
+  background: #f4f7ff;
+  transition: border 0.2s;
+}
+input[type="text"]:focus,
+input[type="password"]:focus,
+textarea:focus {
+  border: 1.5px solid #5755d9;
+  outline: none;
+  background: #fff;
+}
+button, .btn {
+  background: linear-gradient(90deg, #5755d9 0%, #7c3aed 100%);
   color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 0.7rem 1.5rem;
+  font-size: 1.08rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(87, 85, 217, 0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+button:hover, .btn:hover {
+  background: linear-gradient(90deg, #7c3aed 0%, #5755d9 100%);
+  box-shadow: 0 4px 16px rgba(87, 85, 217, 0.13);
+}
+.btn-link {
+  background: none;
+  color: #5755d9;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  font-size: 1rem;
+  text-decoration: underline;
+  margin-top: 1.5rem;
+}
+.btn-link:hover {
+  color: #3b379c;
+}
+.text-center {
+  text-align: center;
+}
+.text-gray {
+  color: #888;
+}
+.mt-4 {
+  margin-top: 2.5rem;
+}
+.xss-output {
+  margin-top: 1.2rem;
+  padding: 1rem;
+  background: #f4f7ff;
+  border-radius: 7px;
+  border: 1px solid #e0e7ff;
+  min-height: 2.2rem;
+  font-size: 1.08rem;
+}
+.xss-explanation {
+  margin-top: 1.5rem;
+  background: #fef9c3;
+  border: 1px solid #fde68a;
+  border-radius: 7px;
+  padding: 1.1rem;
+  color: #7c3aed;
+  font-size: 1.04rem;
+}
+.security-checklist {
+  margin-bottom: 1.5rem;
+  background: #e0e7ff;
+  border-radius: 7px;
+  padding: 1rem 1.2rem;
+  border: 1px solid #c7d2fe;
+  font-size: 1.04rem;
+}
+.panel-header {
+  margin-bottom: 1.2rem;
+}
+.panel-header h2 {
+  color: #7c3aed;
+}
+.panel-body ul ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+  border-left: 2px solid #e0e7ff;
 }

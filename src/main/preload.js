@@ -1,13 +1,17 @@
+
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('todoAPI', {
-  // actions
-  addTodo: (text) => ipcRenderer.send('add-todo', text),
-  deleteTodo: (id) => ipcRenderer.send('delete-todo', id),
-  toggleTodo: (id) => ipcRenderer.send('toggle-todo', id),
-  editTodo: (id, text) => ipcRenderer.send('edit-todo', { id, text }),
-  openAddWindow: () => ipcRenderer.send('add-todo-window'),
+contextBridge.exposeInMainWorld('ipc', {
+  onRedirect: (cb) => ipcRenderer.on('deeplink-redirect', cb),
+});
 
-  // listeners
-  onTodos: (callback) => ipcRenderer.on('todos', callback),
+contextBridge.exposeInMainWorld('api', {
+  openSystemXSS: () => ipcRenderer.send('open-system-xss'),
+  openXSSRCE: () => ipcRenderer.send('open-xss-rce-direct'),
+  saveFile: (data) => ipcRenderer.invoke('save-file', data),
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
+});
+
+contextBridge.exposeInMainWorld('systemapi', {
+  executeCode: (code) => ipcRenderer.invoke('xss-rce-direct', code),
 });

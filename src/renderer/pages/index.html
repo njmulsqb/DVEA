@@ -2,42 +2,46 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>DVEA – Damn Vulnerable Electron App</title>
-    <link rel="stylesheet" href="../../node_modules/spectre.css/dist/spectre.min.css" />
+    <title>DVEA – List of Vulnerabilities</title>
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
 
   <body>
-
     <div class="container grid-lg">
       <header class="navbar">
         <section class="navbar-section">
-          <h1 class="text-bold">📝 DVEA Todo List</h1>
-        </section>
-        <section class="navbar-section">
-          <button id="createTodoBtn" type="button" class="btn btn-primary">+ Add Todo</button>
+          <h1 class="text-bold">🛡️ DVEA – List of Vulnerabilities</h1>
         </section>
       </header>
 
       <div class="panel">
         <div class="panel-header">
-          <div class="btn-group btn-group-block">
-            <button id="filterAll" class="btn btn-sm">All</button>
-            <button id="filterActive" class="btn btn-sm">Active</button>
-            <button id="filterCompleted" class="btn btn-sm">Completed</button>
-          </div>
+          <h2 class="text-center">Choose a vulnerability to explore:</h2>
         </div>
-        <ul id="todoList" class="panel-body"></ul>
-        <div class="panel-footer text-right">
-          <span id="todoCount">0 left</span>
-        </div>
+        <ul class="panel-body">
+          <li>
+            <a href="vuln-redirect.html">Open Redirect</a>
+            <span class="text-small text-gray">(can be invoked via deep link)</span>
+          </li>
+          <li>
+            Renderer XSS
+            <ul>
+              <li><a href="xss-no-priv.html">XSS: No Privileged APIs Exposed</a></li>
+              <li><a href="#" onclick="window.api.openSystemXSS()">XSS: Overprivileged ContextBridge</a></li>
+              <li><a href="xss-rce-direct.html">XSS to RCE (Direct, main window)</a></li>
+          </ul>
+        </li>
+        <li><a href="savefile.html">Insecure File Write (IPC Abuse)</a></li>
+        <li><a href="openexternal.html">openExternal Abuse (Protocol Handling)</a></li>
+            </ul>
+          </li>
+          
+        </ul>
       </div>
 
       <footer class="text-center text-gray mt-4">
         <small>Damn Vulnerable Electron App &copy; 2026</small>
       </footer>
     </div>
-
-    <script src="../js/index.js"></script>
   </body>
 </html>
