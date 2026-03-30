@@ -43,23 +43,6 @@ Content: Hello from DVEA!</code></pre> <span class="text-small text-gray">(creat
     </div>
   </section>
   <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
-  <script>
-    const form = document.getElementById('savefile-form');
-    const status = document.getElementById('status');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      status.textContent = '';
-      const path = document.getElementById('filepath').value;
-      const content = document.getElementById('filecontent').value;
-      try {
-        await window.api.saveFile({ path, content });
-        status.textContent = 'File saved successfully.';
-        status.style.color = 'green';
-      } catch (err) {
-        status.textContent = 'Error: ' + (err && err.message ? err.message : err);
-        status.style.color = 'red';
-      }
-    });
-  </script>
+  <script src="../js/savefile.js"></script>
 </body>
 </html>

@@ -28,9 +28,7 @@ function main() {
     shell.openExternal(url);
   });
 
-  ipcMain.handle('save-file', async (event, data) => {
-    await fs.promises.writeFile(data.path, data.content);
-  });
+
 
   if (!app.isDefaultProtocolClient('dvea')) {
     app.setAsDefaultProtocolClient('dvea');
@@ -88,6 +86,11 @@ ipcMain.on('open-system-xss', openSystemXSSWindow);
     }
   });
 }
+
+  ipcMain.handle('save-file', async (event, data) => {
+    await fs.promises.writeFile(data.path, data.content);
+  });
+
 app.on('ready', main);
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
