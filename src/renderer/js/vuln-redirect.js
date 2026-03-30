@@ -1,4 +1,3 @@
-
 window.ipc.onRedirect((_, redirectUrl) => {
   console.log('[DVEA] Redirecting to:', redirectUrl);
 
