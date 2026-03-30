@@ -22,14 +22,7 @@ function main() {
 
   const fs = require('fs');
 
-  ipcMain.handle('xss-rce-direct', async (event, code) => {
-    try {
-      const result = eval(code);
-      return String(result);
-    } catch (err) {
-      return 'Error: ' + err.message;
-    }
-  });
+
 
   ipcMain.handle('open-external', (event, url) => {
     shell.openExternal(url);
@@ -67,6 +60,15 @@ function main() {
       console.error('Invalid deep link:', err);
     }
   }
+
+  ipcMain.handle('xss-rce-direct', async (event, code) => {
+    try {
+      const result = eval(code);
+      return String(result);
+    } catch (err) {
+      return 'Error: ' + err.message;
+    }
+  });
 
 function openSystemXSSWindow() {
   new Window({
