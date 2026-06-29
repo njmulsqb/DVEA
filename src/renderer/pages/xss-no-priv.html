@@ -1,50 +1,57 @@
 <!doctype html>
 <html>
   <head>
+    <meta charset="UTF-8" />
     <title>XSS: No Privileged APIs</title>
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
   <body>
-    <h1>XSS: No Privileged APIs Exposed</h1>
-    <section class="panel">
-      <div class="panel-body">
-        <b>Security Feature Checklist:</b>
-        <ul>
-          <li>NodeIntegration: <b>false</b> ✅</li>
-          <li>ContextIsolation: <b>true</b> ✅</li>
-          <li>Sandbox: <b>true</b> ✅</li>
-        </ul>
+    <header class="page-header">
+      <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
+      <h1>XSS: No Privileged APIs Exposed</h1>
+      <p class="page-header-sub">Renderer-contained XSS — equivalent impact to a browser</p>
+    </header>
+
+    <div class="page-wrap">
+      <div class="checklist">
+        <span class="checklist-item pass">✓ NodeIntegration: false</span>
+        <span class="checklist-item pass">✓ ContextIsolation: true</span>
+        <span class="checklist-item pass">✓ Sandbox: true</span>
       </div>
-      <div class="panel-header">
-        <h2>Guide: What is happening?</h2>
-      </div>
-      <div class="panel-body">
-        <p>
-          This page demonstrates a classic XSS vulnerability in the renderer process, with no
-          privileged Node.js or IPC APIs exposed. User input is injected into the DOM using
-          <code>innerHTML</code> without sanitization.
-        </p>
-        <b>Example payload:</b>
-        <ul>
-          <li>
-            <pre><code>&lt;img src=x onerror=alert(1)&gt;</code></pre>
-            <span class="text-small text-gray">(shows alert)</span>
-          </li>
-        </ul>
-      </div>
-      <div class="xss-explanation">
-        <strong>Explanation:</strong> This is a classic reflected XSS vulnerability. The attacker
-        can execute arbitrary JavaScript in the renderer, but cannot access the file system, OS, or
-        Electron main process APIs. The risk is similar to a web browser XSS.
-      </div>
-    </section>
-    <form id="xssForm1">
-      <label>Message:</label>
-      <input type="text" id="xssInput1" placeholder="<img src=x onerror=alert(1)>" />
-      <button type="submit">Show Message</button>
-    </form>
-    <div id="xssOutput1" class="xss-output"></div>
-    <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Guide: What is happening?</h2></div>
+        <div class="panel-body">
+          <p>
+            User input is injected directly into the DOM via <code>innerHTML</code> without
+            sanitization. All Electron security features are enabled, so the attacker is limited
+            to the renderer process — no Node.js or IPC APIs are accessible.
+          </p>
+          <b>Example payload:</b>
+          <pre><code>&lt;img src=x onerror=alert(1)&gt;</code></pre>
+        </div>
+        <div class="xss-explanation">
+          <strong>Impact:</strong> The attacker can execute arbitrary JavaScript in the renderer
+          but cannot access the file system, OS, or Electron main process APIs. The risk is
+          equivalent to a browser XSS — session hijacking, UI redressing, or credential phishing
+          within the renderer context.
+        </div>
+      </section>
+
+      <section class="panel demo-panel">
+        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-body">
+          <form id="xssForm1">
+            <label for="xssInput1">Message:</label>
+            <input type="text" id="xssInput1" placeholder="<img src=x onerror=alert(1)>" />
+            <button type="submit">Inject</button>
+          </form>
+          <div id="xssOutput1" class="xss-output"></div>
+        </div>
+      </section>
+
+    </div>
+
     <script src="../js/xss-no-priv.js"></script>
   </body>
 </html>

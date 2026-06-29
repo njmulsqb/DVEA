@@ -1,26 +1,53 @@
 <!doctype html>
 <html>
   <head>
+    <meta charset="UTF-8" />
     <title>Open Redirect</title>
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
   <body>
-    <h1>Open Redirect</h1>
-    <p>
-      <strong>Vulnerability:</strong> This demo shows how an Electron app can be vulnerable to open
-      redirects. If user input or parameters are used to construct a redirect without validation,
-      attackers can send users to malicious sites.<br /><br />
-      <strong>How to invoke:</strong> In this demo, the vulnerability is triggered via a deep link.
-      Use a deep link in the format <code>dvea://?redirect=https://example.com</code> to redirect
-      the app to the specified URL.<br /><br />
-      <strong>Example:</strong> <code>dvea://?redirect=https://evil.com</code><br /><br />
-      You can also use the Simulate Redirect button below to test the vulnerability manually.
-    </p>
-    <button id="simulate" style="margin-bottom: 16px">Simulate Redirect</button>
-    <br />
-    <a href="index.html" class="btn btn-link" style="margin-top: 8px; display: inline-block"
-      >← Back to Vulnerabilities</a
-    >
+    <header class="page-header">
+      <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
+      <h1>Open Redirect</h1>
+      <p class="page-header-sub">Unvalidated deep link parameter loads arbitrary URLs in the app window</p>
+    </header>
+
+    <div class="page-wrap">
+      <section class="panel">
+        <div class="panel-header"><h2>Guide: What is happening?</h2></div>
+        <div class="panel-body">
+          <p>
+            This vulnerability is triggered via a custom deep link. The app registers a
+            <code>dvea://</code> protocol handler with the OS. When launched with a deep link, the
+            main process reads the <code>redirect</code> query parameter and loads it directly —
+            with no validation.
+          </p>
+          <p><b>Deep link format:</b></p>
+          <pre><code>dvea://?redirect=https://example.com</code></pre>
+          <p>
+            You can also use the button below to simulate the redirect without crafting a deep link.
+          </p>
+        </div>
+        <div class="xss-explanation">
+          <strong>Impact:</strong> An attacker who convinces a user to click a crafted
+          <code>dvea://</code> link (e.g., in an email or on a web page) can load any URL inside
+          the app window. Because there is no address bar, the user has no signal that the app is
+          no longer showing trusted content — making this a viable phishing vector.
+        </div>
+      </section>
+
+      <section class="panel demo-panel">
+        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-body">
+          <p class="text-small text-gray">
+            Simulates a deep link that loads <code>https://example.com</code> inside the app window.
+          </p>
+          <button id="simulate">Simulate Redirect</button>
+        </div>
+      </section>
+
+    </div>
+
     <script src="../js/vuln-redirect.js"></script>
   </body>
 </html>

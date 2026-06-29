@@ -167,3 +167,237 @@ button:hover,
   padding-left: 1.5rem;
   border-left: 2px solid #e0e7ff;
 }
+
+/* ── Shared page layout ──────────────────────────────────────── */
+.page-header {
+  background: linear-gradient(135deg, #5755d9 0%, #7c3aed 100%);
+  color: #fff;
+  padding: 1.1rem 2rem 1.4rem;
+  margin-bottom: 0;
+}
+.page-header-back {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin-bottom: 0.55rem;
+  transition: color 0.15s;
+}
+.page-header-back:hover { color: #fff; }
+.page-header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; line-height: 1.25; }
+.page-header-sub { margin: 0.3rem 0 0; opacity: 0.78; font-size: 0.88rem; }
+
+.page-wrap {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 2.5rem;
+}
+
+/* ── Security checklist pills ────────────────────────────────── */
+.checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+}
+.checklist-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+.checklist-item.pass { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.checklist-item.fail { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+/* ── Code blocks ─────────────────────────────────────────────── */
+pre {
+  background: #1e1b2e;
+  color: #cdd6f4;
+  border-radius: 8px;
+  padding: 0.85rem 1.1rem;
+  overflow-x: auto;
+  font-size: 0.87rem;
+  margin: 0.5rem 0 0.85rem;
+  line-height: 1.6;
+}
+pre code { background: none; color: inherit; padding: 0; font-size: inherit; border-radius: 0; }
+code {
+  background: #ede9fe;
+  color: #4338ca;
+  padding: 0.12rem 0.38rem;
+  border-radius: 4px;
+  font-size: 0.88em;
+  font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+}
+
+/* ── Table ───────────────────────────────────────────────────── */
+.table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.table th {
+  background: #f4f7ff;
+  color: #5755d9;
+  font-weight: 600;
+  padding: 0.7rem 1rem;
+  text-align: left;
+  border-bottom: 2px solid #e0e7ff;
+}
+.table td { padding: 0.65rem 1rem; border-bottom: 1px solid #f0f2ff; color: #444; }
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background: #fafbff; }
+
+/* ── Numbered step blocks ────────────────────────────────────── */
+.step-block { display: flex; gap: 1rem; margin-bottom: 1.25rem; align-items: flex-start; }
+.step-num {
+  flex-shrink: 0;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: #5755d9;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.12rem;
+}
+.step-num.muted  { background: #94a3b8; }
+.step-num.warn   { background: #f59e0b; }
+.step-num.danger { background: #dc2626; }
+.step-num.ok     { background: #16a34a; }
+.step-body { flex: 1; min-width: 0; }
+.step-body b { display: block; margin-bottom: 0.3rem; color: #2d2b6e; font-size: 0.95rem; }
+
+.step-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  margin-left: 0.45rem;
+  vertical-align: middle;
+  letter-spacing: 0.3px;
+}
+.step-badge.blocked { background: #fee2e2; color: #991b1b; }
+.step-badge.bypass  { background: #dcfce7; color: #166534; }
+.step-badge.escalate { background: #fef3c7; color: #92400e; }
+
+/* ── Demo panel & misc ───────────────────────────────────────── */
+.demo-panel { margin-top: 1.25rem; }
+.demo-panel .panel-body form { margin: 0; }
+.text-small { font-size: 0.84rem; }
+
+/* ── Index page layout ───────────────────────────────────────── */
+.app-header {
+  background: linear-gradient(135deg, #5755d9 0%, #7c3aed 100%);
+  color: #fff;
+  padding: 2rem 2.5rem 1.8rem;
+  margin-bottom: 2rem;
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.header-icon { font-size: 3rem; line-height: 1; }
+.header-inner h1 { margin: 0; font-size: 2.2rem; font-weight: 700; letter-spacing: 1px; }
+.header-inner p  { margin: 0.25rem 0 0; opacity: 0.82; font-size: 1rem; }
+
+.page-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.section-label {
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 1.5px;
+  color: #999;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.vuln-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.vuln-card {
+  display: block;
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.15rem 1.5rem;
+  border: 1px solid #e0e7ff;
+  border-left: 4px solid #5755d9;
+  box-shadow: 0 2px 8px rgba(87, 85, 217, 0.06);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.18s, border-left-color 0.18s, transform 0.12s;
+}
+.vuln-card:hover {
+  box-shadow: 0 6px 22px rgba(87, 85, 217, 0.14);
+  border-left-color: #7c3aed;
+  transform: translateY(-2px);
+}
+.vuln-card-group { cursor: default; }
+.vuln-card-group:hover { transform: none; box-shadow: 0 2px 8px rgba(87, 85, 217, 0.06); border-left-color: #5755d9; }
+
+.vuln-card-title {
+  font-weight: 600;
+  font-size: 1.03rem;
+  color: #2d2b6e;
+  margin-bottom: 0.3rem;
+}
+.vuln-card-desc {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.45;
+  margin-bottom: 0.65rem;
+}
+
+.vuln-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.vuln-tag {
+  display: inline-block;
+  background: #ede9fe;
+  color: #5755d9;
+  border-radius: 4px;
+  padding: 0.12rem 0.55rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.vuln-sub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.85rem;
+  border-top: 1px solid #e0e7ff;
+  padding-top: 0.75rem;
+}
+.vuln-sub-item {
+  display: block;
+  color: #5755d9;
+  text-decoration: none;
+  font-size: 0.93rem;
+  font-weight: 500;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  background: #f4f7ff;
+  transition: background 0.15s, color 0.15s;
+}
+.vuln-sub-item:hover { background: #e0e7ff; color: #3b379c; }
+
+.app-footer {
+  text-align: center;
+  color: #bbb;
+  font-size: 0.85rem;
+  padding: 2.5rem 0 1.5rem;
+}

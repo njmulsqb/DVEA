@@ -1,55 +1,58 @@
 <!doctype html>
 <html>
   <head>
-    <title>XSS: System APIs Exposed</title>
+    <meta charset="UTF-8" />
+    <title>XSS: Overprivileged ContextBridge</title>
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
   <body>
-    <h1>XSS: Overprivileged ContextBridge</h1>
-    <section class="panel">
-      <div class="panel-body">
-        <b>Security Feature Checklist:</b>
-        <ul>
-          <li>NodeIntegration: <b>false</b> ✅</li>
-          <li>ContextIsolation: <b>true</b> ✅</li>
-          <li>Sandbox: <b>false</b> ❌</li>
-        </ul>
+    <header class="page-header">
+      <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
+      <h1>XSS: Overprivileged ContextBridge</h1>
+      <p class="page-header-sub">XSS with direct access to shell commands via a preload-exposed API</p>
+    </header>
+
+    <div class="page-wrap">
+      <div class="checklist">
+        <span class="checklist-item pass">✓ NodeIntegration: false</span>
+        <span class="checklist-item pass">✓ ContextIsolation: true</span>
+        <span class="checklist-item fail">✗ Sandbox: false</span>
       </div>
-      <div class="panel-header">
-        <h2>Guide: What is happening?</h2>
-      </div>
-      <div class="panel-body">
-        <p>
-          This page demonstrates an XSS vulnerability in the renderer process
-          <strong>with privileged Node.js or Electron APIs exposed</strong>. The renderer has access
-          to privileged APIs via a custom preload script (such as <code>window.systemAPI</code>),
-          even though <code>nodeIntegration</code> is <b>false</b> and
-          <code>contextIsolation</code> is <b>true</b>.
-        </p>
-        <b>Example payload:</b>
-        <ul>
-          <li>
-            <pre><code>&lt;img src=x onerror="window.systemAPI.runCommand('open -a Calculator')"&gt;</code></pre>
-            <span class="text-small text-gray">(runs Calculator on macOS)</span>
-          </li>
-        </ul>
-      </div>
-      <div class="xss-explanation">
-        <strong>Impact:</strong> An attacker can execute arbitrary JavaScript and also access the
-        file system, OS, or main process APIs, leading to full system compromise. This goes beyond
-        browser-like attacks and allows actions like reading/writing files, executing system
-        commands, or exfiltrating sensitive data from the user's machine.<br /><br />
-        <strong>Note:</strong> This demonstrates why <b>least privilege</b> is critical when
-        exposing APIs to the renderer, even with Electron's security features enabled.
-      </div>
-    </section>
-    <form id="xssForm2">
-      <label>Message:</label>
-      <input type="text" id="xssInput2" placeholder="Enter XSS payload here" />
-      <button type="submit">Show Message</button>
-    </form>
-    <div id="xssOutput2" class="xss-output"></div>
-    <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Guide: What is happening?</h2></div>
+        <div class="panel-body">
+          <p>
+            The renderer has access to privileged APIs via a custom preload script that exposes
+            <code>window.systemAPI</code>, even though <code>nodeIntegration</code> is false and
+            <code>contextIsolation</code> is true. XSS in the renderer can call
+            <code>window.systemAPI.runCommand()</code> to execute arbitrary shell commands.
+          </p>
+          <b>Example payload:</b>
+          <pre><code>&lt;img src=x onerror="window.systemAPI.runCommand('open -a Calculator')"&gt;</code></pre>
+          <span class="text-small text-gray">Runs Calculator on macOS. Substitute a command appropriate for your OS.</span>
+        </div>
+        <div class="xss-explanation">
+          <strong>Impact:</strong> Full system compromise — read/write files, execute OS commands,
+          exfiltrate data. This demonstrates why least privilege is critical when designing
+          contextBridge APIs, even when Electron's core security features are enabled.
+        </div>
+      </section>
+
+      <section class="panel demo-panel">
+        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-body">
+          <form id="xssForm2">
+            <label for="xssInput2">Message:</label>
+            <input type="text" id="xssInput2" placeholder="Enter XSS payload here" />
+            <button type="submit">Inject</button>
+          </form>
+          <div id="xssOutput2" class="xss-output"></div>
+        </div>
+      </section>
+
+    </div>
+
     <script src="../js/xss-system-api.js"></script>
   </body>
 </html>

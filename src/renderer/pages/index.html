@@ -2,43 +2,101 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>DVEA – List of Vulnerabilities</title>
+    <title>DVEA – Vulnerabilities</title>
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
-
   <body>
-    <div class="container grid-lg">
-      <header class="navbar">
-        <section class="navbar-section">
-          <h1 class="text-bold">🛡️ DVEA – List of Vulnerabilities</h1>
-        </section>
-      </header>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h2 class="text-center">Choose a vulnerability to explore:</h2>
+    <header class="app-header">
+      <div class="header-inner">
+        <span class="header-icon">🛡️</span>
+        <div>
+          <h1>DVEA</h1>
+          <p>Damn Vulnerable Electron App — an intentionally insecure app for learning Electron security</p>
         </div>
-        <ul class="panel-body">
-          <li>
-            <a href="vuln-redirect.html">Open Redirect</a>
-            <span class="text-small text-gray">(can be invoked via deep link)</span>
-          </li>
-          <li>
-            Renderer XSS
-            <ul>
-              <li><a href="xss-no-priv.html">XSS: No Privileged APIs Exposed</a></li>
-              <li><a href="#" onclick="window.api.openSystemXSS()">XSS: Overprivileged ContextBridge</a></li>
-              <li><a href="xss-rce-direct.html">XSS to RCE (Direct, main window)</a></li>
-            </ul>
-          </li>
-          <li><a href="savefile.html">Insecure File Write (IPC Abuse)</a></li>
-          <li><a href="openexternal.html">openExternal Abuse (Protocol Handling)</a></li>
-        </ul>
       </div>
+    </header>
 
-      <footer class="text-center text-gray mt-4">
-        <small>Damn Vulnerable Electron App &copy; 2026</small>
-      </footer>
-    </div>
+    <main class="page-container">
+      <p class="section-label">Choose a vulnerability to explore</p>
+
+      <div class="vuln-list">
+
+        <a href="vuln-redirect.html" class="vuln-card">
+          <div class="vuln-card-title">Open Redirect</div>
+          <div class="vuln-card-desc">
+            An unvalidated <code>redirect</code> parameter in the app's custom deep link protocol
+            allows any URL to be loaded inside the app window.
+          </div>
+          <div class="vuln-tags">
+            <span class="vuln-tag">Deep Link</span>
+            <span class="vuln-tag">dvea://</span>
+          </div>
+        </a>
+
+        <div class="vuln-card vuln-card-group">
+          <div class="vuln-card-title">Renderer XSS</div>
+          <div class="vuln-card-desc">
+            Unsanitized <code>innerHTML</code> injection across three window configurations,
+            showing how impact escalates from browser-equivalent XSS to full remote code execution.
+          </div>
+          <div class="vuln-sub-list">
+            <a href="xss-no-priv.html" class="vuln-sub-item">
+              XSS: No Privileged APIs — browser-equivalent, renderer only
+            </a>
+            <a href="#" onclick="window.api.openSystemXSS(); return false;" class="vuln-sub-item">
+              XSS: Overprivileged ContextBridge — accesses shell commands via preload
+            </a>
+            <a href="xss-rce-direct.html" class="vuln-sub-item">
+              XSS → RCE — payload eval'd in main process, full Node.js access
+            </a>
+          </div>
+        </div>
+
+        <a href="stored-htmli.html" class="vuln-card">
+          <div class="vuln-card-title">Stored HTML Injection → IPC Token Exfiltration</div>
+          <div class="vuln-card-desc">
+            A stored display name is rendered via <code>innerHTML</code> in an analytics window.
+            A <code>&lt;meta http-equiv="refresh"&gt;</code> payload bypasses CSP and redirects
+            the window to an attacker page that calls an unvalidated IPC bridge to steal the
+            session token.
+          </div>
+          <div class="vuln-tags">
+            <span class="vuln-tag">HTML Injection</span>
+            <span class="vuln-tag">CSP Bypass</span>
+            <span class="vuln-tag">IPC</span>
+          </div>
+        </a>
+
+        <a href="savefile.html" class="vuln-card">
+          <div class="vuln-card-title">Insecure File Write</div>
+          <div class="vuln-card-desc">
+            An IPC handler writes renderer-supplied content to a renderer-supplied path with no
+            validation, allowing arbitrary files to be overwritten on the host system.
+          </div>
+          <div class="vuln-tags">
+            <span class="vuln-tag">IPC Abuse</span>
+            <span class="vuln-tag">Filesystem</span>
+          </div>
+        </a>
+
+        <a href="openexternal.html" class="vuln-card">
+          <div class="vuln-card-title">openExternal Abuse</div>
+          <div class="vuln-card-desc">
+            Unvalidated URLs passed to <code>shell.openExternal()</code> trigger arbitrary OS
+            protocol handlers — browser, mail client, or any custom protocol registered on
+            the system.
+          </div>
+          <div class="vuln-tags">
+            <span class="vuln-tag">Protocol Handling</span>
+            <span class="vuln-tag">shell API</span>
+          </div>
+        </a>
+
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      Damn Vulnerable Electron App &copy; 2026
+    </footer>
   </body>
 </html>

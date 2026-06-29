@@ -8,6 +8,6 @@ window.ipc.onRedirect((_, redirectUrl) => {
 // Optional: simulate without OS deep link
 
 document.getElementById('simulate')?.addEventListener('click', () => {
-  const url = 'https://evil.com';
+  const url = 'https://example.com';
   window.open(url, '_blank');
 });
