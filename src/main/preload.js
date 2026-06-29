@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('api', {
   openXSSRCE: () => ipcRenderer.send('open-xss-rce-direct'),
   saveFile: (data) => ipcRenderer.invoke('save-file', data),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  openAnalytics: (name) => ipcRenderer.send('open-analytics', name),
 });
 
 contextBridge.exposeInMainWorld('systemapi', {

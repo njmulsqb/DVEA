@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Analytics Dashboard</title>
+    <meta http-equiv="Content-Security-Policy" content="script-src *" />
+    <link rel="stylesheet" href="../styles/style.css" />
+  </head>
+  <body>
+    <div id="csp-banner" class="xss-explanation" style="display: none"></div>
+    <h1>Analytics Dashboard</h1>
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Recent Conversation Participants</h2>
+      </div>
+      <div class="panel-body">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Sessions</th>
+              <th>Last Active</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td id="participantName">Loading…</td>
+              <td>12</td>
+              <td>Just now</td>
+            </tr>
+            <tr>
+              <td>Alice Chen</td>
+              <td>8</td>
+              <td>2 hours ago</td>
+            </tr>
+            <tr>
+              <td>Bob Martinez</td>
+              <td>5</td>
+              <td>Yesterday</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <script src="../js/analytics.js"></script>
+  </body>
+</html>

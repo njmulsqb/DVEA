@@ -1,7 +1,7 @@
 'use strict';
 require('dotenv').config();
 const path = require('path');
-const { app, ipcMain } = require('electron');
+const { app, ipcMain, BrowserWindow } = require('electron');
 if (process.env.NODE_ENV === 'development') {
   require('electron-reload')(path.join(__dirname, '..'), {
     hardResetMethod: 'exit',
@@ -70,6 +70,28 @@ function main() {
     });
   }
   ipcMain.on('open-system-xss', openSystemXSSWindow);
+
+  ipcMain.on('open-analytics', (event, name) => {
+    const analyticsWindow = new BrowserWindow({
+      width: 768,
+      height: 1024,
+      show: false,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload-analytics.js'),
+      },
+    });
+    analyticsWindow.loadFile(path.join('src/renderer/pages', 'analytics.html'));
+    analyticsWindow.webContents.once('did-finish-load', () => {
+      analyticsWindow.webContents.send('analytics-set-name', name);
+    });
+    analyticsWindow.webContents.openDevTools();
+    analyticsWindow.once('ready-to-show', () => analyticsWindow.show());
+  });
+
+  ipcMain.handle('get-token', () => {
+    // No sender validation — any page in the analytics window can call this
+    return 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZHZlYS11c2VyLTAwMSIsInJvbGUiOiJhZG1pbiIsInNlc3Npb24iOiJhYmNkZWZnaGlqIn0.DVEA_DEMO_DO_NOT_USE';
+  });
 
   app.on('open-url', (event, deepLink) => {
     event.preventDefault();
