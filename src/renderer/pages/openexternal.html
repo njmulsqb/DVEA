@@ -1,53 +1,80 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>openExternal Abuse (Protocol Handling)</title>
-  <link rel="stylesheet" href="../styles/style.css">
-</head>
-<body>
-  <h1>openExternal Abuse (Protocol Handling)</h1>
-  <section class="panel">
-    <div class="panel-header">
-      <h2>Guide: What is happening?</h2>
+  <head>
+    <meta charset="UTF-8" />
+    <title>openExternal Abuse</title>
+    <link rel="stylesheet" href="../styles/style.css" />
+  </head>
+  <body>
+    <header class="page-header">
+      <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
+      <h1>openExternal Abuse</h1>
+      <p class="page-header-sub">Unvalidated URLs passed to shell.openExternal() trigger arbitrary OS protocol handlers</p>
+    </header>
+
+    <div class="page-wrap">
+      <section class="panel">
+        <div class="panel-header"><h2>Guide: What is happening?</h2></div>
+        <div class="panel-body">
+          <p>
+            The form below lets you specify any URL. When you click "Open Link", it is sent to
+            the main process which calls <code>shell.openExternal(url)</code>
+            <strong>without any validation or allowlist</strong>.
+          </p>
+          <b>How can this be exploited?</b>
+          <ul>
+            <li>Trigger the user's browser to open a phishing or malware site.</li>
+            <li>
+              Abuse custom protocol handlers —
+              <code>mailto:</code>, <code>tel:</code>, <code>slack://</code>, <code>vscode://</code>.
+            </li>
+            <li>Exploit OS-level protocol handler vulnerabilities.</li>
+          </ul>
+          <b>Example URLs to try:</b>
+          <pre><code>https://example.com
+mailto:attacker@example.com
+file:///etc/passwd</code></pre>
+        </div>
+        <div class="xss-explanation">
+          <strong>Impact:</strong> An attacker can open arbitrary URLs or system protocol handlers,
+          potentially triggering phishing, malware downloads, or OS-level exploits. Custom protocol
+          handlers can be abused to open local files or pivot to further attacks.<br /><br />
+          <strong>Fix:</strong> Validate against a strict protocol allowlist
+          (<code>https:</code> only, or a named set of known-safe schemes) — never use a denylist,
+          as it is easy to bypass with lesser-known schemes.
+        </div>
+      </section>
+
+      <section class="panel demo-panel">
+        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-body">
+          <form id="openexternal-form">
+            <label for="url">URL:</label>
+            <input
+              type="text"
+              id="url"
+              name="url"
+              value="file:///etc/passwd"
+              placeholder="file:///etc/passwd"
+              required
+            />
+            <button type="submit">Open Link</button>
+          </form>
+        </div>
+      </section>
+
     </div>
-    <div class="panel-body">
-      <p>
-        This demo shows how unvalidated use of <code>shell.openExternal</code> can allow the renderer to open any URL or protocol handler on the system. The form below lets you specify any URL. When you click "Open Link", the URL is sent to the main process, which opens it using the system handler <b>without any validation or restriction</b>.<br><br>
-        <b>How can this be exploited?</b>
-        <ul>
-          <li>Trigger the user's browser to open a phishing or malware site.</li>
-          <li>Abuse custom protocol handlers (e.g., <code>mailto:</code>, <code>tel:</code>, <code>slack://</code>, <code>vscode://</code>).</li>
-          <li>Exploit OS-level protocol handler vulnerabilities.</li>
-        </ul>
-        <b>Try it:</b> The field below is prefilled for a quick test. Change the URL as you wish.<br>
-        <b>Example URL:</b> <code>https://example.com</code> or <code>mailto:attacker@example.com</code>
-      </p>
-      <form id="openexternal-form">
-          <label for="url">URL:</label>
-          <input type="text" id="url" name="url" value="file:///etc/passwd" placeholder="file:///etc/passwd" required style="width: 100%"><br><br>
-        <button type="submit">Open Link</button>
-      </form>
-    </div>
-    <div class="xss-explanation">
-      <strong>Impact:</strong> An attacker can open arbitrary URLs or system protocol handlers, potentially triggering phishing, malware, or OS-level exploits. This can also be used to open local files or abuse custom handlers for further attacks.<br><br>
-      <strong>Note:</strong> Always validate and restrict URLs passed to <code>shell.openExternal</code> to avoid abuse.
-    </div>
-  </section>
-  <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
-  <script>
-    const form = document.getElementById('openexternal-form');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const url = document.getElementById('url').value;
-      try {
-        await window.api.openExternal(url);
-      } catch (err) {
-        alert('Error: ' + (err && err.message ? err.message : err));
-      }
-    });
-  </script>
-</body>
+
+    <script>
+      document.getElementById('openexternal-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const url = document.getElementById('url').value;
+        try {
+          await window.api.openExternal(url);
+        } catch (err) {
+          alert('Error: ' + (err && err.message ? err.message : err));
+        }
+      });
+    </script>
+  </body>
 </html>
-<!-- 
- we need to tackle case of remote file loading https://benjamin-altpeter.de/shell-openexternal-dangers/ whitelist of protocols and not blacklist-->

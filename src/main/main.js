@@ -8,6 +8,7 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 const { shell } = require('electron');
+const fs = require('fs');
 
 const Window = require('../main/windows/Window');
 const { sandboxed, contextIsolated } = require('process');
@@ -16,8 +17,6 @@ function main() {
   let mainWindow = new Window({
     file: path.join('src/renderer/pages', 'index.html'),
   });
-
-  const fs = require('fs');
 
   ipcMain.handle('open-external', (event, url) => {
     shell.openExternal(url);

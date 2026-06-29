@@ -2,74 +2,77 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Insecure File Write (IPC Abuse)</title>
+    <title>Insecure File Write</title>
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
   <body>
-    <h1>Insecure File Write (IPC Abuse)</h1>
-    <section class="panel">
-      <div class="panel-body">
-        <b>Security Feature Checklist:</b>
-        <ul>
-          <li>NodeIntegration: <b>false</b> ✅</li>
-          <li>ContextIsolation: <b>true</b> ✅</li>
-          <li>Sandbox: <b>true</b> ✅</li>
-        </ul>
+    <header class="page-header">
+      <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
+      <h1>Insecure File Write (IPC Abuse)</h1>
+      <p class="page-header-sub">Renderer-supplied path and content written without validation</p>
+    </header>
+
+    <div class="page-wrap">
+      <div class="checklist">
+        <span class="checklist-item pass">✓ NodeIntegration: false</span>
+        <span class="checklist-item pass">✓ ContextIsolation: true</span>
+        <span class="checklist-item pass">✓ Sandbox: true</span>
+        <span class="checklist-item fail">✗ IPC: no path or content validation</span>
       </div>
-      <div class="panel-header">
-        <h2>Guide: What is happening?</h2>
-      </div>
-      <div class="panel-body">
-        <p>
-          This demo shows how insecure IPC can allow arbitrary file writes from the renderer
-          process. The form below lets you specify any file path and content. When you click "Save
-          File", the data is sent to the main process, which writes the file
-          <b>without any validation or restriction</b>.
-        </p>
-        <b>Example usage:</b>
-        <ul>
-          <li>
-            <pre><code>Path: /tmp/dvea-demo.txt
+
+      <section class="panel">
+        <div class="panel-header"><h2>Guide: What is happening?</h2></div>
+        <div class="panel-body">
+          <p>
+            The form below lets you specify any file path and content. When you click "Save File",
+            the data is sent to the main process, which writes the file
+            <strong>without any validation or restriction</strong>.
+          </p>
+          <b>Example — overwrite a sensitive file:</b>
+          <pre><code>Path:    /tmp/dvea-demo.txt
 Content: Hello from DVEA!</code></pre>
-            <span class="text-small text-gray">(creates or overwrites a file)</span>
-          </li>
-        </ul>
-      </div>
-      <form id="savefile-form">
-        <label for="filepath">File Path:</label>
-        <input
-          type="text"
-          id="filepath"
-          name="filepath"
-          value="/tmp/dvea-demo.txt"
-          placeholder="/tmp/test.txt"
-          required
-          style="width: 100%"
-        /><br /><br />
-        <label for="filecontent">File Content:</label>
-        <textarea
-          id="filecontent"
-          name="filecontent"
-          rows="6"
-          placeholder="Enter file content here..."
-          required
-          style="width: 100%"
-        >
-Hello from DVEA!</textarea
-        ><br /><br />
-        <button type="submit">Save File</button>
-      </form>
-      <div id="status" style="margin-top: 1em"></div>
-      <div class="xss-explanation">
-        <strong>Impact:</strong> Overwrite or create sensitive files anywhere the app has write
-        access (e.g., <code>~/.bashrc</code>, <code>package.json</code>, <code>/tmp/evil.js</code>).
-        Drop malicious scripts, modify app config files, or gain persistence if the app runs with
-        higher privileges.<br /><br />
-        <strong>Note:</strong> Never allow untrusted input to control file paths or content without
-        strict validation and restrictions.
-      </div>
-    </section>
-    <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
+          <span class="text-small text-gray">
+            Try paths like <code>~/.bashrc</code> or <code>package.json</code> to see the full
+            impact.
+          </span>
+        </div>
+        <div class="xss-explanation">
+          <strong>Impact:</strong> Overwrite or create sensitive files anywhere the app has write
+          access — <code>~/.bashrc</code>, <code>package.json</code>, <code>/tmp/evil.js</code>.
+          Drop malicious scripts, modify app config, or gain persistence if the app runs with
+          elevated privileges.
+        </div>
+      </section>
+
+      <section class="panel demo-panel">
+        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-body">
+          <form id="savefile-form">
+            <label for="filepath">File Path:</label>
+            <input
+              type="text"
+              id="filepath"
+              name="filepath"
+              value="/tmp/dvea-demo.txt"
+              placeholder="/tmp/test.txt"
+              required
+            />
+            <label for="filecontent">File Content:</label>
+            <textarea
+              id="filecontent"
+              name="filecontent"
+              rows="6"
+              placeholder="Enter file content here..."
+              required
+            >Hello from DVEA!</textarea>
+            <button type="submit">Save File</button>
+          </form>
+          <div id="status" style="margin-top: 1rem"></div>
+        </div>
+      </section>
+
+    </div>
+
     <script src="../js/savefile.js"></script>
   </body>
 </html>

