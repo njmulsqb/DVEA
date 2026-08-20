@@ -219,6 +219,24 @@ class Observability {
   // Push an ipcLog entry. Maintain bounded storage and push a snapshot.
   pushIpcLog(entry) {
     try {
+      // Deduplicate rapid duplicate entries coming from multiple capture points
+      // Consider entries duplicate when kind, direction, channel, senderId match
+      // within a short time window (500ms). Compare against recent tail of log.
+      const now = entry && entry.ts ? entry.ts : Date.now();
+      const recentWindow = 500; // ms
+      const tail = this.ipcLog.slice(-20); // check last 20 entries
+      let isDup = false;
+      for (let i = tail.length - 1; i >= 0; i--) {
+        const e = tail[i];
+        if (!e) continue;
+        if (Math.abs((e.ts || 0) - now) > recentWindow) continue;
+        if (e.kind === entry.kind && e.direction === entry.direction && e.channel === entry.channel && e.senderId === entry.senderId) {
+          isDup = true;
+          break;
+        }
+      }
+      if (isDup) return; // skip duplicate
+
       this.ipcLog.push(entry);
       if (this.ipcLog.length > MAX_STORED_LOG) {
         // drop oldest

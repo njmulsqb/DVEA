@@ -12,7 +12,12 @@
   <body>
     <h1>Observability Panel (minimal)</h1>
     <div id="lastUpdate">Waiting for updates…</div>
+    <h2>Config</h2>
     <pre id="store">{}</pre>
+    <h2>IPC Log</h2>
+    <div id="ipc-log-container" style="border:1px solid #e6eefb; background:#fff; border-radius:6px; max-height:60vh; overflow:auto; padding:8px;">
+      <ol id="ipc-log" style="list-style:none; margin:0; padding:0; font-family: monospace; font-size:12px;"></ol>
+    </div>
     <script src="../js/panel.js"></script>
   </body>
 </html>

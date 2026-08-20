@@ -249,22 +249,9 @@ function main() {
   // Receive logs from preloads wrapping ipcRenderer.invoke/send
   ipcMain.on('ipc-monitor-preload', (event, payload) => {
     try {
-      const channel = payload && payload.channel;
-      if (typeof channel === 'string' && channel.startsWith('__dvea_monitor__')) return; // avoid recursion
-      if (channel === 'ipc-monitor-preload') return;
-      const kind = payload.kind || 'send';
-      const args = payload.args || [];
-      const redact = !!(observability.config && observability.config.ipcRedact);
-      const serialized = observability.serializeArgs(args, redact);
-      observability.pushIpcLog({
-        ts: Date.now(),
-        direction: 'R→M',
-        kind,
-        channel,
-        args: serialized,
-        senderId: event.sender.id,
-        frameUrl: event.senderFrame && event.senderFrame.url ? event.senderFrame.url : null,
-      });
+      // Preload plumbing messages are not authoritative (they mirror traffic).
+      // Ignore these to avoid duplicate entries — prefer ipcMain.handle/on capture.
+      return;
     } catch (err) {}
   });
 
