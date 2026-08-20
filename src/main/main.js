@@ -19,6 +19,71 @@ function main() {
     file: path.join('src/renderer/pages', 'index.html'),
   });
 
+  // Wrap ipcMain.handle and ipcMain.on at startup so invoke/handle and on/send are logged.
+  try {
+    const origHandle = ipcMain.handle.bind(ipcMain);
+    ipcMain.handle = function (channel, listener) {
+      if (typeof channel === 'string' && channel.startsWith('__dvea_monitor__')) {
+        return origHandle(channel, listener);
+      }
+      const wrapped = async function (event, ...args) {
+        try {
+          const redact = !!(observability.config && observability.config.ipcRedact);
+          const serialized = observability.serializeArgs(args, redact);
+          observability.pushIpcLog({
+            ts: Date.now(),
+            direction: 'R→M',
+            kind: 'invoke',
+            channel,
+            args: serialized,
+            senderId: event && event.sender && event.sender.id,
+            frameUrl: event && event.senderFrame && event.senderFrame.url ? event.senderFrame.url : null,
+          });
+        } catch (err) {}
+        const res = await listener(event, ...args);
+        try {
+          const redact = !!(observability.config && observability.config.ipcRedact);
+          const serializedRes = observability.serializeArgs([res], redact);
+          observability.pushIpcLog({
+            ts: Date.now(),
+            direction: 'M→R',
+            kind: 'invoke-response',
+            channel,
+            args: serializedRes,
+            senderId: event && event.sender && event.sender.id,
+            frameUrl: event && event.sender && event.sender.getURL ? event.sender.getURL() : null,
+          });
+        } catch (err) {}
+        return res;
+      };
+      return origHandle(channel, wrapped);
+    };
+
+    const origOn = ipcMain.on.bind(ipcMain);
+    ipcMain.on = function (channel, listener) {
+      if (typeof channel === 'string' && channel.startsWith('__dvea_monitor__')) {
+        return origOn(channel, listener);
+      }
+      const wrapped = function (event, ...args) {
+        try {
+          const redact = !!(observability.config && observability.config.ipcRedact);
+          const serialized = observability.serializeArgs(args, redact);
+          observability.pushIpcLog({
+            ts: Date.now(),
+            direction: 'R→M',
+            kind: 'on',
+            channel,
+            args: serialized,
+            senderId: event && event.sender && event.sender.id,
+            frameUrl: event && event.senderFrame && event.senderFrame.url ? event.senderFrame.url : null,
+          });
+        } catch (err) {}
+        return listener(event, ...args);
+      };
+      return origOn(channel, wrapped);
+    };
+  } catch (err) {}
+
   ipcMain.handle('open-external', (event, url) => {
     shell.openExternal(url);
   });
