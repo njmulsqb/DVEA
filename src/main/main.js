@@ -12,6 +12,7 @@ const fs = require('fs');
 
 const Window = require('../main/windows/Window');
 const { sandboxed, contextIsolated } = require('process');
+const observability = require('./observability');
 
 function main() {
   let mainWindow = new Window({
@@ -87,10 +88,31 @@ function main() {
     analyticsWindow.once('ready-to-show', () => analyticsWindow.show());
   });
 
+  // Create a dedicated observability panel window (locked down).
+  const panelWindow = new BrowserWindow({
+    width: 700,
+    height: 900,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload-panel.js'),
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+    },
+  });
+  panelWindow.loadFile(path.join('src/renderer/pages', 'panel.html'));
+  panelWindow.once('ready-to-show', () => panelWindow.show());
+  panelWindow.webContents.once('did-finish-load', () => {
+    observability.setPanelWindow(panelWindow);
+  });
+  panelWindow.on('closed', () => observability.clearPanelWindow());
+
   ipcMain.handle('get-token', () => {
     // No sender validation — any page in the analytics window can call this
     return 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZHZlYS11c2VyLTAwMSIsInJvbGUiOiJhZG1pbiIsInNlc3Npb24iOiJhYmNkZWZnaGlqIn0.DVEA_DEMO_DO_NOT_USE';
   });
+
+  // Demo ticker removed. (Was a throwaway visual test; deleted per request.)
 
   app.on('open-url', (event, deepLink) => {
     event.preventDefault();
