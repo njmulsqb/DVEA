@@ -15,3 +15,11 @@ contextBridge.exposeInMainWorld('api', {
 contextBridge.exposeInMainWorld('systemapi', {
   executeCode: (code) => ipcRenderer.invoke('xss-rce-direct', code),
 });
+
+// Send preload corroboration back to main so observability can record renderer-side values.
+try {
+  ipcRenderer.send('preload-corroboration', {
+    contextIsolated: !!process.contextIsolated,
+    sandboxed: !!process.sandboxed,
+  });
+} catch (err) {}

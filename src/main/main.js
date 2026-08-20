@@ -107,10 +107,64 @@ function main() {
   });
   panelWindow.on('closed', () => observability.clearPanelWindow());
 
+  // Register all BrowserWindows globally so we don't miss windows created
+  // outside the Window helper. Read effective prefs and set active on focus.
+  app.on('browser-window-created', (e, win) => {
+    try {
+      // Try to use lastWebPreferences as a best-effort declared fallback.
+      const declared = (win && win.webContents && win.webContents.getLastWebPreferences && win.webContents.getLastWebPreferences()) || {};
+      observability.registerWindow(win, declared);
+      // Re-read on navigation/load events
+      try {
+        win.webContents.on('did-finish-load', () => observability.refreshWindow(win));
+        win.webContents.on('did-navigate', () => observability.refreshWindow(win));
+        win.webContents.on('did-navigate-in-page', () => observability.refreshWindow(win));
+      } catch (err) {}
+    } catch (err) {}
+  });
+
+  // Track focused window
+  app.on('browser-window-focus', (e, win) => {
+    try {
+      if (win && win.id) observability.setActiveWindow(win.id);
+    } catch (err) {}
+  });
+
+  // On startup, set active window to focused if any
+  try {
+    const focused = BrowserWindow.getFocusedWindow();
+    if (focused) observability.setActiveWindow(focused.id);
+  } catch (err) {}
+
   ipcMain.handle('get-token', () => {
     // No sender validation — any page in the analytics window can call this
     return 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZHZlYS11c2VyLTAwMSIsInJvbGUiOiJhZG1pbiIsInNlc3Npb24iOiJhYmNkZWZnaGlqIn0.DVEA_DEMO_DO_NOT_USE';
   });
+
+  // Receive corroboration messages from renderer preloads.
+  ipcMain.on('preload-corroboration', (event, data) => {
+    try {
+      const wcId = event.sender.id;
+      observability.handlePreloadCorroboration(wcId, data || {});
+    } catch (err) {}
+  });
+
+  // Analytics renderer notified it injected name/meta; refresh that window so meta CSP is captured.
+  ipcMain.on('analytics-injected', (event) => {
+    try {
+      const wc = event.sender; // webContents
+      const win = BrowserWindow.fromWebContents(wc);
+      if (win) observability.refreshWindow(win);
+    } catch (err) {}
+  });
+
+  // Publish build-time fuse config (labelled) into the store.
+  const BUILD_FUSES = {
+    // example fuses; replace with real build-time declarations as needed
+    disableNodeIntegrationByDefault: true,
+    enforceContextIsolation: true,
+  };
+  observability.updateConfig({ fuses: BUILD_FUSES, fuses_label: 'build-time declared' });
 
   // Demo ticker removed. (Was a throwaway visual test; deleted per request.)
 

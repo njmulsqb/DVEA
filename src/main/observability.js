@@ -7,9 +7,10 @@ const MAX_PUSH_LOG = 200; // entries included in each pushed snapshot
 
 class Observability {
   constructor() {
-    this.config = {};
+    this.config = {}; // top-level store values
     this.ipcLog = [];
     this._panelWindow = null; // BrowserWindow instance
+    this._windows = new Map(); // id -> { win, declared, effective, preload, csp }
   }
 
   setPanelWindow(win) {
@@ -24,6 +25,163 @@ class Observability {
   updateConfig(patch) {
     Object.assign(this.config, patch);
     this._pushSnapshot();
+  }
+
+  // Register a created window so we can read declared prefs and probe effective ones.
+  registerWindow(win, declaredWebPreferences = {}) {
+    if (!win || !win.id) return;
+    this._windows.set(win.id, {
+      win,
+      declared: declaredWebPreferences,
+      effective: null,
+      preload: null,
+      csp: null,
+    });
+    // push initial declared state into store.config.windows
+    this._publishWindowConfig(win.id);
+    // listen for webContents focus to set active
+    try {
+      win.on('focus', () => this.setActiveWindow(win.id));
+      win.on('closed', () => this.unregisterWindow(win));
+      // Re-read on navigation/load events so CSP meta and other prefs update.
+      try {
+        if (win.webContents) {
+          win.webContents.on('did-finish-load', () => this.refreshWindow(win));
+          win.webContents.on('did-navigate', () => this.refreshWindow(win));
+          win.webContents.on('did-navigate-in-page', () => this.refreshWindow(win));
+          win.webContents.on('dom-ready', () => this.refreshWindow(win));
+        }
+      } catch (err) {}
+    } catch {}
+    // attempt initial scan (includes effective prefs + meta CSP)
+    this.refreshWindow(win);
+  }
+
+  unregisterWindow(win) {
+    const id = win && win.id ? win.id : win;
+    this._windows.delete(id);
+    if (this.config.activeWindow === id) {
+      this.updateConfig({ activeWindow: null });
+    }
+    this._pushSnapshot();
+  }
+
+  setActiveWindow(id) {
+    if (!id) return;
+    this.updateConfig({ activeWindow: id });
+    const info = this._windows.get(id);
+    if (info && info.win) this._updateEffectiveFromWin(info.win);
+  }
+
+  handlePreloadCorroboration(webContentsId, data) {
+    const entry = this._windows.get(webContentsId);
+    if (!entry) return;
+    entry.preload = data;
+    this._publishWindowConfig(webContentsId);
+  }
+
+  handleCspForWebContents(webContentsId, cspValue) {
+    const entry = this._windows.get(webContentsId);
+    if (!entry) return;
+    entry.csp = cspValue || 'none';
+    this._publishWindowConfig(webContentsId);
+  }
+
+  _publishWindowConfig(id) {
+    const entry = this._windows.get(id);
+    if (!entry) return;
+    // Build a windows map for store.config
+    const winMap = this.config.windows || {};
+    winMap[id] = {
+      declared: entry.declared || {},
+      effective: entry.effective || {},
+      preload: entry.preload || null,
+      csp: entry.csp || 'none',
+      versions: entry.versions || null,
+    };
+    this.updateConfig({ windows: winMap });
+  }
+
+  _updateEffectiveFromWin(win) {
+    if (!win || !win.webContents) return;
+    try {
+      const webPrefs = win.webContents.getLastWebPreferences() || {};
+      const info = this._windows.get(win.id);
+      if (!info) return;
+      info.effective = {
+        nodeIntegration: !!webPrefs.nodeIntegration,
+        contextIsolation: !!webPrefs.contextIsolation,
+        sandbox: !!webPrefs.sandbox,
+        webSecurity: !!webPrefs.webSecurity,
+        preload: webPrefs.preload || null,
+        nodeIntegrationInSubFrames: !!webPrefs.nodeIntegrationInSubFrames,
+        webviewTag: !!webPrefs.webviewTag,
+      };
+      info.versions = {
+        electron: process.versions.electron,
+        chrome: process.versions.chrome,
+        node: process.versions.node,
+      };
+      this._publishWindowConfig(win.id);
+      // Attach session header listener to capture CSP for this webContents id
+      try {
+        const ses = win.webContents.session;
+        const entry = this._windows.get(win.id) || {};
+        if (!entry._headersHooked) {
+          ses.webRequest.onHeadersReceived((details, callback) => {
+            try {
+              if (details.webContentsId === win.webContents.id) {
+                const headers = details.responseHeaders || {};
+                // Normalize header key casing
+                const csp = headers['content-security-policy'] || headers['Content-Security-Policy'] || headers['content-security-policy-report-only'] || headers['Content-Security-Policy-Report-Only'];
+                if (csp && csp.length) {
+                  const val = Array.isArray(csp) ? csp.join('; ') : String(csp);
+                  this.handleCspForWebContents(win.id, val);
+                }
+              }
+            } catch (err) {}
+            callback({ cancel: false });
+          });
+          entry._headersHooked = true;
+          this._windows.set(win.id, entry);
+        }
+      } catch (err) {}
+    } catch (err) {}
+  }
+
+  // Public: re-scan effective prefs and CSP meta for a window (called on load/navigation)
+  refreshWindow(win) {
+    try {
+      if (!win || !win.webContents) return;
+      this._updateEffectiveFromWin(win);
+      // Try to read meta CSP from DOM for local files
+        try {
+          const js = `(function(){var m = document.querySelector('meta[http-equiv="Content-Security-Policy" i]'); return m ? m.content : null; })()`;
+          const entry = this._windows.get(win.id) || {};
+          // clear retry marker
+          entry._metaRetry = false;
+          win.webContents.executeJavaScript(js, true)
+            .then((val) => {
+              if (val) {
+                this.handleCspForWebContents(win.id, val);
+              } else {
+                // If no meta found, schedule a single delayed retry to catch dynamically-inserted metas
+                if (!entry._metaRetry) {
+                  entry._metaRetry = true;
+                  this._windows.set(win.id, entry);
+                  setTimeout(() => {
+                    try {
+                      win.webContents.executeJavaScript(js, true).then((val2) => {
+                        if (val2) this.handleCspForWebContents(win.id, val2);
+                      }).catch(() => {});
+                    } catch (err) {}
+                  }, 150);
+                }
+              }
+            })
+            .catch(() => {});
+        } catch (err) {}
+    } catch (err) {}
   }
 
   // Push an ipcLog entry. Maintain bounded storage and push a snapshot.

@@ -21,12 +21,17 @@ class Window extends BrowserWindow {
         ...webPreferences,
       },
     });
-
     this.loadFile(file);
     this.webContents.openDevTools();
     this.once('ready-to-show', () => {
       this.show();
     });
+
+    try {
+      const observability = require('../observability');
+      // register this window with its declared webPreferences
+      observability.registerWindow(this, { ...defaultProps.webPreferences, ...webPreferences });
+    } catch (err) {}
   }
 }
 
