@@ -13,6 +13,38 @@ class Observability {
     this._windows = new Map(); // id -> { win, declared, effective, preload, csp }
   }
 
+  // Serialize IPC args with caps and optional redaction
+  serializeArgs(args, redact = false) {
+    const perArgMax = 1024; // chars per arg
+    const totalMax = 16 * 1024; // total chars
+    let pieces = [];
+    let total = 0;
+    for (const a of args || []) {
+      let text;
+      try {
+        if (redact) {
+          text = '<<REDACTED>>';
+        } else {
+          text = JSON.stringify(a);
+        }
+      } catch (err) {
+        try {
+          text = String(a);
+        } catch {
+          text = '<unserializable>';
+        }
+      }
+      if (text.length > perArgMax) text = text.slice(0, perArgMax) + '...';
+      if (total + text.length > totalMax) {
+        pieces.push('[truncated]');
+        break;
+      }
+      pieces.push(text);
+      total += text.length;
+    }
+    return pieces;
+  }
+
   setPanelWindow(win) {
     this._panelWindow = win;
   }

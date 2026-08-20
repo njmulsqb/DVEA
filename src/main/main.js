@@ -114,6 +114,29 @@ function main() {
       // Try to use lastWebPreferences as a best-effort declared fallback.
       const declared = (win && win.webContents && win.webContents.getLastWebPreferences && win.webContents.getLastWebPreferences()) || {};
       observability.registerWindow(win, declared);
+      // Wrap this window's webContents.send to capture M→R traffic
+      try {
+        const origSend = win.webContents.send.bind(win.webContents);
+        win.webContents.send = function (channel, ...args) {
+          try {
+            if (typeof channel === 'string' && (channel.startsWith('__dvea_monitor__') || channel === 'ipc-monitor-preload')) {
+              return origSend(channel, ...args);
+            }
+            const redact = !!(observability.config && observability.config.ipcRedact);
+            const serialized = observability.serializeArgs(args, redact);
+            observability.pushIpcLog({
+              ts: Date.now(),
+              direction: 'M→R',
+              kind: 'send',
+              channel,
+              args: serialized,
+              senderId: win.id,
+              frameUrl: win.webContents && win.webContents.getURL ? win.webContents.getURL() : null,
+            });
+          } catch (err) {}
+          return origSend(channel, ...args);
+        };
+      } catch (err) {}
       // Re-read on navigation/load events
       try {
         win.webContents.on('did-finish-load', () => observability.refreshWindow(win));
@@ -155,6 +178,28 @@ function main() {
       const wc = event.sender; // webContents
       const win = BrowserWindow.fromWebContents(wc);
       if (win) observability.refreshWindow(win);
+    } catch (err) {}
+  });
+
+  // Receive logs from preloads wrapping ipcRenderer.invoke/send
+  ipcMain.on('ipc-monitor-preload', (event, payload) => {
+    try {
+      const channel = payload && payload.channel;
+      if (typeof channel === 'string' && channel.startsWith('__dvea_monitor__')) return; // avoid recursion
+      if (channel === 'ipc-monitor-preload') return;
+      const kind = payload.kind || 'send';
+      const args = payload.args || [];
+      const redact = !!(observability.config && observability.config.ipcRedact);
+      const serialized = observability.serializeArgs(args, redact);
+      observability.pushIpcLog({
+        ts: Date.now(),
+        direction: 'R→M',
+        kind,
+        channel,
+        args: serialized,
+        senderId: event.sender.id,
+        frameUrl: event.senderFrame && event.senderFrame.url ? event.senderFrame.url : null,
+      });
     } catch (err) {}
   });
 
