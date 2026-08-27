@@ -12,11 +12,77 @@ const fs = require('fs');
 
 const Window = require('../main/windows/Window');
 const { sandboxed, contextIsolated } = require('process');
+const observability = require('./observability');
 
 function main() {
   let mainWindow = new Window({
     file: path.join('src/renderer/pages', 'index.html'),
   });
+
+  // Wrap ipcMain.handle and ipcMain.on at startup so invoke/handle and on/send are logged.
+  try {
+    const origHandle = ipcMain.handle.bind(ipcMain);
+    ipcMain.handle = function (channel, listener) {
+      if (typeof channel === 'string' && channel.startsWith('__dvea_monitor__')) {
+        return origHandle(channel, listener);
+      }
+      const wrapped = async function (event, ...args) {
+        try {
+          const redact = !!(observability.config && observability.config.ipcRedact);
+          const serialized = observability.serializeArgs(args, redact);
+          observability.pushIpcLog({
+            ts: Date.now(),
+            direction: 'R→M',
+            kind: 'invoke',
+            channel,
+            args: serialized,
+            senderId: event && event.sender && event.sender.id,
+            frameUrl: event && event.senderFrame && event.senderFrame.url ? event.senderFrame.url : null,
+          });
+        } catch (err) {}
+        const res = await listener(event, ...args);
+        try {
+          const redact = !!(observability.config && observability.config.ipcRedact);
+          const serializedRes = observability.serializeArgs([res], redact);
+          observability.pushIpcLog({
+            ts: Date.now(),
+            direction: 'M→R',
+            kind: 'invoke-response',
+            channel,
+            args: serializedRes,
+            senderId: event && event.sender && event.sender.id,
+            frameUrl: event && event.sender && event.sender.getURL ? event.sender.getURL() : null,
+          });
+        } catch (err) {}
+        return res;
+      };
+      return origHandle(channel, wrapped);
+    };
+
+    const origOn = ipcMain.on.bind(ipcMain);
+    ipcMain.on = function (channel, listener) {
+      if (typeof channel === 'string' && channel.startsWith('__dvea_monitor__')) {
+        return origOn(channel, listener);
+      }
+      const wrapped = function (event, ...args) {
+        try {
+          const redact = !!(observability.config && observability.config.ipcRedact);
+          const serialized = observability.serializeArgs(args, redact);
+          observability.pushIpcLog({
+            ts: Date.now(),
+            direction: 'R→M',
+            kind: 'on',
+            channel,
+            args: serialized,
+            senderId: event && event.sender && event.sender.id,
+            frameUrl: event && event.senderFrame && event.senderFrame.url ? event.senderFrame.url : null,
+          });
+        } catch (err) {}
+        return listener(event, ...args);
+      };
+      return origOn(channel, wrapped);
+    };
+  } catch (err) {}
 
   ipcMain.handle('open-external', (event, url) => {
     shell.openExternal(url);
@@ -87,10 +153,117 @@ function main() {
     analyticsWindow.once('ready-to-show', () => analyticsWindow.show());
   });
 
+  // Create a dedicated observability panel window (locked down).
+  const panelWindow = new BrowserWindow({
+    width: 700,
+    height: 900,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload-panel.js'),
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+    },
+  });
+  panelWindow.loadFile(path.join('src/renderer/pages', 'panel.html'));
+  panelWindow.once('ready-to-show', () => panelWindow.show());
+  panelWindow.webContents.once('did-finish-load', () => {
+    observability.setPanelWindow(panelWindow);
+  });
+  panelWindow.on('closed', () => observability.clearPanelWindow());
+
+  // Register all BrowserWindows globally so we don't miss windows created
+  // outside the Window helper. Read effective prefs and set active on focus.
+  app.on('browser-window-created', (e, win) => {
+    try {
+      // Try to use lastWebPreferences as a best-effort declared fallback.
+      const declared = (win && win.webContents && win.webContents.getLastWebPreferences && win.webContents.getLastWebPreferences()) || {};
+      observability.registerWindow(win, declared);
+      // Wrap this window's webContents.send to capture M→R traffic
+      try {
+        const origSend = win.webContents.send.bind(win.webContents);
+        win.webContents.send = function (channel, ...args) {
+          try {
+            if (typeof channel === 'string' && (channel.startsWith('__dvea_monitor__') || channel === 'ipc-monitor-preload')) {
+              return origSend(channel, ...args);
+            }
+            const redact = !!(observability.config && observability.config.ipcRedact);
+            const serialized = observability.serializeArgs(args, redact);
+            observability.pushIpcLog({
+              ts: Date.now(),
+              direction: 'M→R',
+              kind: 'send',
+              channel,
+              args: serialized,
+              senderId: win.id,
+              frameUrl: win.webContents && win.webContents.getURL ? win.webContents.getURL() : null,
+            });
+          } catch (err) {}
+          return origSend(channel, ...args);
+        };
+      } catch (err) {}
+      // Re-read on navigation/load events
+      try {
+        win.webContents.on('did-finish-load', () => observability.refreshWindow(win));
+        win.webContents.on('did-navigate', () => observability.refreshWindow(win));
+        win.webContents.on('did-navigate-in-page', () => observability.refreshWindow(win));
+      } catch (err) {}
+    } catch (err) {}
+  });
+
+  // Track focused window
+  app.on('browser-window-focus', (e, win) => {
+    try {
+      if (win && win.id) observability.setActiveWindow(win.id);
+    } catch (err) {}
+  });
+
+  // On startup, set active window to focused if any
+  try {
+    const focused = BrowserWindow.getFocusedWindow();
+    if (focused) observability.setActiveWindow(focused.id);
+  } catch (err) {}
+
   ipcMain.handle('get-token', () => {
     // No sender validation — any page in the analytics window can call this
     return 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZHZlYS11c2VyLTAwMSIsInJvbGUiOiJhZG1pbiIsInNlc3Npb24iOiJhYmNkZWZnaGlqIn0.DVEA_DEMO_DO_NOT_USE';
   });
+
+  // Receive corroboration messages from renderer preloads.
+  ipcMain.on('preload-corroboration', (event, data) => {
+    try {
+      const wcId = event.sender.id;
+      observability.handlePreloadCorroboration(wcId, data || {});
+    } catch (err) {}
+  });
+
+  // Analytics renderer notified it injected name/meta; refresh that window so meta CSP is captured.
+  ipcMain.on('analytics-injected', (event) => {
+    try {
+      const wc = event.sender; // webContents
+      const win = BrowserWindow.fromWebContents(wc);
+      if (win) observability.refreshWindow(win);
+    } catch (err) {}
+  });
+
+  // Receive logs from preloads wrapping ipcRenderer.invoke/send
+  ipcMain.on('ipc-monitor-preload', (event, payload) => {
+    try {
+      // Preload plumbing messages are not authoritative (they mirror traffic).
+      // Ignore these to avoid duplicate entries — prefer ipcMain.handle/on capture.
+      return;
+    } catch (err) {}
+  });
+
+  // Publish build-time fuse config (labelled) into the store.
+  const BUILD_FUSES = {
+    // example fuses; replace with real build-time declarations as needed
+    disableNodeIntegrationByDefault: true,
+    enforceContextIsolation: true,
+  };
+  observability.updateConfig({ fuses: BUILD_FUSES, fuses_label: 'build-time declared' });
+
+  // Demo ticker removed. (Was a throwaway visual test; deleted per request.)
 
   app.on('open-url', (event, deepLink) => {
     event.preventDefault();

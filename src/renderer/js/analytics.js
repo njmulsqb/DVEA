@@ -11,6 +11,11 @@ window.analyticsAPI.onName((_, name) => {
   // Render the name in the table. CSP (script-src *) blocks inline event
   // handlers, so <img onerror="..."> injected here will not execute.
   document.getElementById('participantName').innerHTML = name;
+
+  // Notify main that we've injected the name/meta so it can re-scan (meta may be injected after load)
+  try {
+    if (window.analyticsAPI && window.analyticsAPI.injected) window.analyticsAPI.injected();
+  } catch (err) {}
 });
 
 document.addEventListener('securitypolicyviolation', (e) => {
