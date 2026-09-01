@@ -47,7 +47,7 @@
               XSS: Overprivileged ContextBridge — accesses shell commands via preload
             </a>
             <a href="xss-rce-direct.html" class="vuln-sub-item">
-              XSS → RCE — payload eval'd in main process, full Node.js access
+              XSS → RCE — payload eval'd in main process, full Node.js access — cf. CVE-2020-16608
             </a>
           </div>
         </div>
@@ -80,7 +80,7 @@
         </a>
 
         <a href="openexternal.html" class="vuln-card">
-          <div class="vuln-card-title">openExternal Abuse</div>
+          <div class="vuln-card-title">openExternal Abuse — cf. CVE-2020-25019</div>
           <div class="vuln-card-desc">
             Unvalidated URLs passed to <code>shell.openExternal()</code> trigger arbitrary OS
             protocol handlers — browser, mail client, or any custom protocol registered on
@@ -89,6 +89,18 @@
           <div class="vuln-tags">
             <span class="vuln-tag">Protocol Handling</span>
             <span class="vuln-tag">shell API</span>
+          </div>
+        </a>
+
+        <a href="insecure-auto-update.html" class="vuln-card">
+          <div class="vuln-card-title">Insecure Auto-Update — cf. CVE-2024-39698</div>
+          <div class="vuln-card-desc">
+            Simulated auto-updater that downloads and executes updates from a configurable feed.
+            Demonstrates insecure feed transport and missing signature/integrity checks.
+          </div>
+          <div class="vuln-tags">
+            <span class="vuln-tag">Updater</span>
+            <span class="vuln-tag">HTTP/HTTPS</span>
           </div>
         </a>
 

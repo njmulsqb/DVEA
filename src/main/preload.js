@@ -10,6 +10,11 @@ contextBridge.exposeInMainWorld('api', {
   saveFile: (data) => ipcRenderer.invoke('save-file', data),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   openAnalytics: (name) => ipcRenderer.send('open-analytics', name),
+  startAutoUpdateServer: () => ipcRenderer.invoke('start-auto-update-server'),
+  stopAutoUpdateServer: () => ipcRenderer.invoke('stop-auto-update-server'),
+  checkForUpdate: (opts) => ipcRenderer.invoke('check-for-update', opts),
+  checkSentinel: () => ipcRenderer.invoke('check-sentinel'),
+  resetAutoUpdate: () => ipcRenderer.invoke('reset-auto-update'),
 });
 
 contextBridge.exposeInMainWorld('systemapi', {

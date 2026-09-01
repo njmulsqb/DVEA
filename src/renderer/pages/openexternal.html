@@ -8,7 +8,7 @@
   <body>
     <header class="page-header">
       <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
-      <h1>openExternal Abuse</h1>
+      <h1>openExternal Abuse — cf. CVE-2020-25019</h1>
       <p class="page-header-sub">Unvalidated URLs passed to shell.openExternal() trigger arbitrary OS protocol handlers</p>
     </header>
 
@@ -30,6 +30,12 @@
             </li>
             <li>Exploit OS-level protocol handler vulnerabilities.</li>
           </ul>
+          <p>
+            Real-world instance: CVE-2020-25019 (Jitsi Meet Electron) showed how unsafely passing
+            user-controllable URLs to <code>shell.openExternal</code> led to code execution. Positive
+            Security's "1-click RCE in Electron" research documents the same unsafe pattern across
+            many apps (Telegram, Nextcloud, VLC, Wireshark, Mumble, Bitcoin wallets).
+          </p>
           <b>Example URLs to try:</b>
           <pre><code>https://example.com
 mailto:attacker@example.com
@@ -42,6 +48,16 @@ file:///etc/passwd</code></pre>
           <strong>Fix:</strong> Validate against a strict protocol allowlist
           (<code>https:</code> only, or a named set of known-safe schemes) — never use a denylist,
           as it is easy to bypass with lesser-known schemes.
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>References</h2></div>
+        <div class="panel-body">
+          <ul>
+            <li><a href="https://nvd.nist.gov/vuln/detail/CVE-2020-25019" target="_blank">CVE-2020-25019 — NVD</a></li>
+            <li><a href="https://positive.security/blog/url-open-rce" target="_blank">Positive Security — "1-click RCE in Electron"</a></li>
+          </ul>
         </div>
       </section>
 

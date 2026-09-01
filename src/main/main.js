@@ -13,6 +13,10 @@ const fs = require('fs');
 const Window = require('../main/windows/Window');
 const { sandboxed, contextIsolated } = require('process');
 const observability = require('./observability');
+// Insecure auto-update demo (registers IPC handlers)
+try {
+  require('./insecure-auto-update');
+} catch (err) {}
 
 function main() {
   let mainWindow = new Window({
