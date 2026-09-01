@@ -8,7 +8,7 @@
   <body>
     <header class="page-header">
       <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
-      <h1>Insecure Auto-Update (CVE-2024-39698)</h1>
+      <h1>Insecure Auto-Update — cf. CVE-2024-39698</h1>
       <p class="page-header-sub">Simulated updater demonstrating insecure update feeds and missing signature verification.</p>
     </header>
 
@@ -45,7 +45,8 @@
           </p>
           <p>
             Grounding: related issues include CVE-2024-39698 (electron-updater Windows signature bypass) and
-            Doyensec's publisherName string-comparison bypass. This module demonstrates the general pattern.
+            Doyensec's publisherName string-comparison bypass. This module demonstrates the general pattern; it does
+            not reproduce that Windows-specific bug but is grounded in those real-world examples.
           </p>
 
           <div style="margin-top:1rem">
@@ -102,6 +103,15 @@
             <button id="check-sentinel">Check Sentinel File</button>
             <span id="sentinel-status" style="margin-left:1rem"></span>
           </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>References</h2></div>
+        <div class="panel-body">
+          <ul>
+            <li><a href="https://github.com/advisories/GHSA-9jxc-qjr9-vjxq" target="_blank">CVE-2024-39698 / GHSA-9jxc-qjr9-vjxq — GitHub Advisory</a></li>
+          </ul>
         </div>
       </section>
 

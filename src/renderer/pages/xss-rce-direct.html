@@ -8,7 +8,7 @@
   <body>
     <header class="page-header">
       <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
-      <h1>XSS → RCE (Direct)</h1>
+      <h1>XSS → RCE (Direct) — cf. CVE-2020-16608</h1>
       <p class="page-header-sub">Renderer input eval'd in the main process — full Node.js access without disabling sandbox</p>
     </header>
 
@@ -28,6 +28,11 @@
             passes it directly to <code>eval()</code> — no sandbox is disabled and no new window
             is created. The code executes in the privileged main process with full Node.js access.
           </p>
+          <p>
+            Real-world instance: CVE-2020-16608 described a markdown XSS payload that ultimately used
+            <code>require('electron').shell.openExternal</code> to reach code execution in an app with
+            Node integration — the same XSS-to-RCE via Node pattern demonstrated here.
+          </p>
           <b>Example payloads:</b>
           <pre><code>require('os').platform()</code></pre>
           <pre><code>require('child_process').execSync('whoami').toString()</code></pre>
@@ -38,6 +43,15 @@
           commands, exfiltrate environment variables. The checklist shows all renderer security
           features as enabled: they cannot protect against a vulnerable IPC handler that evaluates
           untrusted input.
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>References</h2></div>
+        <div class="panel-body">
+          <ul>
+            <li><a href="https://nvd.nist.gov/vuln/detail/CVE-2020-16608" target="_blank">CVE-2020-16608 — NVD</a></li>
+          </ul>
         </div>
       </section>
 
