@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Insecure Auto-Update (CVE-2024-39698)</title>
+    <link rel="stylesheet" href="../styles/style.css" />
+  </head>
+  <body>
+    <header class="page-header">
+      <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
+      <h1>Insecure Auto-Update (CVE-2024-39698)</h1>
+      <p class="page-header-sub">Simulated updater demonstrating insecure update feeds and missing signature verification.</p>
+    </header>
+
+    <div class="page-wrap">
+      <div class="checklist">
+        <span class="checklist-item fail">✗ Feed transport: HTTP allowed</span>
+        <span class="checklist-item fail">✗ Signature/integrity: optional</span>
+      </div>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Guide: What is happening?</h2></div>
+        <div class="panel-body">
+          <p>
+            This demo runs a bundled update-feed server locally and a vulnerable auto-updater in the main
+            process. In <strong>VULNERABLE</strong> mode the updater will fetch a manifest over HTTP with
+            no signature or integrity checks and then download and execute whatever payload the manifest
+            specifies. The attacker can serve a poisoned manifest and payload (no user interaction required).
+          </p>
+          <p>
+            In <strong>HARDENED</strong> mode the updater requires HTTPS and verifies a trusted HMAC signature
+            and payload hash; the poisoned manifest is rejected and nothing runs.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Attack Scenario</h2></div>
+        <div class="panel-body">
+          <p>
+            Real threat: an app that checks an HTTP update feed with no signature verification can be
+            MITM'd (public Wi‑Fi, DNS poisoning, compromised CDN). An attacker returns a manifest pointing
+            at their payload; the app downloads and runs it as a trusted update, enabling silent RCE across
+            users. The sentinel is a stand-in for arbitrary attacker code (reverse shell, credential exfiltration).
+          </p>
+          <p>
+            Grounding: related issues include CVE-2024-39698 (electron-updater Windows signature bypass) and
+            Doyensec's publisherName string-comparison bypass. This module demonstrates the general pattern.
+          </p>
+
+          <div style="margin-top:1rem">
+            <div><strong>Poisoned manifest (attacker):</strong></div>
+            <pre id="poisoned-manifest" class="artifact-pre"></pre>
+          </div>
+
+          <div style="margin-top:1rem">
+            <div><strong>Poisoned payload (attacker JS):</strong></div>
+            <pre id="poisoned-payload" class="artifact-pre"></pre>
+          </div>
+
+          <div style="margin-top:1rem">
+            <div><strong>Clean manifest (trusted):</strong></div>
+            <pre id="clean-manifest" class="artifact-pre"></pre>
+          </div>
+
+          <div style="margin-top:1rem">
+            <div><strong>Clean payload (trusted JS):</strong></div>
+            <pre id="clean-payload" class="artifact-pre"></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel demo-panel">
+        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-body">
+          <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+            <button id="start-server">Start Local Feed Server</button>
+            <button id="stop-server" disabled>Stop Server</button>
+            <button id="reset-server">Reset</button>
+            <label style="margin-left:1rem;">Mode:
+              <select id="mode">
+                <option value="vulnerable">VULNERABLE</option>
+                <option value="hardened">HARDENED</option>
+              </select>
+            </label>
+          </div>
+
+          <div style="margin-top:1rem">
+            <label>Feed URL:</label>
+            <input id="feed-url" style="width:80%" />
+          </div>
+
+          <div style="margin-top:1rem">
+            <button id="check-update">Check For Updates</button>
+          </div>
+
+          <div style="margin-top:1rem">
+            <pre id="log" style="height:220px;overflow:auto;background:#111;color:#eee;padding:1rem"></pre>
+          </div>
+
+          <div style="margin-top:1rem">
+            <button id="check-sentinel">Check Sentinel File</button>
+            <span id="sentinel-status" style="margin-left:1rem"></span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <script src="../js/insecure-auto-update.js"></script>
+  </body>
+</html>

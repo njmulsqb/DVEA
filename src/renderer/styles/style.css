@@ -235,6 +235,14 @@ code {
   font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
 }
 
+/* Artifact pre blocks for manifests/payloads: wrap long lines for readability */
+.artifact-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow: auto;
+}
+
 /* ── Table ───────────────────────────────────────────────────── */
 .table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
 .table th {
