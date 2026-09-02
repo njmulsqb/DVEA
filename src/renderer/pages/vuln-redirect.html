@@ -28,6 +28,10 @@
             You can also use the button below to simulate the redirect without crafting a deep link.
           </p>
         </div>
+        <div class="callout-note xss-explanation" style="margin-top:1rem; background:#eef2ff; border-color:#dbeafe; color:#1e293b;">
+          <strong>Note on the deep link:</strong>
+          <p style="margin:0.4rem 0 0 0;">The <code>dvea://</code> scheme must be registered with the OS for deep links to open the app. Packaged installs register this reliably; when running from source (e.g., <code>npm start</code>) on Linux the scheme is typically not registered, so clicking a <code>dvea://</code> link will fall through to the system default. In development, use the "Simulate Redirect" button — it exercises the same unvalidated-redirect code path as a real deep link. To demo real <code>dvea://</code> links, install a packaged build so the OS routes the scheme to DVEA.</p>
+        </div>
         <div class="xss-explanation">
           <strong>Impact:</strong> An attacker who convinces a user to click a crafted
           <code>dvea://</code> link (e.g., in an email or on a web page) can load any URL inside
