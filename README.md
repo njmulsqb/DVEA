@@ -35,6 +35,21 @@ npm install
 npm run start
 ```
 
+**LINUX USERS ONLY — Electron sandbox helper permissions**
+
+On many Linux systems a fresh `npm install` does not set the setuid bit on Electron's sandbox helper. Before running the app on Linux, run the following commands from the project root:
+
+```sh
+sudo chown root:root node_modules/electron/dist/chrome-sandbox
+sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
+```
+
+This sets the owner to `root` and the setuid bit required by Electron's sandbox helper. macOS and Windows do not require this step.
+
+**Tested Platforms & Node**
+
+DVEA is built and tested on Ubuntu (Linux). Node 20+ is required; tested on Node v22.21.0. macOS may work; Windows is untested.
+
 ---
 
 ## Documentation

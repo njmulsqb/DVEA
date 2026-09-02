@@ -192,4 +192,8 @@ ipcMain.handle('reset-auto-update', async () => {
 });
 
 // Bridge to preload: expose keys
-module.exports = {};
+module.exports = {
+  // Expose server control for clean shutdown from main
+  startServer,
+  stopServer,
+};

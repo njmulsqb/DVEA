@@ -6,6 +6,9 @@
   "repository": "https://github.com/njmulsqb/dvea",
   "author": "Najam Ul Saqib",
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "electron-forge start",
     "publish": "electron-forge publish",
