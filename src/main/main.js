@@ -153,7 +153,7 @@ function main() {
     analyticsWindow.webContents.once('did-finish-load', () => {
       analyticsWindow.webContents.send('analytics-set-name', name);
     });
-    analyticsWindow.webContents.openDevTools();
+   // analyticsWindow.webContents.openDevTools();
     analyticsWindow.once('ready-to-show', () => analyticsWindow.show());
   });
 
