@@ -14,13 +14,49 @@ const Window = require('../main/windows/Window');
 const { sandboxed, contextIsolated } = require('process');
 const observability = require('./observability');
 // Insecure auto-update demo (registers IPC handlers)
+let insecureAutoUpdate = null;
 try {
-  require('./insecure-auto-update');
+  insecureAutoUpdate = require('./insecure-auto-update');
 } catch (err) {}
 
 function main() {
   let mainWindow = new Window({
     file: path.join('src/renderer/pages', 'index.html'),
+  });
+
+  // When the main window closes, tear down other app windows and demo servers, then quit.
+  mainWindow.on('closed', async () => {
+    try {
+      // Close observability panel if present
+      try {
+        if (panelWindow && !panelWindow.isDestroyed && !panelWindow.isDestroyed()) {
+          panelWindow.close();
+        }
+      } catch (err) {}
+
+      // Close any remaining app windows
+      try {
+        const { BrowserWindow } = require('electron');
+        const all = BrowserWindow.getAllWindows();
+        for (const w of all) {
+          try {
+            if (w && !w.isDestroyed && !w.isDestroyed()) w.close();
+          } catch (err) {}
+        }
+      } catch (err) {}
+
+      // Stop local demo servers / child processes if running
+      try {
+        if (insecureAutoUpdate && insecureAutoUpdate.stopServer) {
+          await insecureAutoUpdate.stopServer();
+        }
+      } catch (err) {}
+
+      // Quit the app entirely
+      try {
+        app.quit();
+      } catch (err) {}
+    } catch (err) {}
   });
 
   // Wrap ipcMain.handle and ipcMain.on at startup so invoke/handle and on/send are logged.
@@ -286,6 +322,16 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+// Ensure demo servers and child processes are stopped when the app is quitting
+app.on('before-quit', async (event) => {
+  try {
+    if (insecureAutoUpdate && insecureAutoUpdate.stopServer) {
+      try {
+        await insecureAutoUpdate.stopServer();
+      } catch (err) {}
+    }
+  } catch (err) {}
 });
 try {
   require('electron-reloader')(module);
