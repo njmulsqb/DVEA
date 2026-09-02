@@ -28,9 +28,9 @@
             <code>contextIsolation</code> is true. XSS in the renderer can call
             <code>window.systemAPI.runCommand()</code> to execute arbitrary shell commands.
           </p>
-          <b>Example payload:</b>
-          <pre><code>&lt;img src=x onerror="window.systemAPI.runCommand('open -a Calculator')"&gt;</code></pre>
-          <span class="text-small text-gray">Runs Calculator on macOS. Substitute a command appropriate for your OS.</span>
+          <b>Example payload (cross-platform):</b>
+          <pre><code>&lt;img src=x onerror="window.systemAPI.openCalculator()"&gt;</code></pre>
+          <span class="text-small text-gray">Opens Calculator on macOS and common Ubuntu desktops. On Linux this attempts `gnome-calculator`, falls back to `xcalc`, then `xdg-open .`, and finally creates <code>/tmp/dvea_rce_sentinel</code> to make the effect observable.</span>
         </div>
         <div class="xss-explanation">
           <strong>Impact:</strong> Full system compromise — read/write files, execute OS commands,
