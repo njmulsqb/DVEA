@@ -2,69 +2,99 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>XSS: Overprivileged ContextBridge</title>
+    <title>Challenge 2 — Bridged</title>
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
   <body>
     <header class="page-header">
       <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
-      <h1>XSS: Overprivileged ContextBridge</h1>
-      <p class="page-header-sub">XSS with direct access to shell commands via a preload-exposed API</p>
+      <h1>Challenge 2 — Bridged</h1>
+      <p class="page-header-sub">Correct core config, one over-eager bridge, full compromise.</p>
     </header>
 
     <div class="page-wrap">
       <div class="checklist">
-        <span class="checklist-item pass">✓ NodeIntegration: false</span>
-        <span class="checklist-item pass">✓ ContextIsolation: true</span>
-        <span class="checklist-item fail">✗ Sandbox: false</span>
+        <span id="badge-sandbox" class="checklist-item">Sandbox: checking…</span>
+        <span id="badge-isolation" class="checklist-item">ContextIsolation: checking…</span>
+        <span id="badge-nodeintegration" class="checklist-item">NodeIntegration: checking…</span>
+        <span id="badge-preload" class="checklist-item">Privileged bridge: checking…</span>
       </div>
 
       <section class="panel">
         <div class="panel-header"><h2>Guide: What is happening?</h2></div>
         <div class="panel-body">
           <p>
-            The renderer has access to privileged APIs via a custom preload script that exposes
-            <code>window.systemAPI</code>, even though <code>nodeIntegration</code> is false and
-            <code>contextIsolation</code> is true. XSS in the renderer can call
-            <code>window.systemAPI.runCommand()</code> to execute arbitrary shell commands.
+            You configured the hard part right — sandbox, isolation, no Node integration. But
+            this window's preload exposes one privileged function to the page, and XSS climbs
+            straight through it to the OS. Correct core config, one over-eager bridge, full
+            compromise.
           </p>
-          <b>Example payloads (copy/paste into the input below):</b>
-          <div class="example-payloads">
-            <div>
-              <strong>macOS (opens Calculator):</strong>
-              <pre><code>&lt;img src=x onerror="window.systemAPI.runCommand('open -a Calculator')"&gt;</code></pre>
-            </div>
-            <div>
-              <strong>Linux (Ubuntu - sentinel):</strong>
-              <pre><code>&lt;img src=x onerror="window.systemAPI.runCommand('touch /tmp/dvea_rce_sentinel')"&gt;</code></pre>
-              <span class="text-small text-gray">On Ubuntu desktop you can also replace the command with <code>gnome-calculator</code> to open the Calculator. The sentinel ensures an observable effect if no calculator is installed.</span>
-            </div>
-            <div>
-              <strong>Alternative Linux (attempt GUI calculator):</strong>
-              <pre><code>&lt;img src=x onerror="window.systemAPI.runCommand('gnome-calculator || xcalc || xdg-open .')"&gt;</code></pre>
-            </div>
-          </div>
-          <p class="text-small text-gray">Alternatively you can call <code>window.systemAPI.openCalculator()</code> which uses a platform-aware helper exposed by the preload script.</p>
+          <p>
+            The injection point below is the exact same sink as Challenge 1: whatever you
+            submit is rendered straight into the page via <code>innerHTML</code>, unsanitized.
+            The difference isn't the injection — it's what this window's preload put within
+            reach of it.
+          </p>
         </div>
         <div class="xss-explanation">
-          <strong>Impact:</strong> Full system compromise — read/write files, execute OS commands,
-          exfiltrate data. This demonstrates why least privilege is critical when designing
-          contextBridge APIs, even when Electron's core security features are enabled.
+          <strong>Objective:</strong> Using only the injection point below, discover what this
+          window's preload exposed on <code>window</code>, call it successfully, then use it to
+          reach the operating system and retrieve proof. No payloads are given here; craft your
+          own and watch the attacker view and task list respond.
         </div>
       </section>
 
       <section class="panel demo-panel">
-        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-header"><h2>Demo: Injection Point</h2></div>
         <div class="panel-body">
           <form id="xssForm2">
             <label for="xssInput2">Message:</label>
-            <input type="text" id="xssInput2" placeholder="Enter XSS payload here" />
+            <input type="text" id="xssInput2" placeholder="Type or paste your payload here" />
             <button type="submit">Inject</button>
           </form>
           <div id="xssOutput2" class="xss-output"></div>
         </div>
       </section>
 
+      <section class="panel">
+        <div class="panel-header"><h2>Attacker view</h2></div>
+        <div class="panel-body">
+          <p class="text-small text-gray">
+            What an attacker watching this page would see arrive. Your injected script is
+            what has to put something here — nothing else writes to this panel.
+          </p>
+          <ul id="attacker-log" class="xss-output"></ul>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Tasks <span id="flag-progress" class="text-small text-gray"></span></h2></div>
+        <div class="panel-body">
+          <ul class="task-list">
+            <li id="task-1" class="task-item">
+              <span id="task-1-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 1 — Discover the bridge.</strong>
+              Use XSS to enumerate what this window's preload exposed on <code>window</code>
+              and identify the privileged API.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+            <li id="task-2" class="task-item">
+              <span id="task-2-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 2 — Call the privileged API.</strong>
+              Use XSS to invoke the exposed function and get a real response back from the
+              main process.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+            <li id="task-3" class="task-item">
+              <span id="task-3-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 3 — Reach the OS through it.</strong>
+              Use the bridge to run a command that retrieves proof of real operating-system
+              access.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+          </ul>
+        </div>
+      </section>
     </div>
 
     <script src="../js/xss-system-api.js"></script>

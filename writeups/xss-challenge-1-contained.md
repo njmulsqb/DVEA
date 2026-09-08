@@ -251,13 +251,17 @@ runs, and that difference is entirely `webPreferences`:
   filesystem, or a shell — not because something is actively blocking an attempt, but because
   the capability was simply never wired in. Task 4's `require(...)` doesn't get "denied"; it
   fails because `require` doesn't exist here.
-- **Challenge 2 (Bridged):** the same three flags are still correctly set
-  (`src/renderer/pages/xss-system-api.html`'s badges show `NodeIntegration: false`,
-  `ContextIsolation: true`), but its preload
-  (`src/main/preload-systemapi.js`) calls `contextBridge.exposeInMainWorld('systemAPI', { runCommand: (cmd) => exec(cmd) })`.
-  That one exposed function is a direct line from any script running in that page to
-  `child_process.exec` in the main process — the exact same injection technique as this
-  challenge, but now there's something on the other side of the bridge worth reaching.
+- **Challenge 2 (Bridged):** the exact same hardened core as here — `sandbox: true`,
+  `contextIsolation: true`, `nodeIntegration: false` (`openXSSBridgedWindow()` in
+  `src/main/main.js`) — but its preload (`src/main/preload-xss-bridged.js`) exposes one
+  privileged function: `contextBridge.exposeInMainWorld('systemAPI', { runCommand: (cmd) =>
+  ipcRenderer.invoke('bridge-run-command', cmd) })`. That call has to relay through IPC to a
+  handler in the main process rather than calling `child_process.exec` directly inside the
+  preload, precisely because `sandbox: true` restricts what a preload can `require` — but the
+  relay changes nothing about the outcome: any script running on that page can call
+  `window.systemAPI.runCommand()` and get a real shell command executed with the main
+  process's privileges. The exact same injection technique as this challenge; now there's
+  something on the other side of the bridge worth reaching.
 - **Challenge 3 (Owned):** `ipcMain.handle('xss-rce-direct', (event, code) => eval(code))` in
   `src/main/main.js` means the main process itself will `eval()` whatever string a renderer
   sends it, over an IPC channel the default preload exposes as

@@ -9,10 +9,16 @@ if (process.env.NODE_ENV === 'development') {
 }
 const { shell } = require('electron');
 const fs = require('fs');
+const { exec } = require('child_process');
 
 const Window = require('../main/windows/Window');
 const { sandboxed, contextIsolated } = require('process');
 const observability = require('./observability');
+// Challenge 2 — Bridged: fixed secret path/flags the bridge's real command execution proves
+// access to (see openXSSBridgedWindow / bridge-run-command below).
+const BRIDGE_SECRET_PATH = '/tmp/dvea-bridge-secret.txt';
+const BRIDGE_OS_FLAG = 'DVEA{bridge_to_os_pivot}';
+const BRIDGE_CALL_FLAG = 'DVEA{bridge_command_executed}';
 // Insecure auto-update demo (registers IPC handlers)
 let insecureAutoUpdate = null;
 try {
@@ -244,16 +250,66 @@ function main() {
     }
   });
 
-  function openSystemXSSWindow() {
-    new Window({
+  // Challenge 2 — Bridged: the SAME hardened core as Challenge 1 (sandbox, contextIsolation,
+  // no nodeIntegration) — the only deviation is a preload that exposes one privileged
+  // function via contextBridge. That single bridge is the entire vulnerability; everything
+  // else about this window's config is correct.
+  function openXSSBridgedWindow() {
+    const win = new Window({
       file: path.join('src/renderer/pages', 'xss-system-api.html'),
       webPreferences: {
-        preload: path.join(__dirname, 'preload-systemapi.js'),
-        sandbox: false,
+        preload: path.join(__dirname, 'preload-xss-bridged.js'),
+        sandbox: true,
+        contextIsolation: true,
+        nodeIntegration: false,
       },
     });
+
+    // Plant a genuine OS-level secret this challenge's Task 3 must retrieve via a real shell
+    // command run through the bridge — proof the bridge actually reaches the OS, not a
+    // canned response. (Fixed /tmp path: DVEA only ships a Linux .deb, matching the
+    // insecure-auto-update module's own /tmp sentinel-file convention.)
+    try {
+      fs.writeFileSync(BRIDGE_SECRET_PATH, BRIDGE_OS_FLAG + '\n');
+    } catch (err) {}
+
+    // Same config push as Challenge 1: read this window's real effective webPreferences from
+    // the main process (getLastWebPreferences() — the same data the Config Inspector shows)
+    // and write it into the page via executeJavaScript. One-way data write, not a
+    // contextBridge exposure — doesn't touch the privileged-bridge badge below.
+    win.webContents.on('did-finish-load', () => {
+      try {
+        const entry = observability.config.windows && observability.config.windows[win.id];
+        const effective = (entry && entry.effective) || {};
+        const cfg = {
+          sandbox: !!effective.sandbox,
+          contextIsolation: !!effective.contextIsolation,
+          nodeIntegration: !!effective.nodeIntegration,
+        };
+        win.webContents.executeJavaScript(
+          `window.__dveaWindowConfig = ${JSON.stringify(cfg)}; window.dispatchEvent(new Event('dvea-config-ready'));`
+        );
+      } catch (err) {}
+    });
   }
-  ipcMain.on('open-system-xss', openSystemXSSWindow);
+  ipcMain.on('open-xss-bridged', openXSSBridgedWindow);
+
+  // The over-eager bridge's main-process side: runs whatever string the renderer sends,
+  // completely unvalidated — the deliberate vulnerability this challenge demonstrates
+  // (cf. CVE-2020-25019's shape: a contextBridge-exposed command runner reachable from XSS).
+  // Every successful call echoes BRIDGE_CALL_FLAG so a script can prove the round trip
+  // actually happened, not just that it attempted one.
+  ipcMain.handle('bridge-run-command', (event, cmd) => {
+    return new Promise((resolve) => {
+      exec(cmd, { timeout: 5000 }, (err, stdout, stderr) => {
+        if (err) {
+          resolve('Error: ' + err.message);
+        } else {
+          resolve(BRIDGE_CALL_FLAG + '\n' + (stdout || stderr || '(no output)'));
+        }
+      });
+    });
+  });
 
   // Challenge 1 — Contained: a genuinely hardened window (sandbox, contextIsolation,
   // no nodeIntegration, no privileged preload bridge) so the renderer really is walled

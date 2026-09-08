@@ -6,8 +6,8 @@ contextBridge.exposeInMainWorld('ipc', {
 });
 
 contextBridge.exposeInMainWorld('api', {
-  openSystemXSS: () => ipcRenderer.send('open-system-xss'),
   openXSSContained: () => ipcRenderer.send('open-xss-contained'),
+  openXSSBridged: () => ipcRenderer.send('open-xss-bridged'),
   openXSSRCE: () => ipcRenderer.send('open-xss-rce-direct'),
   saveFile: (data) => ipcRenderer.invoke('save-file', data),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
