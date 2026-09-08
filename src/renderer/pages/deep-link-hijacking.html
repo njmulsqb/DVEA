@@ -98,13 +98,13 @@
               <strong>Trusting the URL's contents.</strong> Passing a <code>redirect</code>/<code>url</code>
               parameter straight to <code>loadURL()</code> with no allowlist — letting an
               attacker load arbitrary content in the trusted window (see
-              <a href="vuln-redirect-route1.html?from=parent">Deep Link → Untrusted Navigation</a>).
+              <a href="deep-link-untrusted-navigation.html?from=parent">Deep Link → Untrusted Navigation</a>).
             </li>
             <li>
               <strong>Trusting path parameters.</strong> Handing a <code>path</code> parameter to
               the filesystem with no validation — enabling path traversal and arbitrary file
               access (see
-              <a href="vuln-redirect-route2.html?from=parent">Deep Link → Path Traversal</a>).
+              <a href="deep-link-path-traversal.html?from=parent">Deep Link → Path Traversal</a>).
             </li>
             <li>
               <strong>Routing deep links to privileged actions.</strong> Wiring
@@ -271,8 +271,8 @@ grep -rn "dvea://" .</code></pre>
             different deep-link abuse patterns. Click a route to open its page.</p>
 
           <div class="vuln-sub-list">
-            <a href="vuln-redirect-route1.html?from=parent" class="vuln-sub-item">Deep Link → Untrusted Navigation</a>
-            <a href="vuln-redirect-route2.html?from=parent" class="vuln-sub-item">Deep Link → Path Traversal</a>
+            <a href="deep-link-untrusted-navigation.html?from=parent" class="vuln-sub-item">Deep Link → Untrusted Navigation</a>
+            <a href="deep-link-path-traversal.html?from=parent" class="vuln-sub-item">Deep Link → Path Traversal</a>
           </div>
         </div>
       </section>

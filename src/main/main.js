@@ -160,7 +160,7 @@ function main() {
       const openPath = parsed.searchParams.get('path');
       if (parsed.host === 'open' && openPath && mainWindow) {
         try {
-          await mainWindow.loadFile(path.join('src/renderer/pages', 'vuln-redirect-route2.html'));
+          await mainWindow.loadFile(path.join('src/renderer/pages', 'deep-link-path-traversal.html'));
           try {
             const content = await fs.promises.readFile(openPath, 'utf8');
             mainWindow.webContents.send('deeplink-open', { path: openPath, content });

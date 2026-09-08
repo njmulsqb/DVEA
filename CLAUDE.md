@@ -59,7 +59,7 @@ system-XSS window is actually created via `Window` — see below) rely on the gl
 ### Preload map
 | Preload | Exposed globals | Used by |
 |---|---|---|
-| `preload.js` (default) | `window.api` (open-external, save-file, deep-link simulation, analytics launch, auto-update controls, captured-credentials), `window.ipc` (onRedirect, onCaptured), `window.systemapi` (executeCode) | main window, fake-login window, route1/route2 pages, savefile, openexternal, insecure-auto-update, xss-rce-direct |
+| `preload.js` (default) | `window.api` (open-external, save-file, deep-link simulation, analytics launch, auto-update controls, captured-credentials), `window.ipc` (onRedirect, onCaptured), `window.systemapi` (executeCode) | main window, fake-login window, the two deep-link route pages (`deep-link-untrusted-navigation.html`, `deep-link-path-traversal.html`), savefile, openexternal, insecure-auto-update, xss-rce-direct |
 | `preload-panel.js` | `window.monitor.onUpdate(cb)` — receive-only | observability panel window only |
 | `preload-analytics.js` | `window.analyticsAPI` (onName, getToken, injected) — **no sender validation on `getToken`** | analytics.html, and the attacker page it can be redirected to |
 | `preload-systemapi.js` | `window.systemAPI.runCommand` / `openCalculator` — direct `child_process.exec` | xss-system-api.html (Overprivileged ContextBridge demo) |
@@ -74,23 +74,23 @@ calls to an `ipc-monitor-preload` channel — see §2 for why this is currently 
   `preload-systemapi.js`), Stored HTML Injection's target (`openAnalytics` → new `BrowserWindow`
   with `preload-analytics.js`), and the Deep Link Hijacking demo's fake-login popup.
 - **Module → child route (parent/child pattern)**: Deep Link Hijacking is the exemplar —
-  `vuln-redirect.html` is a parent overview page with a "Routes" panel linking to
-  `vuln-redirect-route1.html` ("Deep Link → Untrusted Navigation") and `vuln-redirect-route2.html`
+  `deep-link-hijacking.html` is a parent overview page with a "Routes" panel linking to
+  `deep-link-untrusted-navigation.html` ("Deep Link → Untrusted Navigation") and `deep-link-path-traversal.html`
   ("Deep Link → Path Traversal"). Each route is its own file with its own demo, not a tab/section
-  of one page. On the hub, the group's card title itself (`<a class="vuln-card-title" href="vuln-redirect.html">`)
+  of one page. On the hub, the group's card title itself (`<a class="vuln-card-title" href="deep-link-hijacking.html">`)
   is a real link to the parent overview page, separate from the nested route links below it — it
   used to be a plain, non-clickable `<div>`, so clicking the card title did nothing; this was fixed
   (2026-09-08) alongside dropping the "Route 1"/"Route 2" numbering in favor of the app's
   `X → Y` naming convention (e.g. "XSS → RCE") used consistently elsewhere.
 - **Back link / breadcrumb**: most module pages hardcode `<a href="index.html" class="page-header-back">← All Vulnerabilities</a>`.
   Route pages instead compute the back link at runtime from a `?from=` query param
-  (`?from=index` → back to hub, `?from=parent` or absent → back to `vuln-redirect.html`), so the
+  (`?from=index` → back to hub, `?from=parent` or absent → back to `deep-link-hijacking.html`), so the
   same route page can be reached directly from the hub *or* from its parent overview and still
   show the correct "where did I come from" link. `index.html` links routes with `?from=index`;
-  `vuln-redirect.html`'s own Routes panel links them with `?from=parent`.
-- Demos that need a second, separate top-level window (fake-login, deep-link route1's popup,
-  the analytics dashboard, the system-XSS window) always go through IPC to main, which creates a
-  real `BrowserWindow`/`Window` — there's no in-renderer window faking.
+  `deep-link-hijacking.html`'s own Routes panel links them with `?from=parent`.
+- Demos that need a second, separate top-level window (fake-login, the Untrusted Navigation
+  route's popup, the analytics dashboard, the system-XSS window) always go through IPC to main,
+  which creates a real `BrowserWindow`/`Window` — there's no in-renderer window faking.
 
 ---
 
@@ -182,8 +182,8 @@ see the note at the end of this section.
 
 | Module | Hub entry | Main-process code | Renderer page(s)/route(s) | What it demonstrates |
 |---|---|---|---|---|
-| Deep Link Hijacking — Deep Link → Untrusted Navigation | grouped card title → parent (`vuln-redirect.html`) → "Deep Link → Untrusted Navigation" route link | `handleDeepLink()` in `main.js` (real `dvea://navigate?url=`), plus `simulate-deeplink` / `simulate-deeplink-window` IPC handlers for in-app simulation | `vuln-redirect.html` (parent) → `vuln-redirect-route1.html`; demo popup is `fake-login.html` | Main process navigates the trusted window (or a new window) straight to an attacker URL, no allowlist. Fake login popup harvests credentials via `captured-credentials` IPC, forwarded to the parent page's "attacker view". |
-| Deep Link Hijacking — Deep Link → Path Traversal | grouped card title → parent (`vuln-redirect.html`) → "Deep Link → Path Traversal" route link | `handleDeepLink()`'s `dvea://open?path=` branch (real), `simulate-deeplink-open` IPC handler (demo) | `vuln-redirect-route2.html` | Deep link supplies an arbitrary file path; main reads it with `fs.promises.readFile` and no path validation. Bundled `secret.txt` (`FAKE_SECRET=flag{dvea_demo_secret}`) is the demo target. |
+| Deep Link Hijacking — Deep Link → Untrusted Navigation | grouped card title → parent (`deep-link-hijacking.html`) → "Deep Link → Untrusted Navigation" route link | `handleDeepLink()` in `main.js` (real `dvea://navigate?url=`), plus `simulate-deeplink` / `simulate-deeplink-window` IPC handlers for in-app simulation | `deep-link-hijacking.html` (parent) → `deep-link-untrusted-navigation.html`; demo popup is `fake-login.html` | Main process navigates the trusted window (or a new window) straight to an attacker URL, no allowlist. Fake login popup harvests credentials via `captured-credentials` IPC, forwarded to the parent page's "attacker view". |
+| Deep Link Hijacking — Deep Link → Path Traversal | grouped card title → parent (`deep-link-hijacking.html`) → "Deep Link → Path Traversal" route link | `handleDeepLink()`'s `dvea://open?path=` branch (real), `simulate-deeplink-open` IPC handler (demo) | `deep-link-path-traversal.html` | Deep link supplies an arbitrary file path; main reads it with `fs.promises.readFile` and no path validation. Bundled `secret.txt` (`FAKE_SECRET=flag{dvea_demo_secret}`) is the demo target. |
 | XSS: No Privileged APIs | Renderer XSS group | n/a (fully client-side) | `xss-no-priv.html` / `xss-no-priv.js` | `innerHTML` injection with every Electron hardening flag on — impact capped at browser-equivalent renderer XSS. |
 | XSS: Overprivileged ContextBridge | Renderer XSS group (JS-triggered, opens new window) | `openSystemXSSWindow()` / `ipcMain.on('open-system-xss', ...)` in `main.js`; handler code is `preload-systemapi.js`'s `child_process.exec` | `xss-system-api.html` / `xss-system-api.js`, window created with `sandbox: false` | Same `innerHTML` XSS pattern, but the preload exposes `window.systemAPI.runCommand` — XSS escalates directly to arbitrary shell command execution despite `contextIsolation: true`. |
 | XSS → RCE (Direct) — cf. CVE-2020-16608 | Renderer XSS group | `ipcMain.handle('xss-rce-direct', (event, code) => eval(code))` in `main.js` | `xss-rce-direct.html` / `xss-rce-direct.js` | Renderer-supplied string is `eval`'d **in the main process** with no sandbox disabled anywhere — full Node access via a vulnerable IPC handler alone. |
@@ -299,9 +299,6 @@ exists on other modules.
   Insecure Auto-Update module register their `ipcMain` handlers before the observability wrap is
   installed, so those two modules produce **zero** entries in the IPC Monitor no matter what you
   do in the demo. This is the single most important thing to know before demoing the panels live.
-- `vuln-redirect.html` has duplicate/mismatched closing tags (an extra `</div>` and `</section>`
-  around lines 68–71) left over from the parent/child refactor. Browsers silently tolerate stray
-  closing tags so nothing visibly breaks, but the markup should be cleaned up.
 - `src/main/datastore/DataStore.js` is dead code — not `require()`'d anywhere in the app. Its
   constructor also calls `this.clear()` unconditionally, which would silently wipe the entire
   store on every instantiation if it's ever wired in without noticing that line.
