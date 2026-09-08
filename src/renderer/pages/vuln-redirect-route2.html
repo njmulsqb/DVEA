@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Route 2 — Path Traversal (Arbitrary File Read)</title>
+    <link rel="stylesheet" href="../styles/style.css" />
+  </head>
+  <body>
+    <header class="page-header">
+      <a href="vuln-redirect.html" class="page-header-back">← Deep Link Hijacking</a>
+      <h1>Route 2 — Path Traversal</h1>
+      <p class="page-header-sub">Deep link reads an arbitrary file path supplied by the attacker.</p>
+    </header>
+
+    <div class="page-wrap">
+      <section class="panel">
+        <div class="panel-header"><h2>Route: Arbitrary File Read</h2></div>
+        <div class="panel-body">
+          <p>Some apps accept deep links that open files. If the main process reads the
+          supplied path with no validation, an attacker can craft a deep link that reads
+          sensitive host files.</p>
+          <p><strong>Objective:</strong> Read a file outside the app's intended directory via a crafted deep link.</p>
+        </div>
+      </section>
+
+      <section class="panel demo-panel">
+        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-body">
+          <p>Enter a file path and click "Simulate Deep Link". The demo invokes the same
+          vulnerable main-process file-read path and displays the returned contents.</p>
+
+          <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
+            <input id="path" type="text" style="flex:1;" placeholder="e.g. src/renderer/pages/secret.txt or /etc/passwd"/>
+            <button id="simulate-open">Simulate Deep Link</button>
+          </div>
+
+          <p class="text-small text-gray" style="margin-top:0.6rem;">Use the bundled <code>src/renderer/pages/secret.txt</code> to demonstrate traversal reliably.</p>
+
+          <div style="margin-top:1rem;">
+            <h4>File contents / result</h4>
+            <div id="file-output" style="white-space:pre-wrap; background:#f8fafc; padding:0.6rem; border-radius:6px; border:1px dashed #e2e8f0; min-height:6rem; font-family:monospace;
+            "></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <script src="../js/vuln-openfile.js"></script>
+  </body>
+</html>

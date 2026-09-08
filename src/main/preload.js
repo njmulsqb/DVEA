@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('api', {
   simulateDeepLink: (target) => ipcRenderer.invoke('simulate-deeplink', target),
   simulateDeepLinkWindow: (target) => ipcRenderer.invoke('simulate-deeplink-window', target),
   sendCapturedCredentials: (data) => ipcRenderer.send('captured-credentials', data),
+  simulateDeepLinkOpen: (path) => ipcRenderer.invoke('simulate-deeplink-open', path),
+  onDeepLinkOpen: (cb) => ipcRenderer.on('deeplink-open', cb),
 });
 
 contextBridge.exposeInMainWorld('systemapi', {

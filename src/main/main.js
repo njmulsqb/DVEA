@@ -142,19 +142,35 @@ function main() {
     if (deepLink) handleDeepLink(deepLink);
   });
 
-  function handleDeepLink(url) {
+  async function handleDeepLink(url) {
     try {
       const parsed = new URL(url);
-      // Route param name: use `url` to reflect navigation intent (dvea://navigate?url=...)
+      // Route: navigate window to a URL (dvea://navigate?url=...)
       const target = parsed.searchParams.get('url');
       if (target && mainWindow) {
-        // Vulnerable behavior: main process directly loads attacker-controlled URL
-        // into the trusted app window with no allowlist or validation.
         try {
           mainWindow.loadURL(target);
         } catch (err) {
           console.error('Failed to navigate to deep link target:', err);
         }
+        return;
+      }
+
+      // Route: open/read a file (dvea://open?path=...)
+      const openPath = parsed.searchParams.get('path');
+      if (parsed.host === 'open' && openPath && mainWindow) {
+        try {
+          await mainWindow.loadFile(path.join('src/renderer/pages', 'vuln-redirect-route2.html'));
+          try {
+            const content = await fs.promises.readFile(openPath, 'utf8');
+            mainWindow.webContents.send('deeplink-open', { path: openPath, content });
+          } catch (err) {
+            mainWindow.webContents.send('deeplink-open', { path: openPath, error: 'Read failed: ' + err.message });
+          }
+        } catch (err) {
+          console.error('Failed to load route2 page for deep link open:', err);
+        }
+        return;
       }
     } catch (err) {
       console.error('Invalid deep link:', err);
@@ -195,6 +211,17 @@ function main() {
       });
     } catch (err) {
       console.error('simulate-deeplink-window failed:', err);
+    }
+  });
+
+  // Simulate deep link that reads a file path (vulnerable: no validation)
+  ipcMain.handle('simulate-deeplink-open', async (event, requestedPath) => {
+    try {
+      const p = requestedPath;
+      const content = await fs.promises.readFile(p, 'utf8');
+      return { content };
+    } catch (err) {
+      return { error: 'Read failed: ' + err.message };
     }
   });
 
