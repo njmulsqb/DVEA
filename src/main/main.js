@@ -177,10 +177,11 @@ function main() {
     try {
       if (!target) return;
       const win = new BrowserWindow({
-        width: 420,
-        height: 520,
+        width: 480,
+        height: 640,
         show: false,
-        resizable: false,
+        resizable: true,
+        maximizable: true,
         title: 'DVEA',
         webPreferences: {
           preload: path.join(__dirname, 'preload.js'),
