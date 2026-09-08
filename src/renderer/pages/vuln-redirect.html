@@ -43,32 +43,33 @@
       </section>
 
       <section class="panel">
-            <div class="panel-header"><h2>Routes</h2></div>
-            <div class="panel-body">
-              <p class="text-small text-gray">This module contains multiple routes demonstrating
-                different deep-link abuse patterns. Click a route to open its page.</p>
+        <div class="panel-header"><h2>Routes</h2></div>
+        <div class="panel-body">
+          <p class="text-small text-gray">This module contains multiple routes demonstrating
+            different deep-link abuse patterns. Click a route to open its page.</p>
 
-              <div class="vuln-sub-list">
-                <a href="vuln-redirect-route1.html?from=parent" class="vuln-sub-item">Deep Link → Untrusted Navigation</a>
-                <a href="vuln-redirect-route2.html?from=parent" class="vuln-sub-item">Deep Link → Path Traversal</a>
-              </div>
-
-              <details style="margin-top:1rem;">
-                <summary><strong>Note on the deep link / OS registration</strong></summary>
-                <p>The <code>dvea://</code> scheme must be registered with the OS for deep links
-                to open the app. Packaged installs register this reliably; when running from source
-                (e.g., <code>npm start</code>) on Linux the scheme is typically not registered,
-                so clicking a <code>dvea://</code> link will fall through to the system default.
-                In development, use the route demos' "Simulate Deep Link" button — they exercise the same
-                vulnerable navigation code path as a real deep link. To demo real
-                <code>dvea://</code> links, install a packaged build so the OS routes the scheme
-                to DVEA.</p>
-              </details>
-            </div>
-          </section>
+          <div class="vuln-sub-list">
+            <a href="vuln-redirect-route1.html?from=parent" class="vuln-sub-item">Deep Link → Untrusted Navigation</a>
+            <a href="vuln-redirect-route2.html?from=parent" class="vuln-sub-item">Deep Link → Path Traversal</a>
+          </div>
         </div>
       </section>
 
+      <section class="panel">
+        <div class="panel-body">
+          <details>
+            <summary><strong>Note on the deep link / OS registration</strong></summary>
+            <p>The <code>dvea://</code> scheme must be registered with the OS for deep links
+            to open the app. Packaged installs register this reliably; when running from source
+            (e.g., <code>npm start</code>) on Linux the scheme is typically not registered,
+            so clicking a <code>dvea://</code> link will fall through to the system default.
+            In development, use the route demos' "Simulate Deep Link" button — they exercise the same
+            vulnerable navigation code path as a real deep link. To demo real
+            <code>dvea://</code> links, install a packaged build so the OS routes the scheme
+            to DVEA.</p>
+          </details>
+        </div>
+      </section>
     </div>
 
     <script src="../js/vuln-redirect.js"></script>
