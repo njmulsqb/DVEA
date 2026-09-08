@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>DVEA — Sign In</title>
+    <link rel="stylesheet" href="../styles/style.css" />
+    <style>
+      .login-box { max-width:420px; margin:4rem auto; padding:1.5rem; border:1px solid #e6e6e6; border-radius:8px; background:#fff; }
+      .login-box h2 { margin-top:0; }
+      .login-field { display:block; width:100%; margin:0.5rem 0; padding:0.5rem; }
+      #captured { white-space:pre-wrap; background:#f8fafc; padding:0.75rem; border-radius:6px; border:1px dashed #e2e8f0; }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrap">
+      <div class="login-box">
+        <h2>DVEA — Session Expired</h2>
+        <p>Please sign in to continue.</p>
+        <form id="login">
+          <input name="username" placeholder="Username or email" class="login-field" />
+          <input name="password" type="password" placeholder="Password" class="login-field" />
+          <button type="submit">Sign In</button>
+        </form>
+
+        <h3 style="margin-top:1rem;">Captured credentials (demo)</h3>
+        <div id="captured">No submissions yet.</div>
+      </div>
+    </div>
+
+    <script>
+      document.getElementById('login').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const data = new FormData(e.target);
+        const obj = {};
+        for (const [k, v] of data.entries()) obj[k] = v;
+        const pretty = JSON.stringify(obj, null, 2);
+        document.getElementById('captured').textContent = pretty;
+      });
+    </script>
+  </body>
+</html>

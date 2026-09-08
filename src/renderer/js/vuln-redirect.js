@@ -1,13 +1,20 @@
-window.ipc.onRedirect((_, redirectUrl) => {
-  console.log('[DVEA] Redirecting to:', redirectUrl);
+// Demo wiring: use the exact vulnerable navigation path implemented in main
+// (main loads attacker-controlled URL into the trusted app window).
 
-  // 🚨 INTENTIONAL OPEN REDIRECT
-  window.open(redirectUrl, '_blank');
-});
+document.addEventListener('DOMContentLoaded', () => {
+  const targetInput = document.getElementById('target');
+  const simulate = document.getElementById('simulate');
 
-// Optional: simulate without OS deep link
+  // Default demo target: bundled fake login page (resolved relative to current page).
+  const defaultTarget = new URL('fake-login.html', window.location.href).href;
+  if (targetInput) targetInput.value = defaultTarget;
 
-document.getElementById('simulate')?.addEventListener('click', () => {
-  const url = 'https://example.com';
-  window.open(url, '_blank');
+  simulate?.addEventListener('click', async () => {
+    const url = (targetInput && targetInput.value) || defaultTarget;
+    try {
+      await window.api.simulateDeepLink(url);
+    } catch (err) {
+      console.error('simulateDeepLink failed', err);
+    }
+  });
 });

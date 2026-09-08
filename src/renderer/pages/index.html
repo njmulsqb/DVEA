@@ -22,10 +22,10 @@
       <div class="vuln-list">
 
         <a href="vuln-redirect.html" class="vuln-card">
-          <div class="vuln-card-title">Open Redirect</div>
+          <div class="vuln-card-title">Deep Link Hijacking</div>
           <div class="vuln-card-desc">
-            An unvalidated <code>redirect</code> parameter in the app's custom deep link protocol
-            allows any URL to be loaded inside the app window.
+            An unauthenticated OS deep link (dvea://) can drive the trusted app window to
+            attacker-controlled content when the main process navigates without validation.
           </div>
           <div class="vuln-tags">
             <span class="vuln-tag">Deep Link</span>

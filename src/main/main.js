@@ -145,16 +145,31 @@ function main() {
   function handleDeepLink(url) {
     try {
       const parsed = new URL(url);
-      const redirect = parsed.searchParams.get('redirect');
-      if (redirect && mainWindow) {
-        mainWindow.loadFile(path.join('src/renderer/pages', 'vuln-redirect.html')).then(() => {
-          mainWindow.webContents.send('deeplink-redirect', redirect);
-        });
+      // Route param name: use `url` to reflect navigation intent (dvea://navigate?url=...)
+      const target = parsed.searchParams.get('url');
+      if (target && mainWindow) {
+        // Vulnerable behavior: main process directly loads attacker-controlled URL
+        // into the trusted app window with no allowlist or validation.
+        try {
+          mainWindow.loadURL(target);
+        } catch (err) {
+          console.error('Failed to navigate to deep link target:', err);
+        }
       }
     } catch (err) {
       console.error('Invalid deep link:', err);
     }
   }
+
+  // Allow renderer demo pages to exercise the exact same vulnerable navigation
+  // path used by real OS deep links.
+  ipcMain.handle('simulate-deeplink', (event, target) => {
+    try {
+      if (target && mainWindow) mainWindow.loadURL(target);
+    } catch (err) {
+      console.error('simulate-deeplink failed:', err);
+    }
+  });
 
   ipcMain.handle('xss-rce-direct', async (event, code) => {
     try {
@@ -305,12 +320,7 @@ function main() {
 
   // Demo ticker removed. (Was a throwaway visual test; deleted per request.)
 
-  app.on('open-url', (event, deepLink) => {
-    event.preventDefault();
-    if (deepLink.startsWith('dvea://redirect?target=')) {
-      Window.create('vuln-redirect.html');
-    }
-  });
+  // Legacy open-url handler removed in favor of unified `handleDeepLink` above.
 }
 
 ipcMain.handle('save-file', async (event, data) => {
