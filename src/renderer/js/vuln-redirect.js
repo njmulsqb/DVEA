@@ -12,9 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
   simulate?.addEventListener('click', async () => {
     const url = (targetInput && targetInput.value) || defaultTarget;
     try {
-      await window.api.simulateDeepLink(url);
+      // Open the fake-login in a new window using the same vulnerable main-process navigation.
+      await window.api.simulateDeepLinkWindow(url);
     } catch (err) {
-      console.error('simulateDeepLink failed', err);
+      console.error('simulateDeepLinkWindow failed', err);
     }
   });
 });

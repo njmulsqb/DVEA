@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('api', {
   checkSentinel: () => ipcRenderer.invoke('check-sentinel'),
   resetAutoUpdate: () => ipcRenderer.invoke('reset-auto-update'),
   simulateDeepLink: (target) => ipcRenderer.invoke('simulate-deeplink', target),
+  simulateDeepLinkWindow: (target) => ipcRenderer.invoke('simulate-deeplink-window', target),
 });
 
 contextBridge.exposeInMainWorld('systemapi', {

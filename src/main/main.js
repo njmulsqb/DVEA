@@ -171,6 +171,32 @@ function main() {
     }
   });
 
+  // Create a new app window and navigate it to the attacker-supplied URL
+  // This uses the same vulnerable main-process navigation path (no validation).
+  ipcMain.handle('simulate-deeplink-window', (event, target) => {
+    try {
+      if (!target) return;
+      const win = new BrowserWindow({
+        width: 420,
+        height: 520,
+        show: false,
+        resizable: false,
+        title: 'DVEA',
+        webPreferences: {
+          preload: path.join(__dirname, 'preload.js'),
+        },
+      });
+      // Vulnerable navigation: main process directly loads the attacker URL into a new window
+      win.loadURL(target);
+      win.once('ready-to-show', () => win.show());
+      win.on('closed', () => {
+        // No special teardown required; window closed cleanly.
+      });
+    } catch (err) {
+      console.error('simulate-deeplink-window failed:', err);
+    }
+  });
+
   ipcMain.handle('xss-rce-direct', async (event, code) => {
     try {
       const result = eval(code);
