@@ -3,11 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('simulate-open');
   const out = document.getElementById('file-output');
 
-  const defaultPath = new URL('secret.txt', window.location.href).pathname.replace('file://','');
-  if (input) input.value = 'src/renderer/pages/secret.txt';
-
   btn?.addEventListener('click', async () => {
     const p = input && input.value;
+    if (!p) return;
     out.textContent = 'Reading...';
     try {
       const res = await window.api.simulateDeepLinkOpen(p);

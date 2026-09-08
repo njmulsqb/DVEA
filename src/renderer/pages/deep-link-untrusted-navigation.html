@@ -18,28 +18,43 @@
         <div class="panel-body">
           <p>This route demonstrates how an attacker-crafted <code>dvea://</code> deep link can make the
           app open a native-looking window and load attacker content with no visible address-bar signal.</p>
+          <p><strong>Objective:</strong> Craft a deep link that loads attacker-controlled content in the
+          trusted app window.</p>
+          <p><strong>How to try it:</strong> A real deep link has the shape
+          <code>dvea://navigate?url=&lt;url&gt;</code> — whatever URL you supply is opened in a new,
+          native-looking app window with no checks. Point it at any external content the app
+          shouldn't trust, or at DVEA's own bundled <code>fake-login.html</code> page to see the
+          credential-harvesting impact in the attacker view below.</p>
         </div>
       </section>
 
       <section class="panel demo-panel">
-        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-header"><h2>Try It</h2></div>
         <div class="panel-body">
-          <p>Enter a target URL and click "Simulate Deep Link". The demo opens a new app window
-          and navigates it to the supplied URL using the same vulnerable main-process path.</p>
-
-          <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
-            <input id="target" type="text" style="flex:1;" />
-            <button id="simulate">Simulate Deep Link</button>
-          </div>
-
-          <p class="text-small text-gray" style="margin-top:0.6rem;">Default demo target is a bundled
-            native-looking fake login page so you can see credential harvests locally.</p>
+          <p>On an installed (packaged) build, the OS registers the <code>dvea://</code> scheme for
+          DVEA — opening a link like <code>dvea://navigate?url=https://example.com</code> from
+          anywhere (a browser address bar, an email, a terminal) pops open a new, native-looking
+          DVEA window loading that URL, with no address bar and no confirmation.</p>
+          <p class="text-small text-gray">Running from source doesn't reliably register the scheme
+          with the OS, so a real <code>dvea://</code> link won't dispatch to the app during
+          development — use the simulator below instead.</p>
 
           <div style="margin-top:1rem;">
             <h4>Attacker view — harvested credentials</h4>
             <div id="captured-log" style="white-space:pre-wrap; background:#f8fafc; padding:0.6rem; border-radius:6px; border:1px dashed #e2e8f0; min-height:3.2rem; font-family:monospace;">No captured credentials yet.</div>
           </div>
 
+          <details style="margin-top:1.25rem;">
+            <summary><strong>Running from source? Use the simulator instead</strong></summary>
+            <div style="margin-top:0.75rem;">
+              <p class="text-small text-gray">Exercises the identical vulnerable main-process
+              navigation path a real deep link would use, without needing the OS to route one.</p>
+              <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
+                <input id="target" type="text" style="flex:1;" placeholder="Target URL" />
+                <button id="simulate">Simulate Deep Link</button>
+              </div>
+            </div>
+          </details>
         </div>
       </section>
 

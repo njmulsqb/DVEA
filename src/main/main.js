@@ -142,6 +142,28 @@ function main() {
     if (deepLink) handleDeepLink(deepLink);
   });
 
+  // Open a new app window and navigate it directly to an attacker-supplied URL, with no
+  // validation. Shared by the real dvea://navigate handler and its in-app simulator so both
+  // exercise the exact same vulnerable code path (same window shape, same unchecked
+  // loadURL call) rather than two similar-but-different implementations.
+  function openUntrustedNavigationWindow(target) {
+    const win = new BrowserWindow({
+      width: 480,
+      height: 640,
+      show: false,
+      resizable: true,
+      maximizable: true,
+      title: 'DVEA',
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+      },
+    });
+    // Vulnerable navigation: main process directly loads the attacker URL into a new window
+    win.loadURL(target);
+    win.once('ready-to-show', () => win.show());
+    return win;
+  }
+
   async function handleDeepLink(url) {
     try {
       const parsed = new URL(url);
@@ -149,7 +171,7 @@ function main() {
       const target = parsed.searchParams.get('url');
       if (target && mainWindow) {
         try {
-          mainWindow.loadURL(target);
+          openUntrustedNavigationWindow(target);
         } catch (err) {
           console.error('Failed to navigate to deep link target:', err);
         }
@@ -177,38 +199,13 @@ function main() {
     }
   }
 
-  // Allow renderer demo pages to exercise the exact same vulnerable navigation
-  // path used by real OS deep links.
-  ipcMain.handle('simulate-deeplink', (event, target) => {
-    try {
-      if (target && mainWindow) mainWindow.loadURL(target);
-    } catch (err) {
-      console.error('simulate-deeplink failed:', err);
-    }
-  });
-
-  // Create a new app window and navigate it to the attacker-supplied URL
-  // This uses the same vulnerable main-process navigation path (no validation).
+  // Create a new app window and navigate it to the attacker-supplied URL — the identical
+  // vulnerable code path (openUntrustedNavigationWindow, above) that a real
+  // dvea://navigate?url=... deep link uses.
   ipcMain.handle('simulate-deeplink-window', (event, target) => {
     try {
       if (!target) return;
-      const win = new BrowserWindow({
-        width: 480,
-        height: 640,
-        show: false,
-        resizable: true,
-        maximizable: true,
-        title: 'DVEA',
-        webPreferences: {
-          preload: path.join(__dirname, 'preload.js'),
-        },
-      });
-      // Vulnerable navigation: main process directly loads the attacker URL into a new window
-      win.loadURL(target);
-      win.once('ready-to-show', () => win.show());
-      win.on('closed', () => {
-        // No special teardown required; window closed cleanly.
-      });
+      openUntrustedNavigationWindow(target);
     } catch (err) {
       console.error('simulate-deeplink-window failed:', err);
     }

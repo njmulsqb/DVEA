@@ -45,6 +45,9 @@ src/renderer/
 src/labs/insecure-auto-update/ — bundled local HTTP+HTTPS feed server + TLS cert/key for that demo
 vulnerable-versions/    — pinned-old-Electron CVE scenarios; lives on the `bind-hijack` branch
                           only (see §3, §5) — not present in this branch's tree.
+writeups/               — repo-only solution writeups for challenge-style labs (see §4). Never
+                          linked from any in-app page and excluded from the packaged app via
+                          forge.config.js's packagerConfig.ignore (see §4 Build/packaging).
 ```
 
 ### The `Window` helper (`src/main/windows/Window.js`)
@@ -52,9 +55,11 @@ A `BrowserWindow` subclass with defaults (`768x1024`, hidden until `ready-to-sho
 preload `src/main/preload.js`). Its constructor **self-registers** with `observability.registerWindow()`
 using the merged declared `webPreferences`. Most demo windows should be created through this
 class so they show up correctly in the Config Inspector; windows created via bare
-`new BrowserWindow(...)` instead (analytics window, panel window, deep-link simulate window,
-system-XSS window is actually created via `Window` — see below) rely on the global
-`app.on('browser-window-created', ...)` listener in `main.js` to register themselves instead.
+`new BrowserWindow(...)` instead (analytics window, panel window, the untrusted-navigation
+popup opened by `openUntrustedNavigationWindow()` — used by both the real deep-link handler and
+its simulator; the system-XSS window is actually created via `Window` — see below) rely on the
+global `app.on('browser-window-created', ...)` listener in `main.js` to register themselves
+instead.
 
 ### Preload map
 | Preload | Exposed globals | Used by |
@@ -182,8 +187,8 @@ see the note at the end of this section.
 
 | Module | Hub entry | Main-process code | Renderer page(s)/route(s) | What it demonstrates |
 |---|---|---|---|---|
-| Deep Link Hijacking — Deep Link → Untrusted Navigation | grouped card title → parent (`deep-link-hijacking.html`) → "Deep Link → Untrusted Navigation" route link | `handleDeepLink()` in `main.js` (real `dvea://navigate?url=`), plus `simulate-deeplink` / `simulate-deeplink-window` IPC handlers for in-app simulation | `deep-link-hijacking.html` (parent) → `deep-link-untrusted-navigation.html`; demo popup is `fake-login.html` | Main process navigates the trusted window (or a new window) straight to an attacker URL, no allowlist. Fake login popup harvests credentials via `captured-credentials` IPC, forwarded to the parent page's "attacker view". |
-| Deep Link Hijacking — Deep Link → Path Traversal | grouped card title → parent (`deep-link-hijacking.html`) → "Deep Link → Path Traversal" route link | `handleDeepLink()`'s `dvea://open?path=` branch (real), `simulate-deeplink-open` IPC handler (demo) | `deep-link-path-traversal.html` | Deep link supplies an arbitrary file path; main reads it with `fs.promises.readFile` and no path validation. Bundled `secret.txt` (`FAKE_SECRET=flag{dvea_demo_secret}`) is the demo target. |
+| Deep Link Hijacking — Deep Link → Untrusted Navigation | grouped card title → parent (`deep-link-hijacking.html`) → "Deep Link → Untrusted Navigation" route link | `handleDeepLink()` in `main.js` (real `dvea://navigate?url=`), plus the `simulate-deeplink-window` IPC handler for in-app simulation — both call the shared `openUntrustedNavigationWindow()` helper | `deep-link-untrusted-navigation.html` — **challenge-style** (see §4): Objective + "How to try it" guidance, no in-page walkthrough/fix. Solution: `writeups/deep-link-untrusted-navigation.md` (repo-only, not linked in-app) | Main process opens a new, native-looking app window (no address bar) and navigates it straight to an attacker URL, no allowlist. Fake login popup (`fake-login.html`) harvests credentials via `captured-credentials` IPC, forwarded to the lab page's "attacker view". |
+| Deep Link Hijacking — Deep Link → Path Traversal | grouped card title → parent (`deep-link-hijacking.html`) → "Deep Link → Path Traversal" route link | `handleDeepLink()`'s `dvea://open?path=` branch (real, loads the lab page into `mainWindow` then IPC-sends the file content), `simulate-deeplink-open` IPC handler (demo, returns content directly via invoke — a separate, not-shared implementation, unlike the navigation lab) | `deep-link-path-traversal.html` — **challenge-style** (see §4): Objective + "How to try it" guidance, no in-page walkthrough/fix. Solution: `writeups/deep-link-path-traversal.md` (repo-only, not linked in-app) | Deep link supplies an arbitrary file path; main reads it with `fs.promises.readFile` and no path validation. Bundled `secret.txt` (`FAKE_SECRET=flag{dvea_demo_secret}`) is a reliable demo target; any OS file (e.g. `/etc/passwd`) proves the read isn't confined to the app at all. |
 | XSS: No Privileged APIs | Renderer XSS group | n/a (fully client-side) | `xss-no-priv.html` / `xss-no-priv.js` | `innerHTML` injection with every Electron hardening flag on — impact capped at browser-equivalent renderer XSS. |
 | XSS: Overprivileged ContextBridge | Renderer XSS group (JS-triggered, opens new window) | `openSystemXSSWindow()` / `ipcMain.on('open-system-xss', ...)` in `main.js`; handler code is `preload-systemapi.js`'s `child_process.exec` | `xss-system-api.html` / `xss-system-api.js`, window created with `sandbox: false` | Same `innerHTML` XSS pattern, but the preload exposes `window.systemAPI.runCommand` — XSS escalates directly to arbitrary shell command execution despite `contextIsolation: true`. |
 | XSS → RCE (Direct) — cf. CVE-2020-16608 | Renderer XSS group | `ipcMain.handle('xss-rce-direct', (event, code) => eval(code))` in `main.js` | `xss-rce-direct.html` / `xss-rce-direct.js` | Renderer-supplied string is `eval`'d **in the main process** with no sandbox disabled anywhere — full Node access via a vulnerable IPC handler alone. |
@@ -232,14 +237,45 @@ Nearly every module page follows the same section order inside `<div class="page
 6. Optional **References** panel with real CVE/advisory links (`xss-rce-direct.html`,
    `openexternal.html`, `insecure-auto-update.html` all do this; several others don't).
 
+The two Deep Link Hijacking route pages (`deep-link-untrusted-navigation.html`,
+`deep-link-path-traversal.html`) deviate from this on purpose — see "Challenge-style labs"
+below; they have no Guide/walkthrough/fix content on the page at all.
+
+### Challenge-style labs + repo-only writeups
+Currently unique to the two Deep Link Hijacking route pages — not (yet) an app-wide
+convention, same "reference pattern, don't assume it's everywhere" caveat as the
+vuln/hardened/reset mechanism below. The pattern:
+- Concept panel keeps only an **Objective** (imperative — "Craft a deep link that...") and a
+  short **"How to try it"** note: enough to know what the input expects and what to attempt
+  (e.g. "the target field takes a URL; DVEA also bundles a fake login page you can target"),
+  deliberately stopping short of the actual working payload/fix.
+- The demo panel is retitled **"Try It"** and leads with the *real* `dvea://...` link format
+  and a concrete example, plus a note that it only dispatches on a packaged/installed build
+  (OS scheme registration doesn't reliably work from source). The interactive
+  input+button ("Simulate Deep Link") is demoted under a `<details>` collapsed by default,
+  labeled `Running from source? Use the simulator instead`. The attacker-view/result panel
+  stays outside the collapsible, always visible, and works with either path.
+- **No in-app link to the solution, anywhere** — no "Solution/Writeup" link on the lab page,
+  no per-lab link on the parent page, nothing in the hub. The only pointer is one general
+  line in `README.md`'s Documentation section saying solutions for challenge-style labs live
+  in `writeups/`. This was deliberate: labs must stay pure challenge with zero filesystem or
+  UI path to the answer, including in the packaged app (see Build/packaging below).
+- Each writeup (`writeups/<lab-name>.md`) is grounded in the real handler code (quoted, not
+  invented) and contains, as numbered sections: the objective restated, an exploitation
+  walkthrough with a real working payload, the vulnerable code vs. a fixed-code diff, and
+  specific (not generic) secure-coding reasoning for why the fix works.
+
 ### Demos fire the real code path
 This is a deliberate, consistent design choice, not just a convention: demo buttons call the
 exact same IPC channel / main-process function that a real attack would use, rather than a mocked
-stand-in. E.g. "Simulate Deep Link" on the "Deep Link → Untrusted Navigation" route calls `simulateDeepLinkWindow`, which runs the
-identical `win.loadURL(target)` main-process navigation that `handleDeepLink()` uses for a real
-`dvea://` link; the savefile demo calls the same `save-file` handler; `xss-rce-direct.js` posts
-straight to the `eval()`-backed IPC handler. Keep this invariant when adding new modules — a demo
-that only *simulates* the vulnerability defeats the app's purpose.
+stand-in. E.g. "Simulate Deep Link" on the "Deep Link → Untrusted Navigation" route calls
+`simulateDeepLinkWindow`, whose handler calls the exact same `openUntrustedNavigationWindow()`
+helper that `handleDeepLink()` uses for a real `dvea://` link — not just a similar
+reimplementation, literally the same function (this was previously an inconsistency — the real
+handler used to navigate `mainWindow` in place while the simulator opened a new window; both now
+go through the one shared helper); the savefile demo calls the same `save-file` handler;
+`xss-rce-direct.js` posts straight to the `eval()`-backed IPC handler. Keep this invariant when
+adding new modules — a demo that only *simulates* the vulnerability defeats the app's purpose.
 
 ### vuln/hardened + reset mechanism
 Only implemented for Insecure Auto-Update today (`mode` select → `vulnerable`/`hardened` branch
@@ -269,19 +305,33 @@ exists on other modules.
 - `npm run make` → `@electron-forge/maker-deb`, Linux-only target, publishes (draft, non-prerelease)
   to GitHub Releases via `@electron-forge/publisher-github` when a `v*` tag is pushed
   (`.github/workflows/build.yml`, Node 22, `npm ci` → `npm run make` → conditionally `npm run publish`).
-- `forge.config.js`'s `packagerConfig` is currently empty — no `ignore` patterns, no icon. This is
-  fine while `vulnerable-versions/` stays off this branch, but if that directory (with its own
-  nested `node_modules` and a second Electron install) is ever merged in, packaging will need an
-  explicit `ignore` entry or the `.deb` will bundle a whole second Electron app.
+- `forge.config.js`'s `packagerConfig.ignore` excludes `/^\/out\//` and `/^\/writeups($|\/)/` —
+  confirmed by actually running `npx electron-forge package` and inspecting the output tree:
+  `writeups/` is absent from the packaged app, ordinary app files are present. No icon is set.
+  **Non-obvious gotcha, worth remembering if this file is touched again:** Electron Forge's own
+  default `ignore` (`[/^\/out\//g]`, excluding its own build-output dir) is only applied when
+  `packagerConfig.ignore` is unset — Forge builds its final packager options as
+  `{ ignore: [/^\/out\//g], ...forgeConfig.packagerConfig }`, and a plain object spread means
+  *setting* `ignore` **replaces** that default rather than merging with it. So `/^\/out\//` has
+  to be repeated explicitly alongside any custom pattern, or the build-output dir stops being
+  excluded from its own packaged output. `vulnerable-versions/` (see §3) still isn't excluded —
+  it's simply absent from this branch's tree today, not deliberately ignored; if that directory
+  is ever merged in, packaging will need its own explicit `ignore` entry too or the `.deb` will
+  bundle a whole second Electron app (own `node_modules`, own Electron binary).
 
 ---
 
 ## 5. State of things
 
 ### Branches
-- **`writeups` (current)** is 8 commits ahead of `main`, all about the Deep Link Hijacking module:
-  it introduced the module entirely (`main` only has a single-page "Open Redirect" demo with no
-  route split, no fake-login popup, no path-traversal route). `main` is the stale baseline here.
+- **`writeups` (current)** is well ahead of `main`, entirely about the Deep Link Hijacking
+  module: it introduced the module (`main` only has a single-page "Open Redirect" demo with no
+  route split, no fake-login popup, no path-traversal route), then iterated it through several
+  rounds — renamed pages to accurate filenames, restructured the two route pages into
+  challenge-style labs with repo-only writeups (see §4), and fixed a real/simulator behavior
+  inconsistency in the navigation handler. `main` is the stale baseline here; check
+  `git log main..writeups --oneline` for the current exact count rather than trusting a number
+  written into this file, since it changes with nearly every commit on this branch.
 - **`bind-hijack`**: a separate line of work adding `vulnerable-versions/electron-30.0.0/` (pinned
   Electron 30 CVE scenarios: `bind-hijack`, `webprefs-injection`) — see §3. Not merged into
   `writeups` or `main`, and not wired into the hub UI at all.

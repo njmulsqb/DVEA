@@ -54,7 +54,11 @@ DVEA is built and tested on Ubuntu (Linux). Node 20+ is required; tested on Node
 
 ## Documentation
 
-All documentation and walkthroughs are now provided inline within the app UI for each vulnerability demo.
+Most vulnerability demos provide their guide and walkthrough inline within the app UI. Some
+labs are presented as pure challenges instead — an objective and a live playground, with no
+in-app walkthrough, payload, or solution. Solutions and full writeups for those labs (the
+real vulnerable code, the working exploit, the fix, and why it works) live in the
+[`writeups/`](./writeups) folder of this repository, not in the app itself.
 
 ---
 

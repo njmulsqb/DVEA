@@ -19,28 +19,45 @@
           <p>Some apps accept deep links that open files. If the main process reads the
           supplied path with no validation, an attacker can craft a deep link that reads
           sensitive host files.</p>
-          <p><strong>Objective:</strong> Read a file outside the app's intended directory via a crafted deep link.</p>
+          <p><strong>Objective:</strong> Craft a deep link that reads a file outside the app's intended
+          directory.</p>
+          <p><strong>How to try it:</strong> A real deep link has the shape
+          <code>dvea://open?path=&lt;file path&gt;</code> — whatever path you supply is read
+          straight from disk with no checks. Try a system file that has nothing to do with DVEA
+          (e.g. <code>/etc/passwd</code>) to prove the read isn't confined to the app at all — DVEA
+          also bundles a small marker file alongside its own pages if you want a reliable target to
+          confirm the read works before going further.</p>
         </div>
       </section>
 
       <section class="panel demo-panel">
-        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-header"><h2>Try It</h2></div>
         <div class="panel-body">
-          <p>Enter a file path and click "Simulate Deep Link". The demo invokes the same
-          vulnerable main-process file-read path and displays the returned contents.</p>
-
-          <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
-            <input id="path" type="text" style="flex:1;" placeholder="e.g. src/renderer/pages/secret.txt or /etc/passwd"/>
-            <button id="simulate-open">Simulate Deep Link</button>
-          </div>
-
-          <p class="text-small text-gray" style="margin-top:0.6rem;">Use the bundled <code>src/renderer/pages/secret.txt</code> to demonstrate traversal reliably.</p>
+          <p>On an installed (packaged) build, the OS registers the <code>dvea://</code> scheme for
+          DVEA — opening a link like <code>dvea://open?path=/etc/passwd</code> from anywhere (a
+          browser address bar, an email, a terminal) drives this window to read and display that
+          file's contents.</p>
+          <p class="text-small text-gray">Running from source doesn't reliably register the scheme
+          with the OS, so a real <code>dvea://</code> link won't dispatch to the app during
+          development — use the simulator below instead.</p>
 
           <div style="margin-top:1rem;">
             <h4>File contents / result</h4>
             <div id="file-output" style="white-space:pre-wrap; background:#f8fafc; padding:0.6rem; border-radius:6px; border:1px dashed #e2e8f0; min-height:6rem; font-family:monospace;
             "></div>
           </div>
+
+          <details style="margin-top:1.25rem;">
+            <summary><strong>Running from source? Use the simulator instead</strong></summary>
+            <div style="margin-top:0.75rem;">
+              <p class="text-small text-gray">Exercises the identical vulnerable main-process
+              file-read path a real deep link would use, without needing the OS to route one.</p>
+              <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
+                <input id="path" type="text" style="flex:1;" placeholder="File path"/>
+                <button id="simulate-open">Simulate Deep Link</button>
+              </div>
+            </div>
+          </details>
         </div>
       </section>
 

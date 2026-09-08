@@ -16,7 +16,6 @@ contextBridge.exposeInMainWorld('api', {
   checkForUpdate: (opts) => ipcRenderer.invoke('check-for-update', opts),
   checkSentinel: () => ipcRenderer.invoke('check-sentinel'),
   resetAutoUpdate: () => ipcRenderer.invoke('reset-auto-update'),
-  simulateDeepLink: (target) => ipcRenderer.invoke('simulate-deeplink', target),
   simulateDeepLinkWindow: (target) => ipcRenderer.invoke('simulate-deeplink-window', target),
   sendCapturedCredentials: (data) => ipcRenderer.send('captured-credentials', data),
   simulateDeepLinkOpen: (path) => ipcRenderer.invoke('simulate-deeplink-open', path),
