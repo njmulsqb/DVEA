@@ -22,9 +22,23 @@
             so a trusted app window can be driven to attacker content with no visible signal.
           </p>
           <p>
-            Deep links are an unauthenticated external entry point into the installed desktop
-            app. The OS routes a <code>dvea://</code> link (from email, chat, or a webpage)
-            directly into the running application process.
+            A deep link is a custom URI scheme — like <code>dvea://</code> — that the operating
+            system associates with a specific desktop application. When registered, the OS
+            routes any link using that scheme to the app, launching it if necessary and handing
+            it the full URL.
+          </p>
+          <p>
+            In Electron, an app claims a scheme by calling
+            <code>app.setAsDefaultProtocolClient('dvea')</code>. Once registered with the OS,
+            clicking a <code>dvea://</code> link anywhere — a browser, an email, a chat message,
+            a webpage — wakes the app and delivers the link to it. The app receives the URL
+            through platform events (<code>open-url</code> on macOS, <code>second-instance</code>
+            / process arguments on Windows and Linux) and decides what to do with it.
+          </p>
+          <p>
+            The critical property: <strong>the link comes from outside the application, and
+            anyone can craft one.</strong> The app is being driven by input it did not generate
+            and cannot trust.
           </p>
           <p><strong>Objective:</strong> Load attacker-controlled content in the trusted app
             window with no visible signal to the user.</p>
@@ -39,6 +53,214 @@
           <strong>Impact:</strong> An attacker who convinces a user to click a crafted
           <code>dvea://</code> link can make the trusted app window display attacker content
           (e.g., a phishing page) without any address-bar signal — enabling credential harvests.
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>What deep links are normally used for</h2></div>
+        <div class="panel-body">
+          <p>Deep links are a legitimate, widely-used feature. Common examples:</p>
+          <ul>
+            <li>
+              <strong>"Open in app"</strong> — a website offers <code>slack://channel/...</code>
+              or <code>vscode://file/...</code> to hand off from the browser to the desktop app.
+            </li>
+            <li>
+              <strong>Password reset / magic links</strong> — an email link opens the app
+              directly to a specific flow.
+            </li>
+            <li>
+              <strong>OAuth / SSO callbacks</strong> — the auth provider redirects to
+              <code>myapp://auth?code=...</code> to return control to the desktop app.
+            </li>
+            <li>
+              <strong>Inter-app workflows</strong> — one app launches another with context via
+              its scheme.
+            </li>
+          </ul>
+          <p>
+            The pattern is convenient precisely because it lets external content reach into the
+            app — which is also exactly why it is dangerous when the app trusts that content.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Common mistakes developers make</h2></div>
+        <div class="panel-body">
+          <p>
+            The deep-link handler is, in effect, an <strong>unauthenticated remote API</strong>
+            into the desktop app: any link the user can be convinced to click invokes it.
+            Developers routinely forget this and make mistakes such as:
+          </p>
+          <ul>
+            <li>
+              <strong>Trusting the URL's contents.</strong> Passing a <code>redirect</code>/<code>url</code>
+              parameter straight to <code>loadURL()</code> with no allowlist — letting an
+              attacker load arbitrary content in the trusted window (see
+              <a href="vuln-redirect-route1.html?from=parent">Deep Link → Untrusted Navigation</a>).
+            </li>
+            <li>
+              <strong>Trusting path parameters.</strong> Handing a <code>path</code> parameter to
+              the filesystem with no validation — enabling path traversal and arbitrary file
+              access (see
+              <a href="vuln-redirect-route2.html?from=parent">Deep Link → Path Traversal</a>).
+            </li>
+            <li>
+              <strong>Routing deep links to privileged actions.</strong> Wiring
+              <code>myapp://settings?...</code> or <code>myapp://run?...</code> to
+              state-changing or sensitive operations, so a single crafted link can invoke
+              capabilities the developer assumed only the user could reach.
+            </li>
+            <li>
+              <strong>Treating the link as authenticated.</strong> Assuming that because the app
+              opened the link, the <em>user</em> intended the action — when in reality an
+              attacker authored the link.
+            </li>
+            <li>
+              <strong>Forgetting the missing UI signal.</strong> In a browser the address bar
+              warns the user where they are; an Electron window has no address bar, so the user
+              has no way to tell the trusted app is now showing or doing something
+              attacker-controlled.
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>How to fix them</h2></div>
+        <div class="panel-body">
+          <ul>
+            <li>
+              <strong>Treat every part of a deep link as fully untrusted input</strong> — the
+              same posture you'd take toward a request from the public internet.
+            </li>
+            <li>
+              <strong>Validate and allowlist.</strong> For navigation, allowlist origins before
+              <code>loadURL()</code>. For file paths, canonicalize and confirm the resolved path
+              stays within an intended directory. Reject anything that doesn't match.
+            </li>
+            <li>
+              <strong>Never route deep links to privileged actions without explicit user
+              confirmation.</strong> A link should not be able to silently change settings, move
+              funds, or run code.
+            </li>
+            <li>
+              <strong>Re-authenticate / re-confirm for anything sensitive</strong> rather than
+              assuming the link implies user intent.
+            </li>
+            <li>
+              <strong>Keep the handler minimal</strong> — the fewer capabilities reachable via
+              the scheme, the smaller the attack surface.
+            </li>
+          </ul>
+          <p class="text-small text-gray">
+            Each route below demonstrates one of these mistakes hands-on, exercising the actual
+            vulnerable code path.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Enumeration — finding an app's deep-link attack surface</h2></div>
+        <div class="panel-body">
+          <p>
+            To attack (or audit) deep links, you first have to discover which schemes an app
+            registers and what its handler does with them. There are three vantage points; a
+            thorough researcher checks all of them.
+          </p>
+
+          <p><b>1. OS-level registration — no source required</b></p>
+          <p>
+            The operating system records which app owns which scheme, so you can enumerate an
+            app's schemes without ever reading its code. This works on any installed app —
+            including DVEA once it's installed as a <code>.deb</code>.
+          </p>
+
+          <p class="text-small text-gray">
+            <strong>Linux</strong> — registered schemes are declared in <code>.desktop</code>
+            files as <code>x-scheme-handler/&lt;scheme&gt;</code> MIME associations:
+          </p>
+          <pre><code># What app is registered to handle dvea:// ?
+xdg-mime query default x-scheme-handler/dvea
+
+# Find every app that registers ANY custom scheme
+grep -rl "x-scheme-handler/" /usr/share/applications/ ~/.local/share/applications/
+
+# Inspect a specific app's desktop entry for its schemes and launch command
+cat /usr/share/applications/dvea.desktop</code></pre>
+
+          <p class="text-small text-gray">
+            <strong>macOS</strong> — schemes are declared in the app bundle's
+            <code>Info.plist</code> under <code>CFBundleURLTypes</code> →
+            <code>CFBundleURLSchemes</code>:
+          </p>
+          <pre><code>plutil -p /Applications/DVEA.app/Contents/Info.plist | grep -A5 CFBundleURLSchemes</code></pre>
+
+          <p class="text-small text-gray">
+            <strong>Windows</strong> — registered schemes live in the registry, each with a
+            <code>URL Protocol</code> value and a shell "open" command:
+          </p>
+          <pre><code>HKEY_CLASSES_ROOT\dvea   (look for the "URL Protocol" value and shell\open\command)</code></pre>
+
+          <p>
+            This vantage point tells you the <strong>scheme(s)</strong> an app claims — but not
+            the routes/actions behind the handler. For that, go to the source.
+          </p>
+
+          <p><b>2. Source analysis — the deepest view</b></p>
+          <p>
+            With the app's source (extraction methods covered separately), search for how the
+            scheme is registered and, more importantly, how the handler parses the URL and
+            dispatches to routes. This reveals the deep-link "API" — every action reachable
+            through the scheme.
+          </p>
+          <pre><code># Scheme registration
+grep -rn "setAsDefaultProtocolClient" .
+grep -rn "protocol.handle\|registerFileProtocol\|registerHttpProtocol" .
+
+# Where deep links arrive
+grep -rn "open-url\|second-instance\|will-finish-launching" .
+
+# The scheme string and its routes
+grep -rn "dvea://" .</code></pre>
+          <p>
+            Trace from the arrival event into the handler: how it parses the URL, which query
+            parameters it reads, and which routes/actions it dispatches to (e.g.
+            <code>navigate</code>, <code>open</code>). That mapping <em>is</em> the attack
+            surface — each route is a candidate for abuse.
+          </p>
+
+          <p><b>3. Manifest &amp; runtime — supporting angles</b></p>
+          <ul>
+            <li>
+              <strong>Build manifest</strong> — schemes are often declared in the build config.
+              With the source tree, check <code>package.json</code> and the
+              electron-builder/electron-forge config (e.g. <code>build.protocols</code>) for
+              declared schemes in one place.
+            </li>
+            <li>
+              <strong>Runtime observation</strong> — feed the app a link and watch what it does:
+              process launches and command-line arguments (<code>strace</code>/<code>ps</code>
+              on Linux, Process Monitor on Windows). This shows the handler's <em>actual
+              behavior</em>, useful when source is obfuscated.
+            </li>
+            <li>
+              <strong>Route probing</strong> — once the scheme is known, unknown routes can be
+              discovered by trying plausible action names and observing responses, ideally
+              confirmed against the source.
+            </li>
+          </ul>
+        </div>
+        <div class="xss-explanation">
+          <strong>The takeaway:</strong> You can map a deep-link attack surface from three
+          directions: the <strong>OS</strong> tells you which schemes exist (no code needed),
+          the <strong>source</strong> reveals the scheme <em>and</em> every route behind the
+          handler, and <strong>runtime</strong> confirms what actually happens when a link
+          fires. On DVEA, start at the OS level against the installed <code>.deb</code> —
+          enumerate the <code>dvea://</code> scheme from its <code>.desktop</code> entry — then
+          use source analysis to map its routes (<code>navigate</code>, <code>open</code>) and
+          attack them via the routes below.
         </div>
       </section>
 
