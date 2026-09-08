@@ -358,10 +358,12 @@ code {
 .vuln-card-group:hover { transform: none; box-shadow: 0 2px 8px rgba(87, 85, 217, 0.06); border-left-color: #5755d9; }
 
 .vuln-card-title {
+  display: block;
   font-weight: 600;
   font-size: 1.03rem;
   color: #2d2b6e;
   margin-bottom: 0.3rem;
+  text-decoration: none;
 }
 .vuln-card-desc {
   font-size: 0.9rem;

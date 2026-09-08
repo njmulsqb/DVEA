@@ -75,8 +75,13 @@ calls to an `ipc-monitor-preload` channel — see §2 for why this is currently 
   with `preload-analytics.js`), and the Deep Link Hijacking demo's fake-login popup.
 - **Module → child route (parent/child pattern)**: Deep Link Hijacking is the exemplar —
   `vuln-redirect.html` is a parent overview page with a "Routes" panel linking to
-  `vuln-redirect-route1.html` (Untrusted Navigation) and `vuln-redirect-route2.html`
-  (Path Traversal). Each route is its own file with its own demo, not a tab/section of one page.
+  `vuln-redirect-route1.html` ("Deep Link → Untrusted Navigation") and `vuln-redirect-route2.html`
+  ("Deep Link → Path Traversal"). Each route is its own file with its own demo, not a tab/section
+  of one page. On the hub, the group's card title itself (`<a class="vuln-card-title" href="vuln-redirect.html">`)
+  is a real link to the parent overview page, separate from the nested route links below it — it
+  used to be a plain, non-clickable `<div>`, so clicking the card title did nothing; this was fixed
+  (2026-09-08) alongside dropping the "Route 1"/"Route 2" numbering in favor of the app's
+  `X → Y` naming convention (e.g. "XSS → RCE") used consistently elsewhere.
 - **Back link / breadcrumb**: most module pages hardcode `<a href="index.html" class="page-header-back">← All Vulnerabilities</a>`.
   Route pages instead compute the back link at runtime from a `?from=` query param
   (`?from=index` → back to hub, `?from=parent` or absent → back to `vuln-redirect.html`), so the
@@ -177,8 +182,8 @@ see the note at the end of this section.
 
 | Module | Hub entry | Main-process code | Renderer page(s)/route(s) | What it demonstrates |
 |---|---|---|---|---|
-| Deep Link Hijacking — Route 1 (Untrusted Navigation) | grouped card → Route 1 | `handleDeepLink()` in `main.js` (real `dvea://navigate?url=`), plus `simulate-deeplink` / `simulate-deeplink-window` IPC handlers for in-app simulation | `vuln-redirect.html` (parent) → `vuln-redirect-route1.html`; demo popup is `fake-login.html` | Main process navigates the trusted window (or a new window) straight to an attacker URL, no allowlist. Fake login popup harvests credentials via `captured-credentials` IPC, forwarded to the parent page's "attacker view". |
-| Deep Link Hijacking — Route 2 (Path Traversal) | grouped card → Route 2 | `handleDeepLink()`'s `dvea://open?path=` branch (real), `simulate-deeplink-open` IPC handler (demo) | `vuln-redirect-route2.html` | Deep link supplies an arbitrary file path; main reads it with `fs.promises.readFile` and no path validation. Bundled `secret.txt` (`FAKE_SECRET=flag{dvea_demo_secret}`) is the demo target. |
+| Deep Link Hijacking — Deep Link → Untrusted Navigation | grouped card title → parent (`vuln-redirect.html`) → "Deep Link → Untrusted Navigation" route link | `handleDeepLink()` in `main.js` (real `dvea://navigate?url=`), plus `simulate-deeplink` / `simulate-deeplink-window` IPC handlers for in-app simulation | `vuln-redirect.html` (parent) → `vuln-redirect-route1.html`; demo popup is `fake-login.html` | Main process navigates the trusted window (or a new window) straight to an attacker URL, no allowlist. Fake login popup harvests credentials via `captured-credentials` IPC, forwarded to the parent page's "attacker view". |
+| Deep Link Hijacking — Deep Link → Path Traversal | grouped card title → parent (`vuln-redirect.html`) → "Deep Link → Path Traversal" route link | `handleDeepLink()`'s `dvea://open?path=` branch (real), `simulate-deeplink-open` IPC handler (demo) | `vuln-redirect-route2.html` | Deep link supplies an arbitrary file path; main reads it with `fs.promises.readFile` and no path validation. Bundled `secret.txt` (`FAKE_SECRET=flag{dvea_demo_secret}`) is the demo target. |
 | XSS: No Privileged APIs | Renderer XSS group | n/a (fully client-side) | `xss-no-priv.html` / `xss-no-priv.js` | `innerHTML` injection with every Electron hardening flag on — impact capped at browser-equivalent renderer XSS. |
 | XSS: Overprivileged ContextBridge | Renderer XSS group (JS-triggered, opens new window) | `openSystemXSSWindow()` / `ipcMain.on('open-system-xss', ...)` in `main.js`; handler code is `preload-systemapi.js`'s `child_process.exec` | `xss-system-api.html` / `xss-system-api.js`, window created with `sandbox: false` | Same `innerHTML` XSS pattern, but the preload exposes `window.systemAPI.runCommand` — XSS escalates directly to arbitrary shell command execution despite `contextIsolation: true`. |
 | XSS → RCE (Direct) — cf. CVE-2020-16608 | Renderer XSS group | `ipcMain.handle('xss-rce-direct', (event, code) => eval(code))` in `main.js` | `xss-rce-direct.html` / `xss-rce-direct.js` | Renderer-supplied string is `eval`'d **in the main process** with no sandbox disabled anywhere — full Node access via a vulnerable IPC handler alone. |
@@ -230,7 +235,7 @@ Nearly every module page follows the same section order inside `<div class="page
 ### Demos fire the real code path
 This is a deliberate, consistent design choice, not just a convention: demo buttons call the
 exact same IPC channel / main-process function that a real attack would use, rather than a mocked
-stand-in. E.g. "Simulate Deep Link" on Route 1 calls `simulateDeepLinkWindow`, which runs the
+stand-in. E.g. "Simulate Deep Link" on the "Deep Link → Untrusted Navigation" route calls `simulateDeepLinkWindow`, which runs the
 identical `win.loadURL(target)` main-process navigation that `handleDeepLink()` uses for a real
 `dvea://` link; the savefile demo calls the same `save-file` handler; `xss-rce-direct.js` posts
 straight to the `eval()`-backed IPC handler. Keep this invariant when adding new modules — a demo
