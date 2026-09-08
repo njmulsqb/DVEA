@@ -7,7 +7,7 @@
   </head>
   <body>
     <header class="page-header">
-      <a href="vuln-redirect.html" class="page-header-back">← Deep Link Hijacking</a>
+      <a id="back-link" class="page-header-back" href="#">← Back</a>
       <h1>Route 2 — Path Traversal</h1>
       <p class="page-header-sub">Deep link reads an arbitrary file path supplied by the attacker.</p>
     </header>
@@ -46,6 +46,26 @@
 
     </div>
 
+    <script>
+      (function () {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const from = params.get('from');
+          const back = document.getElementById('back-link');
+          if (!back) return;
+          if (from === 'index') {
+            back.href = 'index.html';
+            back.textContent = '← All Vulnerabilities';
+          } else if (from === 'parent') {
+            back.href = 'vuln-redirect.html';
+            back.textContent = '← Deep Link Hijacking';
+          } else {
+            back.href = 'vuln-redirect.html';
+            back.textContent = '← Deep Link Hijacking';
+          }
+        } catch (err) {}
+      })();
+    </script>
     <script src="../js/vuln-openfile.js"></script>
   </body>
 </html>
