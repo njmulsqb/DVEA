@@ -13,12 +13,14 @@
     "start": "electron-forge start",
     "publish": "electron-forge publish",
     "make": "electron-forge make",
-    "format": "prettier --write 'src/**/*.{js,css,html}'"
+    "format": "prettier --write 'src/**/*.{js,css,html}'",
+    "test": "playwright test"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.10.2",
     "@electron-forge/maker-deb": "^7.11.1",
     "@electron-forge/publisher-github": "^7.11.1",
+    "@playwright/test": "^1.62.1",
     "dotenv": "^17.2.3",
     "electron": "^40.2.1",
     "electron-reload": "^2.0.0-alpha.1",

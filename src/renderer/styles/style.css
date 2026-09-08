@@ -213,6 +213,9 @@ button:hover,
 }
 .checklist-item.pass { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
 .checklist-item.fail { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+/* Distinct from .pass: a confirmed-blocked outcome is not the same thing as an exploit
+   success (see Challenge 1's "try to escape" task) — same amber used by .step-badge.escalate. */
+.checklist-item.contained { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 
 /* ── Code blocks ─────────────────────────────────────────────── */
 pre {

@@ -255,6 +255,45 @@ function main() {
   }
   ipcMain.on('open-system-xss', openSystemXSSWindow);
 
+  // Challenge 1 — Contained: a genuinely hardened window (sandbox, contextIsolation,
+  // no nodeIntegration, no privileged preload bridge) so the renderer really is walled
+  // off from Node/the OS — the "try to escape" task depends on this being real, not
+  // just badge text.
+  function openXSSContainedWindow() {
+    const win = new Window({
+      file: path.join('src/renderer/pages', 'xss-no-priv.html'),
+      webPreferences: {
+        preload: path.join(__dirname, 'preload-xss-contained.js'),
+        sandbox: true,
+        contextIsolation: true,
+        nodeIntegration: false,
+      },
+    });
+
+    // The lab's config badges can't read window.process in this main world (that's the
+    // whole point of contextIsolation: true — see xss-no-priv.js). So push this window's
+    // real effective webPreferences — the same getLastWebPreferences()-derived data the
+    // Config Inspector shows (observability.js) — directly into the page via
+    // executeJavaScript once it has loaded. This is a one-way data write, not a
+    // contextBridge exposure: it adds no callable API to this world, so the
+    // zero-exposure preload (and the "Privileged bridge" badge) stay exactly that.
+    win.webContents.on('did-finish-load', () => {
+      try {
+        const entry = observability.config.windows && observability.config.windows[win.id];
+        const effective = (entry && entry.effective) || {};
+        const cfg = {
+          sandbox: !!effective.sandbox,
+          contextIsolation: !!effective.contextIsolation,
+          nodeIntegration: !!effective.nodeIntegration,
+        };
+        win.webContents.executeJavaScript(
+          `window.__dveaWindowConfig = ${JSON.stringify(cfg)}; window.dispatchEvent(new Event('dvea-config-ready'));`
+        );
+      } catch (err) {}
+    });
+  }
+  ipcMain.on('open-xss-contained', openXSSContainedWindow);
+
   ipcMain.on('open-analytics', (event, name) => {
     const analyticsWindow = new BrowserWindow({
       width: 768,

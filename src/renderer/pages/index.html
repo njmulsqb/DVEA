@@ -34,20 +34,21 @@
         </div>
 
         <div class="vuln-card vuln-card-group">
-          <div class="vuln-card-title">Renderer XSS</div>
+          <a href="renderer-xss.html" class="vuln-card-title">What Can XSS Do in Electron?</a>
           <div class="vuln-card-desc">
-            Unsanitized <code>innerHTML</code> injection across three window configurations,
-            showing how impact escalates from browser-equivalent XSS to full remote code execution.
+            The same injection, three configurations, three very different blast radii — the
+            same unsanitized <code>innerHTML</code> injection across three window configurations,
+            escalating from browser-equivalent XSS to full remote code execution.
           </div>
           <div class="vuln-sub-list">
-            <a href="xss-no-priv.html" class="vuln-sub-item">
-              XSS: No Privileged APIs — browser-equivalent, renderer only
+            <a href="#" onclick="window.api.openXSSContained(); return false;" class="vuln-sub-item">
+              Challenge 1 — Contained: hardened config; XSS is walled to the renderer
             </a>
             <a href="#" onclick="window.api.openSystemXSS(); return false;" class="vuln-sub-item">
-              XSS: Overprivileged ContextBridge — accesses shell commands via preload
+              Challenge 2 — Bridged: correct isolation, one overprivileged preload API
             </a>
             <a href="xss-rce-direct.html" class="vuln-sub-item">
-              XSS → RCE — payload eval'd in main process, full Node.js access — cf. CVE-2020-16608
+              Challenge 3 — Owned: main process evaluates renderer input with full Node access
             </a>
           </div>
         </div>

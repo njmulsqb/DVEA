@@ -2,54 +2,126 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>XSS: No Privileged APIs</title>
+    <title>Challenge 1 — Contained</title>
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
   <body>
     <header class="page-header">
       <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
-      <h1>XSS: No Privileged APIs Exposed</h1>
-      <p class="page-header-sub">Renderer-contained XSS — equivalent impact to a browser</p>
+      <h1>Challenge 1 — Contained</h1>
+      <p class="page-header-sub">XSS fires here, but the hardened config walls it to the renderer.</p>
     </header>
 
     <div class="page-wrap">
       <div class="checklist">
-        <span class="checklist-item pass">✓ NodeIntegration: false</span>
-        <span class="checklist-item pass">✓ ContextIsolation: true</span>
-        <span class="checklist-item pass">✓ Sandbox: true</span>
+        <span id="badge-sandbox" class="checklist-item">Sandbox: checking…</span>
+        <span id="badge-isolation" class="checklist-item">ContextIsolation: checking…</span>
+        <span id="badge-nodeintegration" class="checklist-item">NodeIntegration: checking…</span>
+        <span id="badge-preload" class="checklist-item">Privileged bridge: checking…</span>
       </div>
 
       <section class="panel">
         <div class="panel-header"><h2>Guide: What is happening?</h2></div>
         <div class="panel-body">
           <p>
-            User input is injected directly into the DOM via <code>innerHTML</code> without
-            sanitization. All Electron security features are enabled, so the attacker is limited
-            to the renderer process — no Node.js or IPC APIs are accessible.
+            This window's configuration badges above are read live from this actual window —
+            not hardcoded — so what they say is what's genuinely enforced here.
           </p>
-          <b>Example payload:</b>
-          <pre><code>&lt;img src=x onerror=alert(1)&gt;</code></pre>
+          <p>
+            The injection point below renders whatever you submit straight into the page via
+            <code>innerHTML</code>, unsanitized. Your script <strong>will</strong> execute.
+            But this window is hardened: sandbox on, context isolation on, no Node
+            integration, and no preload exposes any privileged API to this page. XSS here can
+            attack the page — read what's on screen, read renderer storage, phish a user
+            inside the page itself — but it cannot touch Node.js, the filesystem, or the
+            operating system. Prove what contained XSS can still do, then watch it hit the
+            wall.
+          </p>
         </div>
         <div class="xss-explanation">
-          <strong>Impact:</strong> The attacker can execute arbitrary JavaScript in the renderer
-          but cannot access the file system, OS, or Electron main process APIs. The risk is
-          equivalent to a browser XSS — session hijacking, UI redressing, or credential phishing
-          within the renderer context.
+          <strong>Objective:</strong> Using only the injection point below, complete the four
+          tasks in order of increasing ambition — steal on-page data, read renderer storage,
+          harvest a phished credential, then try to break out of the renderer entirely. No
+          payloads are given here; craft your own and watch the attacker view and task list
+          respond.
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Sensitive data on this page</h2></div>
+        <div class="panel-body">
+          <p>
+            The app renders what looks like a live session token directly into the DOM below.
+            A real app should never expose a token like this to the same context that also
+            renders untrusted input — that mistake is the point of this challenge.
+          </p>
+          <p>Session token: <code id="session-token">(loading…)</code></p>
+          <p class="text-small text-gray">
+            This window's renderer also has a value stashed in <code>localStorage</code> under
+            the key <code>dvea_secret</code> — nothing on this page reveals it directly.
+          </p>
         </div>
       </section>
 
       <section class="panel demo-panel">
-        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-header"><h2>Demo: Injection Point</h2></div>
         <div class="panel-body">
           <form id="xssForm1">
             <label for="xssInput1">Message:</label>
-            <input type="text" id="xssInput1" placeholder="<img src=x onerror=alert(1)>" />
+            <input type="text" id="xssInput1" placeholder="Type or paste your payload here" />
             <button type="submit">Inject</button>
           </form>
           <div id="xssOutput1" class="xss-output"></div>
         </div>
       </section>
 
+      <section class="panel">
+        <div class="panel-header"><h2>Attacker view</h2></div>
+        <div class="panel-body">
+          <p class="text-small text-gray">
+            What an attacker watching this page would see arrive. Your injected script is
+            what has to put something here — nothing else writes to this panel.
+          </p>
+          <ul id="attacker-log" class="xss-output"></ul>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Tasks <span id="flag-progress" class="text-small text-gray"></span></h2></div>
+        <div class="panel-body">
+          <ul class="task-list">
+            <li id="task-1" class="task-item">
+              <span id="task-1-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 1 — Steal page data.</strong>
+              Use XSS to read the session token displayed above out of the DOM and get it
+              into the attacker view.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+            <li id="task-2" class="task-item">
+              <span id="task-2-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 2 — Read renderer storage.</strong>
+              This window's <code>localStorage</code> holds a secret under
+              <code>dvea_secret</code>. Use XSS to read it and surface it in the attacker
+              view — the value you recover is itself the flag.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+            <li id="task-3" class="task-item">
+              <span id="task-3-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 3 — In-page phishing.</strong>
+              Use XSS to inject a fake login form into the page and capture a submitted
+              credential into the attacker view.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+            <li id="task-4" class="task-item">
+              <span id="task-4-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 4 — Try to escape.</strong>
+              Attempt to break out of the renderer — reach Node.js, the filesystem, or the
+              OS. Because this window is genuinely hardened, watch it fail.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+          </ul>
+        </div>
+      </section>
     </div>
 
     <script src="../js/xss-no-priv.js"></script>
