@@ -16,66 +16,59 @@
       <section class="panel">
         <div class="panel-header"><h2>Guide: What is happening?</h2></div>
         <div class="panel-body">
-          <p>
-            Browser vs Electron: In a browser an open redirect is lower severity because the
-            address bar shows the destination. In an Electron app there is no address bar,
-            so a trusted app window can be driven to attacker content with no visible signal.
-          </p>
-          <p>
-            Deep links are an unauthenticated external entry point into the installed desktop
-            app. The OS routes a <code>dvea://</code> link (from email, chat, or a webpage)
-            directly into the running application process.
-          </p>
-          <p><strong>Objective:</strong> Load attacker-controlled content in the trusted app
-            window with no visible signal to the user.</p>
-          <p>
-            The vulnerability: the main process parses the deep link and directly navigates
-            the app window to the attacker-supplied URL with no allowlist or validation.
-          </p>
-          <p><b>Deep link format:</b></p>
-          <pre><code>dvea://navigate?url=&lt;attacker&gt;</code></pre>
-        </div>
-        <div class="xss-explanation">
-          <strong>Impact:</strong> An attacker who convinces a user to click a crafted
-          <code>dvea://</code> link can make the trusted app window display attacker content
-          (e.g., a phishing page) without any address-bar signal — enabling credential harvests.
-        </div>
-      </section>
+          <section class="panel">
+            <div class="panel-header"><h2>Guide: What is happening?</h2></div>
+            <div class="panel-body">
+              <p>
+                Browser vs Electron: In a browser an open redirect is lower severity because the
+                address bar shows the destination. In an Electron app there is no address bar,
+                so a trusted app window can be driven to attacker content with no visible signal.
+              </p>
+              <p>
+                Deep links are an unauthenticated external entry point into the installed desktop
+                app. The OS routes a <code>dvea://</code> link (from email, chat, or a webpage)
+                directly into the running application process.
+              </p>
+              <p><strong>Objective:</strong> Load attacker-controlled content in the trusted app
+                window with no visible signal to the user.</p>
+              <p>
+                The vulnerability: the main process parses the deep link and directly navigates
+                the app window to the attacker-supplied URL with no allowlist or validation.
+              </p>
+              <p><b>Deep link format:</b></p>
+              <pre><code>dvea://navigate?url=&lt;attacker&gt;</code></pre>
+            </div>
+            <div class="xss-explanation">
+              <strong>Impact:</strong> An attacker who convinces a user to click a crafted
+              <code>dvea://</code> link can make the trusted app window display attacker content
+              (e.g., a phishing page) without any address-bar signal — enabling credential harvests.
+            </div>
+          </section>
 
-      <section class="panel demo-panel">
-        <div class="panel-header"><h2>Routes</h2></div>
-        <div class="panel-body">
-          <p class="text-small text-gray">This module contains multiple routes demonstrating
-            different deep-link abuse patterns. Route 1 is implemented here; Route 2 will be
-            added later.</p>
+          <section class="panel">
+            <div class="panel-header"><h2>Routes</h2></div>
+            <div class="panel-body">
+              <p class="text-small text-gray">This module contains multiple routes demonstrating
+                different deep-link abuse patterns. Click a route to open its page.</p>
 
-          <h3>Route 1 — Untrusted Navigation</h3>
-          <p>Enter a target URL and click "Simulate Deep Link". The demo calls the exact
-            vulnerable navigation path in the main process so the trusted window is navigated
-            to the supplied URL.</p>
-          <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
-            <input id="target" type="text" style="flex:1;" />
-            <button id="simulate">Simulate Deep Link</button>
-          </div>
-          <p class="text-small text-gray" style="margin-top:0.6rem;">Default demo target is a bundled
-            native-looking fake login page so you can see credential harvests locally.</p>
+              <div class="vuln-sub-list">
+                <a href="vuln-redirect-route1.html" class="vuln-sub-item">Route 1 — Untrusted Navigation</a>
+                <span class="vuln-sub-item vuln-sub-item-disabled">Route 2 — Path Traversal (coming soon)</span>
+              </div>
 
-          <div style="margin-top:1rem;">
-            <h4>Attacker view — harvested credentials</h4>
-            <div id="captured-log" style="white-space:pre-wrap; background:#f8fafc; padding:0.6rem; border-radius:6px; border:1px dashed #e2e8f0; min-height:3.2rem; font-family:monospace;">No captured credentials yet.</div>
-          </div>
-
-          <details style="margin-top:1rem;">
-            <summary><strong>Note on the deep link / OS registration</strong></summary>
-            <p>The <code>dvea://</code> scheme must be registered with the OS for deep links
-            to open the app. Packaged installs register this reliably; when running from source
-            (e.g., <code>npm start</code>) on Linux the scheme is typically not registered,
-            so clicking a <code>dvea://</code> link will fall through to the system default.
-            In development, use the "Simulate Deep Link" button — it exercises the same
-            vulnerable navigation code path as a real deep link. To demo real
-            <code>dvea://</code> links, install a packaged build so the OS routes the scheme
-            to DVEA.</p>
-          </details>
+              <details style="margin-top:1rem;">
+                <summary><strong>Note on the deep link / OS registration</strong></summary>
+                <p>The <code>dvea://</code> scheme must be registered with the OS for deep links
+                to open the app. Packaged installs register this reliably; when running from source
+                (e.g., <code>npm start</code>) on Linux the scheme is typically not registered,
+                so clicking a <code>dvea://</code> link will fall through to the system default.
+                In development, use the route demos' "Simulate Deep Link" button — they exercise the same
+                vulnerable navigation code path as a real deep link. To demo real
+                <code>dvea://</code> links, install a packaged build so the OS routes the scheme
+                to DVEA.</p>
+              </details>
+            </div>
+          </section>
         </div>
       </section>
 
