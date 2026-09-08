@@ -21,17 +21,17 @@
 
       <div class="vuln-list">
 
-        <a href="vuln-redirect.html" class="vuln-card">
+        <div class="vuln-card vuln-card-group">
           <div class="vuln-card-title">Deep Link Hijacking</div>
           <div class="vuln-card-desc">
             An unauthenticated OS deep link (dvea://) can drive the trusted app window to
             attacker-controlled content when the main process navigates without validation.
           </div>
-          <div class="vuln-tags">
-            <span class="vuln-tag">Deep Link</span>
-            <span class="vuln-tag">dvea://</span>
+          <div class="vuln-sub-list">
+            <a href="vuln-redirect-route1.html" class="vuln-sub-item">Route 1 — Untrusted Navigation</a>
+            <span class="vuln-sub-item vuln-sub-item-disabled">Route 2 — Path Traversal (coming soon)</span>
           </div>
-        </a>
+        </div>
 
         <div class="vuln-card vuln-card-group">
           <div class="vuln-card-title">Renderer XSS</div>

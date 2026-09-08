@@ -16,36 +16,33 @@
       <section class="panel">
         <div class="panel-header"><h2>Guide: What is happening?</h2></div>
         <div class="panel-body">
-          <section class="panel">
-            <div class="panel-header"><h2>Guide: What is happening?</h2></div>
-            <div class="panel-body">
-              <p>
-                Browser vs Electron: In a browser an open redirect is lower severity because the
-                address bar shows the destination. In an Electron app there is no address bar,
-                so a trusted app window can be driven to attacker content with no visible signal.
-              </p>
-              <p>
-                Deep links are an unauthenticated external entry point into the installed desktop
-                app. The OS routes a <code>dvea://</code> link (from email, chat, or a webpage)
-                directly into the running application process.
-              </p>
-              <p><strong>Objective:</strong> Load attacker-controlled content in the trusted app
-                window with no visible signal to the user.</p>
-              <p>
-                The vulnerability: the main process parses the deep link and directly navigates
-                the app window to the attacker-supplied URL with no allowlist or validation.
-              </p>
-              <p><b>Deep link format:</b></p>
-              <pre><code>dvea://navigate?url=&lt;attacker&gt;</code></pre>
-            </div>
-            <div class="xss-explanation">
-              <strong>Impact:</strong> An attacker who convinces a user to click a crafted
-              <code>dvea://</code> link can make the trusted app window display attacker content
-              (e.g., a phishing page) without any address-bar signal — enabling credential harvests.
-            </div>
-          </section>
+          <p>
+            Browser vs Electron: In a browser an open redirect is lower severity because the
+            address bar shows the destination. In an Electron app there is no address bar,
+            so a trusted app window can be driven to attacker content with no visible signal.
+          </p>
+          <p>
+            Deep links are an unauthenticated external entry point into the installed desktop
+            app. The OS routes a <code>dvea://</code> link (from email, chat, or a webpage)
+            directly into the running application process.
+          </p>
+          <p><strong>Objective:</strong> Load attacker-controlled content in the trusted app
+            window with no visible signal to the user.</p>
+          <p>
+            The vulnerability: the main process parses the deep link and directly navigates
+            the app window to the attacker-supplied URL with no allowlist or validation.
+          </p>
+          <p><b>Deep link format:</b></p>
+          <pre><code>dvea://navigate?url=&lt;attacker&gt;</code></pre>
+        </div>
+        <div class="xss-explanation">
+          <strong>Impact:</strong> An attacker who convinces a user to click a crafted
+          <code>dvea://</code> link can make the trusted app window display attacker content
+          (e.g., a phishing page) without any address-bar signal — enabling credential harvests.
+        </div>
+      </section>
 
-          <section class="panel">
+      <section class="panel">
             <div class="panel-header"><h2>Routes</h2></div>
             <div class="panel-body">
               <p class="text-small text-gray">This module contains multiple routes demonstrating
