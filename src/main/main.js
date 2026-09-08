@@ -197,6 +197,19 @@ function main() {
     }
   });
 
+  // Receive captured credentials from any renderer (the fake-login window) and
+  // forward them to the module page (mainWindow) so the demo's attacker view can
+  // display harvested credentials separately from the victim-facing window.
+  ipcMain.on('captured-credentials', (event, data) => {
+    try {
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('captured-credentials', data);
+      }
+    } catch (err) {
+      console.error('forwarding captured credentials failed:', err);
+    }
+  });
+
   ipcMain.handle('xss-rce-direct', async (event, code) => {
     try {
       const result = eval(code);

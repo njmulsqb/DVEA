@@ -18,4 +18,17 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('simulateDeepLinkWindow failed', err);
     }
   });
+
+  // Listen for harvested credentials forwarded by main and display them in the attacker view.
+  const capturedLog = document.getElementById('captured-log');
+  if (capturedLog && window.ipc && window.ipc.onCaptured) {
+    window.ipc.onCaptured((_, data) => {
+      try {
+        const pretty = JSON.stringify(data, null, 2);
+        capturedLog.textContent = pretty;
+      } catch (err) {
+        capturedLog.textContent = String(data);
+      }
+    });
+  }
 });

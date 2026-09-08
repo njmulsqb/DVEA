@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('ipc', {
   onRedirect: (cb) => ipcRenderer.on('deeplink-redirect', cb),
+  onCaptured: (cb) => ipcRenderer.on('captured-credentials', cb),
 });
 
 contextBridge.exposeInMainWorld('api', {
@@ -17,6 +18,7 @@ contextBridge.exposeInMainWorld('api', {
   resetAutoUpdate: () => ipcRenderer.invoke('reset-auto-update'),
   simulateDeepLink: (target) => ipcRenderer.invoke('simulate-deeplink', target),
   simulateDeepLinkWindow: (target) => ipcRenderer.invoke('simulate-deeplink-window', target),
+  sendCapturedCredentials: (data) => ipcRenderer.send('captured-credentials', data),
 });
 
 contextBridge.exposeInMainWorld('systemapi', {
