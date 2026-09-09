@@ -18,6 +18,7 @@ if (process.env.NODE_ENV === 'development') {
 const { shell } = require('electron');
 const fs = require('fs');
 const os = require('os');
+const crypto = require('crypto');
 const { exec, execSync } = require('child_process');
 
 const Window = require('../main/windows/Window');
@@ -112,6 +113,16 @@ const BRIDGE_CALL_FLAG = 'DVEA{bridge_command_executed}';
 // openXSSOwnedWindow below).
 const RCE_SECRET_PATH = '/tmp/dvea-rce-flag.txt';
 const RCE_HOST_FLAG = 'DVEA{full_host_compromise}';
+
+// Flagship — Stored HTML Injection → IPC Token Exfiltration. The "session token" the vulnerable
+// get-token bridge hands out. Generated fresh each launch and held ONLY here in main-process
+// memory: it is never a static literal in source (which would let a solver grep the shipped
+// app.asar for it), never written to any file, never logged. The only way to obtain its value is
+// to actually complete the chain and call the unvalidated get-token bridge from a window that has
+// the analytics preload. STORED_HTMLI_FLAG is the reward returned when a solver submits that
+// captured token back (see the submit-stored-htmli-flag handler).
+const STORED_HTMLI_TOKEN = 'sess_live_' + crypto.randomBytes(24).toString('hex');
+const STORED_HTMLI_FLAG = 'DVEA{stored_html_to_ipc_exfil}';
 
 // ── Insecure File Write lab ──────────────────────────────────────────────────
 // THE VULNERABILITY is the save-file handler at the bottom of this file: it writes a
@@ -796,8 +807,18 @@ function main() {
   } catch (err) {}
 
   ipcMain.handle('get-token', () => {
-    // No sender validation — any page in the analytics window can call this
-    return 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZHZlYS11c2VyLTAwMSIsInJvbGUiOiJhZG1pbiIsInNlc3Npb24iOiJhYmNkZWZnaGlqIn0.DVEA_DEMO_DO_NOT_USE';
+    // THE VULNERABILITY (unchanged): no sender validation — any page loaded in the analytics
+    // window can call this and receive the session token, including an attacker's redirect target.
+    return STORED_HTMLI_TOKEN;
+  });
+
+  // Flag validation for the flagship. Not part of the vulnerable chain — it only grades a solve.
+  // The solver captures STORED_HTMLI_TOKEN by completing the chain (calling get-token from the
+  // analytics/attacker window) and submits it here; an exact match returns the flag. The real
+  // token is compared in-memory and never sent to the renderer except as the get-token response.
+  ipcMain.handle('submit-stored-htmli-flag', (event, submitted) => {
+    const ok = typeof submitted === 'string' && submitted.trim() === STORED_HTMLI_TOKEN;
+    return ok ? { ok: true, flag: STORED_HTMLI_FLAG } : { ok: false };
   });
 
   // Receive corroboration messages from renderer preloads.

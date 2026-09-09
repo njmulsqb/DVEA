@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('api', {
   initFileWrite: () => ipcRenderer.invoke('filewrite-init'),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   openAnalytics: (name) => ipcRenderer.send('open-analytics', name),
+  submitStoredHtmliFlag: (token) => ipcRenderer.invoke('submit-stored-htmli-flag', token),
   startAutoUpdateServer: () => ipcRenderer.invoke('start-auto-update-server'),
   stopAutoUpdateServer: () => ipcRenderer.invoke('stop-auto-update-server'),
   checkForUpdate: (opts) => ipcRenderer.invoke('check-for-update', opts),
