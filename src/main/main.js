@@ -23,6 +23,85 @@ const { exec, execSync } = require('child_process');
 const Window = require('../main/windows/Window');
 const { sandboxed, contextIsolated } = require('process');
 const observability = require('./observability');
+
+// Wrap ipcMain.handle and ipcMain.on so invoke/handle and on/send are logged to the IPC Monitor.
+// Installed at MODULE LOAD TIME (called once immediately below), not inside main()/'ready' — a
+// handler bound to the original, unwrapped ipcMain.handle/.on before this patch runs stays
+// invisible to the monitor for its entire lifetime, since Node has already captured a reference
+// to the un-wrapped function by the time any later reassignment happens. This bit every handler
+// registered before 'ready': the whole insecure-auto-update module (required a few lines below)
+// and the trailing save-file/filewrite-init handlers at the bottom of this file. Idempotent so it
+// can't double-wrap (and therefore double-log) if ever called more than once.
+let ipcWrappingInstalled = false;
+function installIpcWrapping() {
+  if (ipcWrappingInstalled) return;
+  ipcWrappingInstalled = true;
+  try {
+    const origHandle = ipcMain.handle.bind(ipcMain);
+    ipcMain.handle = function (channel, listener) {
+      if (typeof channel === 'string' && channel.startsWith('__dvea_monitor__')) {
+        return origHandle(channel, listener);
+      }
+      const wrapped = async function (event, ...args) {
+        try {
+          const redact = !!(observability.config && observability.config.ipcRedact);
+          const serialized = observability.serializeArgs(args, redact);
+          observability.pushIpcLog({
+            ts: Date.now(),
+            direction: 'R→M',
+            kind: 'invoke',
+            channel,
+            args: serialized,
+            senderId: event && event.sender && event.sender.id,
+            frameUrl: event && event.senderFrame && event.senderFrame.url ? event.senderFrame.url : null,
+          });
+        } catch (err) {}
+        const res = await listener(event, ...args);
+        try {
+          const redact = !!(observability.config && observability.config.ipcRedact);
+          const serializedRes = observability.serializeArgs([res], redact);
+          observability.pushIpcLog({
+            ts: Date.now(),
+            direction: 'M→R',
+            kind: 'invoke-response',
+            channel,
+            args: serializedRes,
+            senderId: event && event.sender && event.sender.id,
+            frameUrl: event && event.sender && event.sender.getURL ? event.sender.getURL() : null,
+          });
+        } catch (err) {}
+        return res;
+      };
+      return origHandle(channel, wrapped);
+    };
+
+    const origOn = ipcMain.on.bind(ipcMain);
+    ipcMain.on = function (channel, listener) {
+      if (typeof channel === 'string' && channel.startsWith('__dvea_monitor__')) {
+        return origOn(channel, listener);
+      }
+      const wrapped = function (event, ...args) {
+        try {
+          const redact = !!(observability.config && observability.config.ipcRedact);
+          const serialized = observability.serializeArgs(args, redact);
+          observability.pushIpcLog({
+            ts: Date.now(),
+            direction: 'R→M',
+            kind: 'on',
+            channel,
+            args: serialized,
+            senderId: event && event.sender && event.sender.id,
+            frameUrl: event && event.senderFrame && event.senderFrame.url ? event.senderFrame.url : null,
+          });
+        } catch (err) {}
+        return listener(event, ...args);
+      };
+      return origOn(channel, wrapped);
+    };
+  } catch (err) {}
+}
+installIpcWrapping();
+
 // Challenge 2 — Bridged: fixed secret path/flags the bridge's real command execution proves
 // access to (see openXSSBridgedWindow / bridge-run-command below).
 const BRIDGE_SECRET_PATH = '/tmp/dvea-bridge-secret.txt';
@@ -224,70 +303,10 @@ function main() {
     } catch (err) {}
   });
 
-  // Wrap ipcMain.handle and ipcMain.on at startup so invoke/handle and on/send are logged.
-  try {
-    const origHandle = ipcMain.handle.bind(ipcMain);
-    ipcMain.handle = function (channel, listener) {
-      if (typeof channel === 'string' && channel.startsWith('__dvea_monitor__')) {
-        return origHandle(channel, listener);
-      }
-      const wrapped = async function (event, ...args) {
-        try {
-          const redact = !!(observability.config && observability.config.ipcRedact);
-          const serialized = observability.serializeArgs(args, redact);
-          observability.pushIpcLog({
-            ts: Date.now(),
-            direction: 'R→M',
-            kind: 'invoke',
-            channel,
-            args: serialized,
-            senderId: event && event.sender && event.sender.id,
-            frameUrl: event && event.senderFrame && event.senderFrame.url ? event.senderFrame.url : null,
-          });
-        } catch (err) {}
-        const res = await listener(event, ...args);
-        try {
-          const redact = !!(observability.config && observability.config.ipcRedact);
-          const serializedRes = observability.serializeArgs([res], redact);
-          observability.pushIpcLog({
-            ts: Date.now(),
-            direction: 'M→R',
-            kind: 'invoke-response',
-            channel,
-            args: serializedRes,
-            senderId: event && event.sender && event.sender.id,
-            frameUrl: event && event.sender && event.sender.getURL ? event.sender.getURL() : null,
-          });
-        } catch (err) {}
-        return res;
-      };
-      return origHandle(channel, wrapped);
-    };
-
-    const origOn = ipcMain.on.bind(ipcMain);
-    ipcMain.on = function (channel, listener) {
-      if (typeof channel === 'string' && channel.startsWith('__dvea_monitor__')) {
-        return origOn(channel, listener);
-      }
-      const wrapped = function (event, ...args) {
-        try {
-          const redact = !!(observability.config && observability.config.ipcRedact);
-          const serialized = observability.serializeArgs(args, redact);
-          observability.pushIpcLog({
-            ts: Date.now(),
-            direction: 'R→M',
-            kind: 'on',
-            channel,
-            args: serialized,
-            senderId: event && event.sender && event.sender.id,
-            frameUrl: event && event.senderFrame && event.senderFrame.url ? event.senderFrame.url : null,
-          });
-        } catch (err) {}
-        return listener(event, ...args);
-      };
-      return origOn(channel, wrapped);
-    };
-  } catch (err) {}
+  // ipcMain.handle/.on wrapping is installed once at module load time (installIpcWrapping(),
+  // above) so handlers registered before 'ready' — insecure-auto-update, save-file,
+  // filewrite-init — are captured too. installIpcWrapping() is idempotent; no need to call it
+  // again here.
 
   ipcMain.handle('open-external', (event, url) => {
     shell.openExternal(url);
