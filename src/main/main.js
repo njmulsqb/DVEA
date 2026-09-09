@@ -32,6 +32,15 @@ const BRIDGE_CALL_FLAG = 'DVEA{bridge_command_executed}';
 // openXSSOwnedWindow below).
 const RCE_SECRET_PATH = '/tmp/dvea-rce-flag.txt';
 const RCE_HOST_FLAG = 'DVEA{full_host_compromise}';
+// Pick the dvea:// deep link out of a process argv list. Used for both the cold-start case
+// (our own process.argv) and the already-running case (the second instance's argv), since the
+// URL's position varies: `electron .` puts a path first in development, and the OS appends the
+// URL to whatever Exec line the .desktop file declares.
+function findDeepLinkArg(argv) {
+  if (!Array.isArray(argv)) return null;
+  return argv.find((arg) => typeof arg === 'string' && arg.startsWith('dvea://')) || null;
+}
+
 // Escape untrusted text for the DIAGNOSTIC pages main builds (e.g. the "target failed to load"
 // page below). This is not a hardening of any lab — no vulnerable path uses it; it only stops a
 // malformed target string from mangling an error message the user needs to be able to read.
@@ -163,15 +172,33 @@ function main() {
     app.setAsDefaultProtocolClient('dvea');
   }
 
+  // macOS delivers deep links as an app event. Linux and Windows do not — there the URL
+  // arrives as a command-line argument, handled by the two paths below.
   app.on('open-url', (event, url) => {
     event.preventDefault();
     handleDeepLink(url);
   });
 
+  // App ALREADY running: the OS starts a second process, which the single-instance lock (see
+  // the bottom of this file) turns into this event on the first instance, handing us its argv.
   app.on('second-instance', (event, argv) => {
-    const deepLink = argv.find((arg) => arg.startsWith('dvea://'));
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+    const deepLink = findDeepLinkArg(argv);
     if (deepLink) handleDeepLink(deepLink);
   });
+
+  // App NOT running: the OS launches it with the deep link in our own argv. Nothing else reads
+  // it — 'open-url' is macOS-only and 'second-instance' by definition only fires for an
+  // instance that was already up — so without this, a cold-start deep link silently opens the
+  // app and does nothing at all. Deferred until the first page load settles so the route
+  // handlers aren't navigating a window that is still loading index.html.
+  const initialDeepLink = findDeepLinkArg(process.argv);
+  if (initialDeepLink) {
+    mainWindow.webContents.once('did-finish-load', () => handleDeepLink(initialDeepLink));
+  }
 
   // Open a new app window and navigate it directly to an attacker-supplied URL, with no
   // validation. Shared by the real dvea://navigate handler and its in-app simulator so both
@@ -660,7 +687,16 @@ ipcMain.handle('save-file', async (event, data) => {
   await fs.promises.writeFile(data.path, data.content);
 });
 
-app.on('ready', main);
+// Deep links depend on this. Without the single-instance lock, launching a dvea:// link while
+// DVEA is already open starts a SECOND, independent app process rather than signalling the
+// running one — 'second-instance' never fires, so the link is dropped and the user just gets a
+// duplicate window. Taking the lock makes the OS route the link to the instance that is already
+// up; the redundant process quits immediately without ever creating a window.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('ready', main);
+}
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();

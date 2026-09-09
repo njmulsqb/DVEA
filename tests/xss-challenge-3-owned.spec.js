@@ -15,6 +15,7 @@ const ELECTRON_BIN = path.join(
   'node_modules/electron/dist/electron' + (process.platform === 'win32' ? '.exe' : '')
 );
 const MAIN_JS_PATH = path.join(APP_DIR, 'src/main/main.js');
+const USER_DATA_DIR = path.join(require('node:os').tmpdir(), `dvea-test-xss-3-owned-${process.pid}`);
 const RCE_SECRET_PATH = '/tmp/dvea-rce-flag.txt';
 
 async function inject(win, payload) {
@@ -31,7 +32,10 @@ test.describe('Challenge 3 — Owned (XSS)', () => {
     app = await electron.launch({
       executablePath: ELECTRON_BIN,
       cwd: APP_DIR,
-      args: [APP_DIR],
+      // Isolated userData so this app instance gets its own single-instance lock (see
+      // requestSingleInstanceLock in main.js). Without it, spec files running in parallel —
+      // or a DVEA the developer already has open — collide and the launch is refused.
+      args: [APP_DIR, `--user-data-dir=${USER_DATA_DIR}`],
       // Some shells/CI runners export these for unrelated tooling; if set, Electron runs as
       // plain Node instead of launching the app, so force them off for this launch only.
       env: { ...process.env, ELECTRON_RUN_AS_NODE: '', ELECTRON_NO_ATTACH_CONSOLE: '' },
