@@ -25,8 +25,5 @@
     "electron": "^40.2.1",
     "electron-reload": "^2.0.0-alpha.1",
     "prettier": "^3.8.1"
-  },
-  "dependencies": {
-    "electron-store": "^11.0.2"
   }
 }
