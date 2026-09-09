@@ -22,6 +22,25 @@ module.exports = {
         // finds no handler and falls back to a web search. The whole Deep Link Hijacking
         // module depends on the OS routing this scheme to DVEA.
         mimeType: ['x-scheme-handler/dvea'],
+
+        // App icon for the installed .deb. Deliberately the OBJECT form, not a plain string
+        // path: electron-installer-common treats a string as a single legacy *pixmap* icon
+        // (/usr/share/pixmaps/dvea.png), which modern desktop environments often ignore — the
+        // usual reason a packaged Linux Electron app installs with a blank/generic icon even
+        // though the config looks right. Each key here is installed into the hicolor theme as
+        // /usr/share/icons/hicolor/<key>/apps/dvea.png, which is what the generated .desktop
+        // file's `Icon=dvea` line actually resolves against.
+        //
+        // Format is fixed by the installer, not a preference: numeric size keys MUST be PNG and
+        // the file's real pixel dimensions must match the key, while `scalable` MUST be SVG.
+        // Note packagerConfig.icon is intentionally NOT set — @electron/packager only applies
+        // that on Windows (.ico) and macOS (.icns), so it would do nothing for the .deb.
+        icon: {
+          '16x16': 'assets/dvea-favicon-16.png',
+          '32x32': 'assets/dvea-favicon-32.png',
+          '512x512': 'assets/dvea-icon-512.png',
+          scalable: 'assets/dvea-icon-crimson.svg',
+        },
       },
     },
    

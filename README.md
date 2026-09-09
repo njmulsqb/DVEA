@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/dvea-logo-primary-crimson.svg" alt="DVEA — Damn Vulnerable Electron App" width="420" />
+</p>
+
 # DVEA — Damn Vulnerable Electron App
 
 DVEA is a purpose-built, intentionally vulnerable [Electron](https://www.electronjs.org/) desktop
