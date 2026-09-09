@@ -375,9 +375,20 @@ The old flat `style.css` is **deleted**. Styling is now a two-file token system 
   Typing `dvea://…` into a browser **address bar** works when the scheme is registered; the earlier
   belief that it doesn't was wrong.
 - **Tests**: `npm test` → `playwright test` (`playwright.config.js`, `tests/*.spec.js`). No browser
-  projects — each spec launches the real Electron app via Playwright's `_electron`. Specs exist for
-  the three XSS challenges, both deep-link routes + a deep-link OS-registration guard, Insecure
-  File Write, and Insecure Auto-Update. Each launches with its own `--user-data-dir` so the single-instance lock doesn't make
+  projects — each spec launches the real Electron app via Playwright's `_electron`. **Every module
+  now has a spec**: the three XSS challenges, both deep-link routes + a deep-link OS-registration
+  guard, Insecure File Write, Insecure Auto-Update, openExternal Abuse, and the flagship Stored
+  HTML Injection. Two of them have module-specific constraints worth knowing:
+  `openexternal-abuse.spec.js` replaces `shell.openExternal` in the main process with a recorder
+  before anything is clicked (otherwise the tests would launch real OS protocol handlers — browser,
+  mail client — on the dev machine or in CI) and fails fast if that patch doesn't take;
+  `stored-htmli-flagship.spec.js` deliberately does **not** automate a solve — it covers the
+  challenge's primitives and guardrails (page carries no solution content, no flagship writeup in
+  the repo, the privileged window is genuinely hardened, a wrong flag submission reveals nothing,
+  the per-launch token has no static literal anywhere in the tree) and asserts the positive grading
+  path at source level, so no flag literal or solve path is committed to the repo while the
+  solution is withheld. Note it also launches *without* `--no-sandbox`, since it asserts the
+  analytics window's real hardened config. Each launches with its own `--user-data-dir` so the single-instance lock doesn't make
   parallel specs (or a running DVEA) collide. Heads-up: each spec spawns Electron processes, so a
   low `fs.inotify.max_user_instances` can make the full parallel run flaky (`sudo sysctl
   fs.inotify.max_user_instances=512`).
