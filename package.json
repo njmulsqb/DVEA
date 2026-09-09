@@ -27,8 +27,6 @@
     "prettier": "^3.8.1"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.1",
-    "electron-store": "^11.0.2",
-    "spectre.css": "^0.5.9"
+    "electron-store": "^11.0.2"
   }
 }
