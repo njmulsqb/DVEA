@@ -34,7 +34,7 @@
         </div>
 
         <div class="vuln-card vuln-card-group">
-          <a href="renderer-xss.html" class="vuln-card-title">What Can XSS Do in Electron?</a>
+          <a href="renderer-xss.html" class="vuln-card-title">What Can XSS Do in Electron? <span class="task-count">10 tasks</span></a>
           <div class="vuln-card-desc">
             The same injection, three configurations, three very different blast radii — the
             same unsanitized <code>innerHTML</code> injection across three window configurations,
@@ -42,13 +42,13 @@
           </div>
           <div class="vuln-sub-list">
             <a href="#" onclick="window.api.openXSSContained(); return false;" class="vuln-sub-item">
-              Challenge 1 — Contained: hardened config; XSS is walled to the renderer
+              <span class="task-count">4 tasks</span>Challenge 1 — Contained: hardened config; XSS is walled to the renderer
             </a>
             <a href="#" onclick="window.api.openXSSBridged(); return false;" class="vuln-sub-item">
-              Challenge 2 — Bridged: correct isolation, one overprivileged preload API
+              <span class="task-count">3 tasks</span>Challenge 2 — Bridged: correct isolation, one overprivileged preload API
             </a>
             <a href="#" onclick="window.api.openXSSOwned(); return false;" class="vuln-sub-item">
-              Challenge 3 — Owned: main process evaluates renderer input with full Node access
+              <span class="task-count">3 tasks</span>Challenge 3 — Owned: main process evaluates renderer input with full Node access
             </a>
           </div>
         </div>
@@ -69,7 +69,7 @@
         </a>
 
         <a href="savefile.html" class="vuln-card">
-          <div class="vuln-card-title">Insecure File Write</div>
+          <div class="vuln-card-title">Insecure File Write <span class="task-count">3 tasks</span></div>
           <div class="vuln-card-desc">
             An IPC handler writes renderer-supplied content to a renderer-supplied path with no
             validation, allowing arbitrary files to be overwritten on the host system.

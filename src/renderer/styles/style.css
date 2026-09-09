@@ -388,6 +388,22 @@ code {
   letter-spacing: 0.3px;
 }
 
+/* Static count of how many tasks a challenge has (not solved-progress). */
+.task-count {
+  display: inline-block;
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+  padding: 0.05rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+.vuln-card-title .task-count { margin-left: 0.45rem; vertical-align: middle; }
+.vuln-sub-item .task-count { float: right; margin-left: 0.6rem; }
+
 .vuln-sub-list {
   display: flex;
   flex-direction: column;
