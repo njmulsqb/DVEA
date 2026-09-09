@@ -30,7 +30,7 @@
 
     <table class="modtable">
       <colgroup>
-        <col class="col-id" /><col class="col-mod" /><col class="col-surface" /><col class="col-diff" /><col class="col-tasks" />
+        <col class="col-id" /><col class="col-mod" /><col class="col-surface" /><col class="col-diff" />
       </colgroup>
       <thead>
         <tr>
@@ -38,7 +38,6 @@
           <th>module</th>
           <th>surface</th>
           <th>difficulty</th>
-          <th>tasks</th>
         </tr>
       </thead>
       <tbody>
@@ -52,33 +51,29 @@
           </td>
           <td class="modrow__surface"></td>
           <td><span class="meter meter--easy"><i></i><i></i><i></i></span><span class="meter__label">Easy</span></td>
-          <td class="modrow__tasks"><span class="none">—</span></td>
         </tr>
         <tr class="modrow modrow--child" data-difficulty="easy">
           <td class="modrow__id"></td>
           <td class="modrow__mod"><a href="deep-link-untrusted-navigation.html?from=index">Deep Link → Untrusted Navigation</a></td>
           <td class="modrow__surface"></td>
           <td><span class="meter meter--easy"><i></i><i></i><i></i></span><span class="meter__label">Easy</span></td>
-          <td class="modrow__tasks"><span class="none">—</span></td>
         </tr>
         <tr class="modrow modrow--child" data-difficulty="medium">
           <td class="modrow__id"></td>
           <td class="modrow__mod"><a href="deep-link-path-traversal.html?from=index">Deep Link → Path Traversal</a></td>
           <td class="modrow__surface"></td>
           <td><span class="meter meter--medium"><i></i><i></i><i></i></span><span class="meter__label">Medium</span></td>
-          <td class="modrow__tasks"><span class="none">—</span></td>
         </tr>
 
         <!-- Insecure File Write -->
         <tr class="modrow" data-difficulty="medium">
           <td class="modrow__id">02</td>
           <td class="modrow__mod">
-            <a href="savefile.html">Insecure File Write</a>
+            <a href="savefile.html">Insecure File Write</a><span class="task-badge">3 tasks</span>
             <span class="modrow__desc">An IPC handler writes renderer-supplied content to a renderer-supplied path with no validation, allowing arbitrary files to be overwritten on the host system.</span>
           </td>
           <td class="modrow__surface"><span class="tag">IPC Abuse</span> <span class="tag">Filesystem</span></td>
           <td><span class="meter meter--medium"><i></i><i></i><i></i></span><span class="meter__label">Medium</span></td>
-          <td class="modrow__tasks"><span class="n">3</span> tasks</td>
         </tr>
 
         <!-- openExternal Abuse -->
@@ -90,52 +85,46 @@
           </td>
           <td class="modrow__surface"><span class="tag">Protocol Handling</span> <span class="tag">shell API</span></td>
           <td><span class="meter meter--medium"><i></i><i></i><i></i></span><span class="meter__label">Medium</span></td>
-          <td class="modrow__tasks"><span class="none">—</span></td>
         </tr>
 
         <!-- What Can XSS Do in Electron? -->
         <tr class="modrow modrow--group" data-difficulty="medium">
           <td class="modrow__id">04</td>
           <td class="modrow__mod">
-            <a href="renderer-xss.html">What Can XSS Do in Electron?</a>
+            <a href="renderer-xss.html">What Can XSS Do in Electron?</a><span class="task-badge">10 tasks</span>
             <span class="modrow__desc">The same injection, three configurations, three very different blast radii — the same unsanitized <code>innerHTML</code> injection across three window configurations, escalating from browser-equivalent XSS to full remote code execution.</span>
           </td>
           <td class="modrow__surface"></td>
           <td><span class="meter meter--medium"><i></i><i></i><i></i></span><span class="meter__label">Medium</span></td>
-          <td class="modrow__tasks"><span class="n">10</span> tasks</td>
         </tr>
         <tr class="modrow modrow--child" data-difficulty="medium">
           <td class="modrow__id"></td>
-          <td class="modrow__mod"><a href="#" onclick="window.api.openXSSContained(); return false;">Challenge 1 — Contained: hardened config; XSS is walled to the renderer</a></td>
+          <td class="modrow__mod"><a href="#" onclick="window.api.openXSSContained(); return false;">Challenge 1 — Contained: hardened config; XSS is walled to the renderer</a><span class="task-badge">4 tasks</span></td>
           <td class="modrow__surface"></td>
           <td><span class="meter meter--medium"><i></i><i></i><i></i></span><span class="meter__label">Medium</span></td>
-          <td class="modrow__tasks"><span class="n">4</span> tasks</td>
         </tr>
         <tr class="modrow modrow--child" data-difficulty="hard">
           <td class="modrow__id"></td>
-          <td class="modrow__mod"><a href="#" onclick="window.api.openXSSBridged(); return false;">Challenge 2 — Bridged: correct isolation, one overprivileged preload API</a></td>
+          <td class="modrow__mod"><a href="#" onclick="window.api.openXSSBridged(); return false;">Challenge 2 — Bridged: correct isolation, one overprivileged preload API</a><span class="task-badge">3 tasks</span></td>
           <td class="modrow__surface"></td>
           <td><span class="meter meter--hard"><i></i><i></i><i></i></span><span class="meter__label">Hard</span></td>
-          <td class="modrow__tasks"><span class="n">3</span> tasks</td>
         </tr>
         <tr class="modrow modrow--child" data-difficulty="hard">
           <td class="modrow__id"></td>
-          <td class="modrow__mod"><a href="#" onclick="window.api.openXSSOwned(); return false;">Challenge 3 — Owned: main process evaluates renderer input with full Node access</a></td>
+          <td class="modrow__mod"><a href="#" onclick="window.api.openXSSOwned(); return false;">Challenge 3 — Owned: main process evaluates renderer input with full Node access</a><span class="task-badge">3 tasks</span></td>
           <td class="modrow__surface"></td>
           <td><span class="meter meter--hard"><i></i><i></i><i></i></span><span class="meter__label">Hard</span></td>
-          <td class="modrow__tasks"><span class="n">3</span> tasks</td>
         </tr>
 
         <!-- Insecure Auto-Update -->
         <tr class="modrow" data-difficulty="hard">
           <td class="modrow__id">05</td>
           <td class="modrow__mod">
-            <a href="insecure-auto-update.html">Insecure Auto-Update — cf. CVE-2024-39698</a>
+            <a href="insecure-auto-update.html">Insecure Auto-Update — cf. CVE-2024-39698</a><span class="task-badge">3 tasks</span>
             <span class="modrow__desc">Simulated auto-updater that downloads and executes updates from a configurable feed. Demonstrates insecure feed transport and missing signature/integrity checks.</span>
           </td>
           <td class="modrow__surface"><span class="tag">Updater</span> <span class="tag">HTTP/HTTPS</span></td>
           <td><span class="meter meter--hard"><i></i><i></i><i></i></span><span class="meter__label">Hard</span></td>
-          <td class="modrow__tasks"><span class="n">3</span> tasks</td>
         </tr>
 
       </tbody>
@@ -150,7 +139,7 @@
     </div>
     <table class="modtable" style="margin-top:0">
       <colgroup>
-        <col class="col-id" /><col class="col-mod" /><col class="col-surface" /><col class="col-diff" /><col class="col-tasks" />
+        <col class="col-id" /><col class="col-mod" /><col class="col-surface" /><col class="col-diff" />
       </colgroup>
       <tbody>
         <!-- Stored HTML Injection (flagship) -->
@@ -162,7 +151,6 @@
           </td>
           <td class="modrow__surface"><span class="tag">HTML Injection</span> <span class="tag">CSP Bypass</span> <span class="tag">IPC</span></td>
           <td><span class="meter meter--insane"><i></i><i></i><i></i></span><span class="meter__label">Insane</span></td>
-          <td class="modrow__tasks"><span class="none">—</span></td>
         </tr>
       </tbody>
     </table>

@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <title>Deep Link → Untrusted Navigation</title>
-    <link rel="stylesheet" href="../styles/style.css" />
+    <link rel="stylesheet" href="../styles/theme.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
   </head>
   <body>
     <header class="page-header">
@@ -46,7 +47,7 @@
 
           <div style="margin-top:1rem;">
             <h4>Attacker view — harvested credentials</h4>
-            <div id="captured-log" style="white-space:pre-wrap; background:#f8fafc; padding:0.6rem; border-radius:6px; border:1px dashed #e2e8f0; min-height:3.2rem; font-family:monospace;">No captured credentials yet.</div>
+            <div id="captured-log" class="io-box" style="min-height:3.2rem;">No captured credentials yet.</div>
           </div>
 
           <details style="margin-top:1.25rem;">
@@ -56,7 +57,7 @@
               navigation path a real deep link would use, without needing the OS to route one.</p>
               <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
                 <input id="target" type="text" style="flex:1;" placeholder="https://example.com — or paste a full dvea://navigate?url=… link" />
-                <button id="simulate">Simulate Deep Link</button>
+                <button id="simulate" class="btn--primary">Simulate Deep Link</button>
               </div>
               <div id="simulate-status" class="text-small text-gray" style="margin-top:0.5rem; min-height:1.2rem;"></div>
             </div>

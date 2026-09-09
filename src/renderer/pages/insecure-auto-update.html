@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <title>Insecure Auto-Update (cf. CVE-2024-39698)</title>
-    <link rel="stylesheet" href="../styles/style.css" />
+    <link rel="stylesheet" href="../styles/theme.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
   </head>
   <body>
     <header class="page-header">
@@ -54,7 +55,7 @@
           rejected. Work out <em>which</em> feed and mode to use yourself — nothing here hands you
           the exploit.
         </div>
-        <div class="xss-explanation" style="border-left-color:#b91c1c;">
+        <div class="xss-explanation xss-explanation--critical">
           <strong>This genuinely runs code.</strong> Starting the server opens real local HTTP/HTTPS
           listeners, and a successful VULNERABLE update <code>eval()</code>s a payload in the main
           process that writes marker files under <code>/tmp</code> (and reads a planted decoy
@@ -103,11 +104,11 @@
           </div>
 
           <div style="margin-top:1rem">
-            <button id="check-update">Check For Updates</button>
+            <button id="check-update" class="btn--primary">Check For Updates</button>
           </div>
 
           <div style="margin-top:1rem">
-            <pre id="log" style="height:200px;overflow:auto;background:#111;color:#eee;padding:1rem;border-radius:6px"></pre>
+            <pre id="log" class="log-pre" style="height:200px"></pre>
           </div>
         </div>
       </section>

@@ -44,14 +44,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!banner) return;
     if (b.ok) {
       banner.textContent = b.banner;
-      banner.style.background = '#eef2ff';
-      banner.style.borderColor = '#c7d2fe';
+      banner.classList.remove('bad');
     } else {
       // The config was overwritten with something the app can't parse — that's still the app's
       // behavior changing from a file write, just into a broken state.
       banner.textContent = '⚠ config unreadable: ' + (b.error || 'unknown error');
-      banner.style.background = '#fef2f2';
-      banner.style.borderColor = '#fecaca';
+      banner.classList.add('bad');
     }
   }
 
@@ -84,11 +82,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const state = await window.api.saveFile({ path, content });
       status.textContent = 'File written to: ' + (state && state.resolved ? state.resolved : path);
-      status.style.color = 'green';
+      status.className = 'status-ok';
       applyState(state);
     } catch (err) {
       status.textContent = 'Error: ' + (err && err.message ? err.message : err);
-      status.style.color = 'red';
+      status.className = 'status-err';
     }
   });
 });

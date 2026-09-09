@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <title>Deep Link → Path Traversal (Arbitrary File Read)</title>
-    <link rel="stylesheet" href="../styles/style.css" />
+    <link rel="stylesheet" href="../styles/theme.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
   </head>
   <body>
     <header class="page-header">
@@ -43,8 +44,7 @@
 
           <div style="margin-top:1rem;">
             <h4>File contents / result</h4>
-            <div id="file-output" style="white-space:pre-wrap; background:#f8fafc; padding:0.6rem; border-radius:6px; border:1px dashed #e2e8f0; min-height:6rem; font-family:monospace;
-            "></div>
+            <div id="file-output" class="io-box" style="min-height:6rem;"></div>
           </div>
 
           <details style="margin-top:1.25rem;">
@@ -54,7 +54,7 @@
               file-read path a real deep link would use, without needing the OS to route one.</p>
               <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
                 <input id="path" type="text" style="flex:1;" placeholder="File path"/>
-                <button id="simulate-open">Simulate Deep Link</button>
+                <button id="simulate-open" class="btn--primary">Simulate Deep Link</button>
               </div>
             </div>
           </details>

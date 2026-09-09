@@ -3,18 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <title>DVEA — Sign In</title>
-    <link rel="stylesheet" href="../styles/style.css" />
-    <style>
-      /* Ensure inputs size correctly inside the card */
-      *, *::before, *::after { box-sizing: border-box; }
-      .login-box { max-width:420px; margin:4rem auto; padding:1.5rem; border:1px solid #e6e6e6; border-radius:10px; background:#fff; box-shadow:0 6px 18px rgba(16,24,40,0.06); }
-      .login-box h2 { margin-top:0; font-size:1.25rem; }
-      .muted { color:#475569; margin:0.25rem 0 0 0; }
-      .login-field { display:block; width:100%; margin:0.25rem 0 0.75rem 0; padding:0.65rem 0.75rem; border:1px solid #e6e6e6; border-radius:6px; font-size:0.95rem; }
-      .primary { background:#1f6feb; color:#fff; border:0; padding:0.6rem 0.9rem; border-radius:6px; cursor:pointer; }
-      #cancel { background:transparent; border:1px solid #cbd5e1; padding:0.55rem 0.85rem; border-radius:6px; cursor:pointer; }
-      #captured { white-space:pre-wrap; background:#f8fafc; padding:0.75rem; border-radius:6px; border:1px dashed #e2e8f0; font-family:monospace; font-size:0.9rem; color:#0f172a; }
-    </style>
+    <link rel="stylesheet" href="../styles/theme.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
   </head>
   <body>
     <div class="page-wrap">
@@ -27,7 +17,7 @@
           <label style="display:block; font-size:0.9rem; margin:0.5rem 0 0.25rem 0;">Password</label>
           <input name="password" type="password" placeholder="Password" class="login-field" />
           <div style="display:flex; gap:0.5rem; margin-top:1.25rem;">
-            <button type="submit" class="primary">Sign In</button>
+            <button type="submit" class="primary btn--primary">Sign In</button>
           </div>
         </form>
       </div>
