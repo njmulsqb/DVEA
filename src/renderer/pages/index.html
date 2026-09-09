@@ -2,137 +2,189 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>DVEA – Vulnerabilities</title>
-    <link rel="stylesheet" href="../styles/style.css" />
+    <title>DVEA · vulnerabilities</title>
+    <link rel="stylesheet" href="../styles/theme.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
   </head>
-  <body>
-    <header class="app-header">
-      <div class="header-inner">
-        <span class="header-icon">🛡️</span>
-        <div>
-          <h1>DVEA</h1>
-          <p>Damn Vulnerable Electron App — an intentionally insecure app for learning Electron security</p>
-        </div>
+  <body class="page">
+    <div class="chrome-bar">
+      <span class="chrome-bar__mark">◆</span>
+      <span class="chrome-bar__word">DVEA</span>
+      <span class="chrome-bar__path">~/modules</span>
+      <span class="chrome-bar__spacer"></span>
+      <span class="chrome-bar__meta">6 modules</span>
+      <span class="chrome-bar__status"><span class="live-dot"></span>hooks armed</span>
+    </div>
+
+    <div class="index-hero">
+      <h1 class="index-hero__title">Damn Vulnerable<br />Electron App</h1>
+      <p class="index-hero__sub">An intentionally insecure app for learning Electron security</p>
+    </div>
+
+    <div class="filter-strip" id="filter-strip">
+      <button class="filter-strip__item is-active" data-filter="all">all</button>
+      <button class="filter-strip__item" data-filter="easy">easy</button>
+      <button class="filter-strip__item" data-filter="medium">medium</button>
+      <button class="filter-strip__item" data-filter="hard">hard</button>
+    </div>
+
+    <table class="modtable">
+      <colgroup>
+        <col class="col-id" /><col class="col-mod" /><col class="col-surface" /><col class="col-diff" /><col class="col-tasks" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th>id</th>
+          <th>module</th>
+          <th>surface</th>
+          <th>difficulty</th>
+          <th>tasks</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- Deep Link Hijacking -->
+        <tr class="modrow modrow--group" data-difficulty="easy">
+          <td class="modrow__id">01</td>
+          <td class="modrow__mod">
+            <a href="deep-link-hijacking.html">Deep Link Hijacking</a>
+            <span class="modrow__desc">An unauthenticated OS deep link (dvea://) can drive the trusted app window to attacker-controlled content when the main process navigates without validation.</span>
+          </td>
+          <td class="modrow__surface"></td>
+          <td><span class="meter meter--easy"><i></i><i></i><i></i></span><span class="meter__label">Easy</span></td>
+          <td class="modrow__tasks"><span class="none">—</span></td>
+        </tr>
+        <tr class="modrow modrow--child" data-difficulty="easy">
+          <td class="modrow__id"></td>
+          <td class="modrow__mod"><a href="deep-link-untrusted-navigation.html?from=index">Deep Link → Untrusted Navigation</a></td>
+          <td class="modrow__surface"></td>
+          <td><span class="meter meter--easy"><i></i><i></i><i></i></span><span class="meter__label">Easy</span></td>
+          <td class="modrow__tasks"><span class="none">—</span></td>
+        </tr>
+        <tr class="modrow modrow--child" data-difficulty="medium">
+          <td class="modrow__id"></td>
+          <td class="modrow__mod"><a href="deep-link-path-traversal.html?from=index">Deep Link → Path Traversal</a></td>
+          <td class="modrow__surface"></td>
+          <td><span class="meter meter--medium"><i></i><i></i><i></i></span><span class="meter__label">Medium</span></td>
+          <td class="modrow__tasks"><span class="none">—</span></td>
+        </tr>
+
+        <!-- Insecure File Write -->
+        <tr class="modrow" data-difficulty="medium">
+          <td class="modrow__id">02</td>
+          <td class="modrow__mod">
+            <a href="savefile.html">Insecure File Write</a>
+            <span class="modrow__desc">An IPC handler writes renderer-supplied content to a renderer-supplied path with no validation, allowing arbitrary files to be overwritten on the host system.</span>
+          </td>
+          <td class="modrow__surface"><span class="tag">IPC Abuse</span> <span class="tag">Filesystem</span></td>
+          <td><span class="meter meter--medium"><i></i><i></i><i></i></span><span class="meter__label">Medium</span></td>
+          <td class="modrow__tasks"><span class="n">3</span> tasks</td>
+        </tr>
+
+        <!-- openExternal Abuse -->
+        <tr class="modrow" data-difficulty="medium">
+          <td class="modrow__id">03</td>
+          <td class="modrow__mod">
+            <a href="openexternal.html">openExternal Abuse — cf. CVE-2020-25019</a>
+            <span class="modrow__desc">Unvalidated URLs passed to <code>shell.openExternal()</code> trigger arbitrary OS protocol handlers — browser, mail client, or any custom protocol registered on the system.</span>
+          </td>
+          <td class="modrow__surface"><span class="tag">Protocol Handling</span> <span class="tag">shell API</span></td>
+          <td><span class="meter meter--medium"><i></i><i></i><i></i></span><span class="meter__label">Medium</span></td>
+          <td class="modrow__tasks"><span class="none">—</span></td>
+        </tr>
+
+        <!-- What Can XSS Do in Electron? -->
+        <tr class="modrow modrow--group" data-difficulty="medium">
+          <td class="modrow__id">04</td>
+          <td class="modrow__mod">
+            <a href="renderer-xss.html">What Can XSS Do in Electron?</a>
+            <span class="modrow__desc">The same injection, three configurations, three very different blast radii — the same unsanitized <code>innerHTML</code> injection across three window configurations, escalating from browser-equivalent XSS to full remote code execution.</span>
+          </td>
+          <td class="modrow__surface"></td>
+          <td><span class="meter meter--medium"><i></i><i></i><i></i></span><span class="meter__label">Medium</span></td>
+          <td class="modrow__tasks"><span class="n">10</span> tasks</td>
+        </tr>
+        <tr class="modrow modrow--child" data-difficulty="medium">
+          <td class="modrow__id"></td>
+          <td class="modrow__mod"><a href="#" onclick="window.api.openXSSContained(); return false;">Challenge 1 — Contained: hardened config; XSS is walled to the renderer</a></td>
+          <td class="modrow__surface"></td>
+          <td><span class="meter meter--medium"><i></i><i></i><i></i></span><span class="meter__label">Medium</span></td>
+          <td class="modrow__tasks"><span class="n">4</span> tasks</td>
+        </tr>
+        <tr class="modrow modrow--child" data-difficulty="hard">
+          <td class="modrow__id"></td>
+          <td class="modrow__mod"><a href="#" onclick="window.api.openXSSBridged(); return false;">Challenge 2 — Bridged: correct isolation, one overprivileged preload API</a></td>
+          <td class="modrow__surface"></td>
+          <td><span class="meter meter--hard"><i></i><i></i><i></i></span><span class="meter__label">Hard</span></td>
+          <td class="modrow__tasks"><span class="n">3</span> tasks</td>
+        </tr>
+        <tr class="modrow modrow--child" data-difficulty="hard">
+          <td class="modrow__id"></td>
+          <td class="modrow__mod"><a href="#" onclick="window.api.openXSSOwned(); return false;">Challenge 3 — Owned: main process evaluates renderer input with full Node access</a></td>
+          <td class="modrow__surface"></td>
+          <td><span class="meter meter--hard"><i></i><i></i><i></i></span><span class="meter__label">Hard</span></td>
+          <td class="modrow__tasks"><span class="n">3</span> tasks</td>
+        </tr>
+
+        <!-- Insecure Auto-Update -->
+        <tr class="modrow" data-difficulty="hard">
+          <td class="modrow__id">05</td>
+          <td class="modrow__mod">
+            <a href="insecure-auto-update.html">Insecure Auto-Update — cf. CVE-2024-39698</a>
+            <span class="modrow__desc">Simulated auto-updater that downloads and executes updates from a configurable feed. Demonstrates insecure feed transport and missing signature/integrity checks.</span>
+          </td>
+          <td class="modrow__surface"><span class="tag">Updater</span> <span class="tag">HTTP/HTTPS</span></td>
+          <td><span class="meter meter--hard"><i></i><i></i><i></i></span><span class="meter__label">Hard</span></td>
+          <td class="modrow__tasks"><span class="n">3</span> tasks</td>
+        </tr>
+
+      </tbody>
+    </table>
+
+    <div class="toolbody" style="padding-bottom:8px">
+      <div class="sec sec--brand" style="margin-top:8px">
+        <span class="sec__num">★</span>
+        <span class="sec__label">Flagship Challenge</span>
+        <span class="sec__rule"></span>
       </div>
-    </header>
+    </div>
+    <table class="modtable" style="margin-top:0">
+      <colgroup>
+        <col class="col-id" /><col class="col-mod" /><col class="col-surface" /><col class="col-diff" /><col class="col-tasks" />
+      </colgroup>
+      <tbody>
+        <!-- Stored HTML Injection (flagship) -->
+        <tr class="modrow modrow--flagship" data-difficulty="hard">
+          <td class="modrow__id">06</td>
+          <td class="modrow__mod">
+            <a href="stored-htmli.html"><span class="tag tag--brand">★ Flagship</span> Stored HTML Injection → IPC Token Exfiltration</a>
+            <span class="modrow__desc">A stored display name is rendered via <code>innerHTML</code> in an analytics window. A <code>&lt;meta http-equiv="refresh"&gt;</code> payload bypasses CSP and redirects the window to an attacker page that calls an unvalidated IPC bridge to steal the session token.</span>
+          </td>
+          <td class="modrow__surface"><span class="tag">HTML Injection</span> <span class="tag">CSP Bypass</span> <span class="tag">IPC</span></td>
+          <td><span class="meter meter--insane"><i></i><i></i><i></i></span><span class="meter__label">Insane</span></td>
+          <td class="modrow__tasks"><span class="none">—</span></td>
+        </tr>
+      </tbody>
+    </table>
 
-    <main class="page-container">
-      <p class="section-label">Choose a vulnerability to explore</p>
+    <footer class="index-footer">Damn Vulnerable Electron App &copy; 2026</footer>
 
-      <div class="vuln-list">
-
-        <div class="vuln-card vuln-card-group">
-          <a href="deep-link-hijacking.html" class="vuln-card-title">Deep Link Hijacking</a>
-          <div class="vuln-card-desc">
-            An unauthenticated OS deep link (dvea://) can drive the trusted app window to
-            attacker-controlled content when the main process navigates without validation.
-          </div>
-          <div class="vuln-tags">
-            <span class="vuln-tag vuln-tag--difficulty difficulty-easy">Easy</span>
-          </div>
-          <div class="vuln-sub-list">
-            <a href="deep-link-untrusted-navigation.html?from=index" class="vuln-sub-item">
-              <span class="vuln-tag vuln-tag--difficulty difficulty-easy">Easy</span>Deep Link → Untrusted Navigation
-            </a>
-            <a href="deep-link-path-traversal.html?from=index" class="vuln-sub-item">
-              <span class="vuln-tag vuln-tag--difficulty difficulty-medium">Medium</span>Deep Link → Path Traversal
-            </a>
-          </div>
-        </div>
-
-        <a href="savefile.html" class="vuln-card">
-          <div class="vuln-card-title">Insecure File Write <span class="task-count">3 tasks</span></div>
-          <div class="vuln-card-desc">
-            An IPC handler writes renderer-supplied content to a renderer-supplied path with no
-            validation, allowing arbitrary files to be overwritten on the host system.
-          </div>
-          <div class="vuln-tags">
-            <span class="vuln-tag vuln-tag--difficulty difficulty-medium">Medium</span>
-            <span class="vuln-tag">IPC Abuse</span>
-            <span class="vuln-tag">Filesystem</span>
-          </div>
-        </a>
-
-        <a href="openexternal.html" class="vuln-card">
-          <div class="vuln-card-title">openExternal Abuse — cf. CVE-2020-25019</div>
-          <div class="vuln-card-desc">
-            Unvalidated URLs passed to <code>shell.openExternal()</code> trigger arbitrary OS
-            protocol handlers — browser, mail client, or any custom protocol registered on
-            the system.
-          </div>
-          <div class="vuln-tags">
-            <span class="vuln-tag vuln-tag--difficulty difficulty-medium">Medium</span>
-            <span class="vuln-tag">Protocol Handling</span>
-            <span class="vuln-tag">shell API</span>
-          </div>
-        </a>
-
-        <div class="vuln-card vuln-card-group">
-          <a href="renderer-xss.html" class="vuln-card-title">What Can XSS Do in Electron? <span class="task-count">10 tasks</span></a>
-          <div class="vuln-card-desc">
-            The same injection, three configurations, three very different blast radii — the
-            same unsanitized <code>innerHTML</code> injection across three window configurations,
-            escalating from browser-equivalent XSS to full remote code execution.
-          </div>
-          <div class="vuln-tags">
-            <span class="vuln-tag vuln-tag--difficulty difficulty-medium">Medium</span>
-          </div>
-          <div class="vuln-sub-list">
-            <a href="#" onclick="window.api.openXSSContained(); return false;" class="vuln-sub-item">
-              <span class="task-count">4 tasks</span><span class="vuln-tag vuln-tag--difficulty difficulty-medium">Medium</span>Challenge 1 — Contained: hardened config; XSS is walled to the renderer
-            </a>
-            <a href="#" onclick="window.api.openXSSBridged(); return false;" class="vuln-sub-item">
-              <span class="task-count">3 tasks</span><span class="vuln-tag vuln-tag--difficulty difficulty-hard">Hard</span>Challenge 2 — Bridged: correct isolation, one overprivileged preload API
-            </a>
-            <a href="#" onclick="window.api.openXSSOwned(); return false;" class="vuln-sub-item">
-              <span class="task-count">3 tasks</span><span class="vuln-tag vuln-tag--difficulty difficulty-hard">Hard</span>Challenge 3 — Owned: main process evaluates renderer input with full Node access
-            </a>
-          </div>
-        </div>
-
-        <a href="insecure-auto-update.html" class="vuln-card">
-          <div class="vuln-card-title">Insecure Auto-Update — cf. CVE-2024-39698 <span class="task-count">3 tasks</span></div>
-          <div class="vuln-card-desc">
-            Simulated auto-updater that downloads and executes updates from a configurable feed.
-            Demonstrates insecure feed transport and missing signature/integrity checks.
-          </div>
-          <div class="vuln-tags">
-            <span class="vuln-tag vuln-tag--difficulty difficulty-hard">Hard</span>
-            <span class="vuln-tag">Updater</span>
-            <span class="vuln-tag">HTTP/HTTPS</span>
-          </div>
-        </a>
-
-      </div>
-
-      <p class="section-label section-label--flagship">Flagship Challenge</p>
-
-      <div class="vuln-list">
-
-        <a href="stored-htmli.html" class="vuln-card vuln-card--flagship">
-          <div class="vuln-card-title">
-            <span class="vuln-tag vuln-tag--flagship">★ Flagship</span>
-            Stored HTML Injection → IPC Token Exfiltration
-          </div>
-          <div class="vuln-card-desc">
-            A stored display name is rendered via <code>innerHTML</code> in an analytics window.
-            A <code>&lt;meta http-equiv="refresh"&gt;</code> payload bypasses CSP and redirects
-            the window to an attacker page that calls an unvalidated IPC bridge to steal the
-            session token.
-          </div>
-          <div class="vuln-tags">
-            <span class="vuln-tag vuln-tag--difficulty difficulty-insane">Insane</span>
-            <span class="vuln-tag">HTML Injection</span>
-            <span class="vuln-tag">CSP Bypass</span>
-            <span class="vuln-tag">IPC</span>
-          </div>
-        </a>
-
-      </div>
-    </main>
-
-    <footer class="app-footer">
-      Damn Vulnerable Electron App &copy; 2026
-    </footer>
+    <script>
+      // Visual filter only — shows/hides rows by difficulty. No app behavior touched.
+      (function () {
+        const strip = document.getElementById('filter-strip');
+        if (!strip) return;
+        strip.addEventListener('click', (e) => {
+          const btn = e.target.closest('.filter-strip__item');
+          if (!btn) return;
+          const filter = btn.getAttribute('data-filter');
+          strip.querySelectorAll('.filter-strip__item').forEach((b) => b.classList.toggle('is-active', b === btn));
+          document.querySelectorAll('.modrow').forEach((row) => {
+            const show = filter === 'all' || row.getAttribute('data-difficulty') === filter;
+            row.style.display = show ? '' : 'none';
+          });
+        });
+      })();
+    </script>
   </body>
 </html>

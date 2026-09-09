@@ -1,29 +1,62 @@
-// Subscribe to monitor updates exposed by preload-panel.js
-const lastEl = document.getElementById('lastUpdate');
+// Subscribe to monitor updates exposed by preload-panel.js.
+// Capture wiring (monitor.onUpdate + the client-side __dvea_monitor__ / ipc-monitor-preload
+// filter) is unchanged — only the rendering was rebuilt to the terminal aesthetic.
+const lastEl = document.getElementById('last-update');
+const countEl = document.getElementById('ipc-count');
 const storeEl = document.getElementById('store');
 const ipcLogContainer = document.getElementById('ipc-log-container');
 const ipcLogEl = document.getElementById('ipc-log');
 
+// Classify a log row's accent by IPC direction/kind for the terminal log treatment.
+function loglineModifier(e) {
+  const dir = e.direction || '';
+  const kind = e.kind || '';
+  if (kind === 'invoke-response') return 'ok';
+  if (dir === 'R→M') return 'info';
+  if (dir === 'M→R') return 'muted';
+  return 'muted';
+}
+
 function renderIpcLog(entries) {
   if (!ipcLogEl) return;
-  // Determine if the user is near the bottom before rendering
-  const wasNearBottom = (ipcLogContainer.scrollHeight - ipcLogContainer.scrollTop - ipcLogContainer.clientHeight) < 40;
+  const wasNearBottom =
+    ipcLogContainer.scrollHeight - ipcLogContainer.scrollTop - ipcLogContainer.clientHeight < 40;
 
-  // Render entries as list items
   ipcLogEl.innerHTML = '';
-  for (const e of entries) {
-    const li = document.createElement('li');
-    const time = new Date(e.ts).toLocaleTimeString();
-    const chan = e.channel || '';
-    const kind = e.kind || '';
-    const dir = e.direction || '';
-    const sender = e.senderId != null ? `#${e.senderId}` : '';
-    const args = e.args ? e.args.join(' ') : '';
-    li.textContent = `[${time}] ${dir} ${kind} ${chan} ${sender} ${args}`;
-    ipcLogEl.appendChild(li);
+  if (!entries.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-note';
+    empty.textContent = 'no ipc traffic captured yet';
+    ipcLogEl.appendChild(empty);
   }
 
-  // After rendering, if the view was near bottom, scroll to bottom
+  for (const e of entries) {
+    const row = document.createElement('div');
+    row.className = 'logline logline--' + loglineModifier(e);
+
+    const ts = document.createElement('span');
+    ts.className = 'logline__ts';
+    ts.textContent = new Date(e.ts).toLocaleTimeString();
+
+    const tag = document.createElement('span');
+    tag.className = 'logline__tag';
+    const dir = e.direction || '';
+    const kind = e.kind || '';
+    tag.textContent = (dir + ' ' + kind).trim();
+
+    const msg = document.createElement('span');
+    msg.className = 'logline__msg';
+    const chan = e.channel || '';
+    const sender = e.senderId != null ? '#' + e.senderId : '';
+    const args = e.args ? e.args.join(' ') : '';
+    msg.textContent = [chan, sender, args].filter(Boolean).join('  ');
+
+    row.appendChild(ts);
+    row.appendChild(tag);
+    row.appendChild(msg);
+    ipcLogEl.appendChild(row);
+  }
+
   if (wasNearBottom) {
     ipcLogContainer.scrollTop = ipcLogContainer.scrollHeight;
   }
@@ -32,10 +65,8 @@ function renderIpcLog(entries) {
 if (window.monitor && window.monitor.onUpdate) {
   window.monitor.onUpdate((payload) => {
     try {
-      lastEl.textContent = new Date(payload.ts).toLocaleString();
-      // show config in the store block
+      lastEl.textContent = new Date(payload.ts).toLocaleTimeString();
       storeEl.textContent = JSON.stringify(payload.config || {}, null, 2);
-      // render ipc log entries specifically and keep user's scroll position if they scrolled up
       const entries = (payload.ipcLog || []).filter((e) => {
         // defensive client-side filter: exclude plumbing channel entries
         if (!e || !e.channel) return true;
@@ -43,6 +74,7 @@ if (window.monitor && window.monitor.onUpdate) {
         if (String(e.channel).startsWith('ipc-monitor-preload')) return false;
         return true;
       });
+      if (countEl) countEl.textContent = entries.length + ' events';
       renderIpcLog(entries);
     } catch (err) {
       storeEl.textContent = String(payload);

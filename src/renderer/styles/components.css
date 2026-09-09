@@ -1,0 +1,506 @@
+/* ============================================================================
+   DVEA — components.css
+   "Terminal manpage" component layer (docs/DESIGN_SPEC.md §03/§04). Colors are
+   referenced through var(--…) from theme.css ONLY — this file names no colors.
+   ============================================================================ */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg-app);
+  color: var(--text-body);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent-text); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+/* ── Layout: full-bleed chrome/tables, capped content measure ──────────────── */
+.page { min-height: 100vh; }
+.measure {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--page-pad-y) var(--page-pad-x);
+}
+
+/* ── Chrome bar (§04 .chrome-bar) ──────────────────────────────────────────── */
+.chrome-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 8px var(--page-pad-x);
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-panel);
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+.chrome-bar__mark { color: var(--accent-text); font-weight: 700; }
+.chrome-bar__word {
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.chrome-bar__path { color: var(--text-muted); }
+.chrome-bar__spacer { flex: 1; }
+.chrome-bar__meta { color: var(--text-faint); }
+.chrome-bar__status { color: var(--text-body); display: inline-flex; align-items: center; gap: 6px; }
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 var(--focus-ring);
+  animation: live-pulse 1.6s var(--ease) infinite;
+}
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 var(--focus-ring); }
+  70% { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* ── Breadcrumb ────────────────────────────────────────────────────────────── */
+.breadcrumb {
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  color: var(--text-muted);
+  margin: 0 0 22px;
+  display: inline-block;
+}
+.breadcrumb:hover { color: var(--text-body); }
+
+/* ── Module header (§01) ───────────────────────────────────────────────────── */
+.mod-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-display);
+  line-height: 1.1;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  margin: 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--accent);
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+.mod-title__id {
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  font-weight: 600;
+  color: var(--accent-text);
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+.mod-meta {
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  color: var(--text-muted);
+  margin: 14px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.mod-meta__sep { color: var(--text-faint); }
+.mod-lede {
+  font-size: var(--fs-lede);
+  color: var(--text-body);
+  margin: 14px 0 0;
+  max-width: var(--measure);
+}
+
+/* ── Section header (§03 core device) ──────────────────────────────────────── */
+.sec {
+  --sec-num: var(--text-muted);
+  --sec-rule: var(--border-default);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: var(--space-section) 0 var(--space-block);
+}
+.sec--brand { --sec-num: var(--accent-text); }         /* numeral only; rule stays neutral so crimson isn't a wide border */
+.sec--critical { --sec-num: var(--critical); --sec-rule: var(--critical); }
+.sec--success { --sec-num: var(--success); --sec-rule: var(--success); }
+.sec--muted { --sec-num: var(--text-muted); }
+.sec__num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  font-weight: 700;
+  color: var(--sec-num);
+  letter-spacing: 0.16em;
+}
+.sec__label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+.sec__hint {
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.sec__rule { flex: 1; height: 0; border-top: 1px solid var(--sec-rule); opacity: 0.6; }
+
+/* First section after the header shouldn't add a huge gap. */
+.sec:first-of-type { margin-top: 28px; }
+
+/* Prose inside sections */
+.prose { font-size: var(--fs-body); color: var(--text-body); }
+.prose p { margin: 0 0 var(--space-block); max-width: var(--measure); }
+.prose strong { color: var(--text-primary); font-weight: 600; }
+.prose ul { margin: 0 0 var(--space-block); padding-left: 20px; }
+.prose li { margin: 0 0 8px; }
+
+/* ── Inline code (§03) ─────────────────────────────────────────────────────── */
+code {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  color: var(--accent-text);
+  background: var(--accent-wash);
+  border: 1px solid var(--border-default);
+  border-radius: 0;
+  padding: 1px 5px;
+}
+
+/* ── Titled code block with gutter + copy (§03 .code) ──────────────────────── */
+.code { margin: 0 0 var(--space-block); border: 1px solid var(--border-default); background: var(--bg-code); }
+.code__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  color: var(--text-muted);
+}
+.code__copy {
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 0;
+  padding: 1px 8px;
+  cursor: pointer;
+}
+.code__copy:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.code__body { display: flex; font-family: var(--font-mono); font-size: var(--fs-code); line-height: 1.65; overflow-x: auto; }
+.code__gutter {
+  flex: 0 0 auto;
+  padding: 10px 10px 10px 12px;
+  text-align: right;
+  color: var(--text-faint);
+  border-right: 1px solid var(--border-subtle);
+  user-select: none;
+  white-space: pre;
+}
+.code__lines { padding: 10px 14px; white-space: pre; color: var(--text-body); }
+
+/* ── Diff rows (§04 .diff) — full-bleed tinted, +/- as content ─────────────── */
+.diff { margin: 0 0 var(--space-block); border: 1px solid var(--border-default); font-family: var(--font-mono); font-size: var(--fs-code); }
+.diff__row { padding: 3px 12px; white-space: pre; }
+.diff__del { background: var(--diff-del-wash); color: var(--diff-del); }
+.diff__add { background: var(--diff-add-wash); color: var(--diff-add); }
+
+/* ── Callouts (§03) — 3px left bar, wash, mono label inline with Inter body ── */
+.callout {
+  border-left: 3px solid var(--border-strong);
+  background: var(--bg-raised);
+  padding: 12px 16px;
+  margin: 0 0 var(--space-block);
+  font-size: var(--fs-body);
+  color: var(--text-body);
+  max-width: var(--measure);
+}
+.callout__label {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: 8px;
+}
+.callout--critical { border-left-color: var(--critical); background: var(--critical-wash); }
+.callout--critical .callout__label { color: var(--critical); }
+.callout--warning { border-left-color: var(--warning); background: var(--warning-wash); }
+.callout--warning .callout__label { color: var(--warning); }
+.callout--success { border-left-color: var(--success); background: var(--success-wash); }
+.callout--success .callout__label { color: var(--success); }
+
+/* ── Tags (§03) — square, hairline, lowercase ──────────────────────────────── */
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  text-transform: lowercase;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 0;
+  padding: 1px 6px;
+}
+.tag--brand { color: var(--accent-text); border-color: var(--accent); }
+
+/* ── Difficulty meter (§03) — three-block, encodes level + value ───────────── */
+.meter { display: inline-flex; gap: 2px; vertical-align: middle; }
+.meter i { width: 11px; height: 8px; border: 1px solid var(--border-strong); background: transparent; }
+.meter--easy i:nth-child(-n + 1) { background: var(--success); border-color: var(--success); }
+.meter--medium i:nth-child(-n + 2) { background: var(--warning); border-color: var(--warning); }
+.meter--hard i,
+.meter--insane i { background: var(--critical); border-color: var(--critical); }
+.meter__label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  color: var(--text-muted);
+  margin-left: 6px;
+  text-transform: lowercase;
+}
+
+/* ── Buttons (§03) — 6px radius, no press scale, one crimson per screen ─────── */
+.btn {
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-body);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease);
+}
+.btn:hover { border-color: var(--text-faint); color: var(--text-primary); }
+.btn--primary {
+  color: var(--text-primary);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.btn--primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn--danger { color: var(--critical); border-color: var(--critical); background: transparent; }
+.btn--danger:hover { background: var(--critical-wash); }
+.btn:disabled,
+.btn[disabled] { color: var(--text-faint); border-color: var(--border-subtle); background: transparent; cursor: not-allowed; }
+
+/* ── Fields (§03) — mono, placeholder "payload…" ───────────────────────────── */
+.field {
+  font-family: var(--font-mono);
+  font-size: var(--fs-code);
+  color: var(--text-primary);
+  background: var(--bg-code);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  padding: 8px 10px;
+  width: 100%;
+}
+.field::placeholder { color: var(--text-faint); }
+.field:focus { border-color: var(--accent); }
+select.field { text-transform: none; }
+textarea.field { line-height: 1.6; resize: vertical; }
+label.field-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 6px;
+}
+
+/* ── Demo panel — the one place with a raised background + bordered box ─────── */
+.demo {
+  border: 1px solid var(--border-default);
+  background: var(--bg-raised);
+  padding: 18px 20px;
+}
+.demo__row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.demo__row:last-child { margin-bottom: 0; }
+
+/* ── Log tail (§04 .logline) — panel-style rows beneath a hairline ─────────── */
+.logtail {
+  margin-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 12px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-log);
+  line-height: 1.6;
+  max-height: 220px;
+  overflow: auto;
+  background: var(--bg-code);
+}
+.logline { display: flex; gap: 10px; padding: 1px 10px; white-space: pre-wrap; word-break: break-word; }
+.logline__ts { color: var(--text-faint); flex: 0 0 auto; }
+.logline__tag { flex: 0 0 auto; text-transform: uppercase; }
+.logline__msg { color: var(--text-body); flex: 1; min-width: 0; }
+.logline--info .logline__tag { color: var(--info); }
+.logline--warn .logline__tag { color: var(--warning); }
+.logline--ok .logline__tag { color: var(--success); }
+.logline--crit .logline__tag { color: var(--critical); }
+.logline--muted .logline__tag { color: var(--text-faint); }
+
+/* ── Task list (challenge modules) — kept semantic, restyled to tokens ─────── */
+.task-list { list-style: none; margin: 0; padding: 0; }
+.task-item {
+  border: 1px solid var(--border-subtle);
+  border-left: 2px solid var(--border-strong);
+  background: var(--bg-panel);
+  padding: 12px 16px;
+  margin: 0 0 10px;
+  font-size: var(--fs-body);
+  color: var(--text-body);
+}
+.task-item strong { color: var(--text-primary); font-weight: 600; }
+.task-flag {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-log);
+  color: var(--accent-text);
+}
+.status-pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  margin-right: 8px;
+}
+.status-pill.pass { color: var(--success); border-color: var(--success); }
+.status-pill.fail { color: var(--text-faint); border-color: var(--border-subtle); }
+.status-pill.contained { color: var(--warning); border-color: var(--warning); }
+
+/* ── Index — dense module table (§04) ──────────────────────────────────────── */
+.index-hero { padding: var(--page-pad-y) var(--page-pad-x) 6px; }
+.index-hero__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-display);
+  line-height: 1.08;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+.index-hero__sub { font-size: var(--fs-lede); color: var(--text-muted); margin: 12px 0 0; }
+.filter-strip {
+  display: flex;
+  gap: 0;
+  margin: 20px var(--page-pad-x) 0;
+  border: 1px solid var(--border-default);
+  width: fit-content;
+}
+.filter-strip__item {
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border-default);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.filter-strip__item:last-child { border-right: none; }
+.filter-strip__item.is-active { background: var(--accent); color: var(--text-primary); }
+
+.modtable { width: 100%; border-collapse: collapse; margin-top: 18px; table-layout: fixed; }
+.modtable thead th {
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  text-align: left;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-default);
+}
+/* Inner cells stay tight; only the outer edges align to the page gutter. */
+.modtable th:first-child, .modrow > td:first-child { padding-left: var(--page-pad-x); }
+.modtable th:last-child, .modrow > td:last-child { padding-right: var(--page-pad-x); }
+/* Column sizing (table-layout: fixed) — module column takes the remaining width. */
+.modtable col.col-id { width: 60px; }
+.modtable col.col-surface { width: 210px; }
+.modtable col.col-diff { width: 132px; }
+.modtable col.col-tasks { width: 96px; }
+.modrow { border-bottom: 1px solid var(--border-subtle); }
+.modrow > td { padding: 12px 16px; vertical-align: baseline; }
+.modrow > td:nth-child(4) { white-space: nowrap; }
+.modrow:hover { background: var(--bg-raised); box-shadow: inset 2px 0 0 0 var(--accent); }
+.modrow__id { font-family: var(--font-mono); font-size: var(--fs-chrome); color: var(--text-faint); }
+.modrow__mod a { font-family: var(--font-mono); font-weight: 700; color: var(--text-primary); }
+.modrow__mod a:hover { color: var(--accent-text); text-decoration: none; }
+.modrow__desc { display: block; font-family: var(--font-body); font-size: var(--fs-code); color: var(--text-muted); margin-top: 4px; max-width: 620px; line-height: 1.55; }
+/* Task count is a first-class column, not a muted afterthought. */
+.modrow__tasks { font-family: var(--font-mono); font-size: var(--fs-chrome); color: var(--text-body); white-space: nowrap; width: 84px; }
+.modrow__tasks .n { color: var(--accent-text); font-weight: 700; }
+.modrow__tasks .none { color: var(--text-faint); }
+.modrow--child > td { padding-top: 8px; padding-bottom: 8px; }
+.modrow--child .modrow__mod { padding-left: 22px; }
+.modrow--child .modrow__mod a { font-weight: 400; color: var(--text-body); }
+.modrow--child .modrow__mod a:hover { color: var(--accent-text); }
+.modrow__surface { white-space: nowrap; }
+.modrow--flagship { background: var(--bg-raised); border-top: 1px solid var(--border-default); }
+.index-footer {
+  font-family: var(--font-mono);
+  font-size: var(--fs-chrome);
+  color: var(--text-faint);
+  padding: 24px var(--page-pad-x) 40px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 24px;
+}
+
+/* ── Full-width tool body (observability panel) ────────────────────────────── */
+.toolbody { padding: 20px var(--page-pad-x) 40px; }
+.rawjson {
+  font-family: var(--font-mono);
+  font-size: var(--fs-log);
+  line-height: 1.6;
+  color: var(--text-body);
+  background: var(--bg-code);
+  border: 1px solid var(--border-default);
+  padding: 12px 14px;
+  margin: 0;
+  max-height: 34vh;
+  overflow: auto;
+  white-space: pre;
+}
+.empty-note { font-family: var(--font-mono); font-size: var(--fs-log); color: var(--text-faint); padding: 8px 10px; }
+
+/* ── Utility ───────────────────────────────────────────────────────────────── */
+.mono { font-family: var(--font-mono); }
+.muted { color: var(--text-muted); }
+.faint { color: var(--text-faint); }
+.text-small { font-size: var(--fs-log); }
+
+/* ── Reduced motion (§04 hard rule) ────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .live-dot { animation: none; }
+  * { transition: none !important; }
+}
