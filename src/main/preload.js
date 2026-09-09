@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('api', {
   openXSSBridged: () => ipcRenderer.send('open-xss-bridged'),
   openXSSOwned: () => ipcRenderer.send('open-xss-owned'),
   saveFile: (data) => ipcRenderer.invoke('save-file', data),
+  initFileWrite: () => ipcRenderer.invoke('filewrite-init'),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   openAnalytics: (name) => ipcRenderer.send('open-analytics', name),
   startAutoUpdateServer: () => ipcRenderer.invoke('start-auto-update-server'),

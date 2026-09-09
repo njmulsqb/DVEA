@@ -9,7 +9,7 @@
     <header class="page-header">
       <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
       <h1>Insecure File Write (IPC Abuse)</h1>
-      <p class="page-header-sub">Renderer-supplied path and content written without validation</p>
+      <p class="page-header-sub">An IPC handler trusts a renderer-supplied path — and hands the renderer the host filesystem</p>
     </header>
 
     <div class="page-wrap">
@@ -17,30 +17,91 @@
         <span class="checklist-item pass">✓ NodeIntegration: false</span>
         <span class="checklist-item pass">✓ ContextIsolation: true</span>
         <span class="checklist-item pass">✓ Sandbox: true</span>
-        <span class="checklist-item fail">✗ IPC: no path or content validation</span>
+        <span class="checklist-item fail">✗ IPC: writes a renderer-supplied path, no validation</span>
       </div>
 
       <section class="panel">
         <div class="panel-header"><h2>Guide: What is happening?</h2></div>
         <div class="panel-body">
           <p>
-            The form below lets you specify any file path and content. When you click "Save File",
-            the data is sent to the main process, which writes the file
-            <strong>without any validation or restriction</strong>.
+            In a browser, page JavaScript <strong>cannot touch the filesystem</strong> — there is
+            no API that lets a script open an arbitrary path and write bytes to it. That's a
+            deliberate, load-bearing part of the web sandbox. Electron reopens exactly that door,
+            on purpose, through IPC: the renderer asks the main process to do something, and the
+            main process runs with the full privileges of the OS user the app launched as.
           </p>
-          <b>Example — overwrite a sensitive file:</b>
-          <pre><code>Path:    /tmp/dvea-demo.txt
-Content: Hello from DVEA!</code></pre>
-          <span class="text-small text-gray">
-            Try paths like <code>~/.bashrc</code> or <code>package.json</code> to see the full
-            impact.
-          </span>
+          <p>
+            The moment an IPC handler writes to a <strong>path the renderer chose</strong>, all of
+            the renderer hardening above stops mattering. <code>sandbox</code>,
+            <code>contextIsolation</code>, and <code>nodeIntegration: false</code> keep the renderer
+            from calling <code>fs</code> itself — but they do nothing about a main-process handler
+            that takes a renderer-supplied path and writes it anyway. The renderer never needed
+            <code>require('fs')</code>; it just needed to ask a handler that already has it.
+          </p>
+          <p>
+            The danger isn't "overwrite a text file." Arbitrary file <em>write</em> is a
+            general-purpose primitive: change what the app loads on next launch, drop a file into a
+            location the OS or another program will execute, replace a config file that decides how
+            software behaves, or establish persistence. A renderer compromised by XSS — or one that
+            renders attacker-controlled content — can reach this handler and weaponize it, without
+            the victim doing anything.
+          </p>
         </div>
         <div class="xss-explanation">
-          <strong>Impact:</strong> Overwrite or create sensitive files anywhere the app has write
-          access — <code>~/.bashrc</code>, <code>package.json</code>, <code>/tmp/evil.js</code>.
-          Drop malicious scripts, modify app config, or gain persistence if the app runs with
-          elevated privileges.
+          <strong>Objective:</strong> This app is written as if its "Save File" feature only ever
+          drops a harmless note into its own saves folder. Prove that assumption is a fiction. The
+          challenge isn't "type a path and click Save" — it's to demonstrate that the write is not
+          confined anywhere, that it can <em>replace</em> files the app already owns, and finally
+          that it can rewrite a file the app itself reads — turning "save a file" into control over
+          what the app does. Craft the paths and content yourself; nothing is pre-filled.
+        </div>
+        <div class="xss-explanation" style="border-left-color:#b91c1c;">
+          <strong>This genuinely writes to your real filesystem</strong> with this app's
+          permissions — there is no simulation layer. The flags below only ever check
+          DVEA-controlled files under a temporary directory, so the challenge is safe to run
+          repeatedly, but the handler itself will write wherever you point it. Don't aim it at
+          anything you care about.
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Recon: DVEA's own files</h2></div>
+        <div class="panel-body">
+          <p class="text-small text-gray">
+            These are files <strong>this app</strong> owns and manages — the app tells you where
+            they are and what it does with them. It's the unvalidated write primitive that lets you
+            reach in and tamper with them. (Working paths + content live nowhere on this page; you
+            build the writes.)
+          </p>
+          <ul class="text-small">
+            <li>
+              <strong>Intended saves directory</strong> — where the app pretends its writes land:
+              <br /><code id="save-dir">…</code>
+            </li>
+            <li>
+              <strong>A file DVEA planted and owns</strong> — it exists on disk right now:
+              <br /><code id="marker-path">…</code>
+            </li>
+            <li>
+              <strong>The app's own config file</strong> — the app <em>reads</em> this on demand
+              and reflects it in the banner below:
+              <br /><code id="config-path">…</code>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>App behavior (driven by the config file)</h2></div>
+        <div class="panel-body">
+          <p class="text-small text-gray">
+            The banner below is not hard-coded — the app reads it from its config file on disk. If
+            that file changes, this changes.
+          </p>
+          <div
+            id="app-banner"
+            style="padding:0.8rem 1rem; border-radius:8px; background:#eef2ff; border:1px solid #c7d2fe; font-weight:600;"
+          >…</div>
         </div>
       </section>
 
@@ -53,8 +114,8 @@ Content: Hello from DVEA!</code></pre>
               type="text"
               id="filepath"
               name="filepath"
-              value="/tmp/dvea-demo.txt"
-              placeholder="/tmp/test.txt"
+              placeholder="Absolute path to write to…"
+              autocomplete="off"
               required
             />
             <label for="filecontent">File Content:</label>
@@ -62,12 +123,42 @@ Content: Hello from DVEA!</code></pre>
               id="filecontent"
               name="filecontent"
               rows="6"
-              placeholder="Enter file content here..."
+              placeholder="Bytes to write…"
               required
-            >Hello from DVEA!</textarea>
+            ></textarea>
             <button type="submit">Save File</button>
           </form>
           <div id="status" style="margin-top: 1rem"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Tasks <span id="flag-progress" class="text-small text-gray"></span></h2></div>
+        <div class="panel-body">
+          <ul class="task-list">
+            <li id="task-1" class="task-item">
+              <span id="task-1-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 1 — Write outside the intended directory.</strong>
+              The app claims its writes only ever land in its own saves folder. Write a file
+              somewhere that has nothing to do with DVEA at all, proving there is no path
+              restriction.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+            <li id="task-2" class="task-item">
+              <span id="task-2-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 2 — Overwrite an existing file.</strong>
+              DVEA already planted a file it owns (see recon). Replace its contents — proving write
+              can clobber an existing file, not just create a new one.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+            <li id="task-3" class="task-item">
+              <span id="task-3-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 3 — Weaponize: change what the app does (the capstone).</strong>
+              Overwrite the config file the app reads (see recon) so the banner above changes to
+              content you chose — turning "write a file" into control over the app's own behavior.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+          </ul>
         </div>
       </section>
 

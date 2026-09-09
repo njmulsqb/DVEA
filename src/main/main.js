@@ -17,6 +17,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 const { shell } = require('electron');
 const fs = require('fs');
+const os = require('os');
 const { exec, execSync } = require('child_process');
 
 const Window = require('../main/windows/Window');
@@ -32,6 +33,130 @@ const BRIDGE_CALL_FLAG = 'DVEA{bridge_command_executed}';
 // openXSSOwnedWindow below).
 const RCE_SECRET_PATH = '/tmp/dvea-rce-flag.txt';
 const RCE_HOST_FLAG = 'DVEA{full_host_compromise}';
+
+// ── Insecure File Write lab ──────────────────────────────────────────────────
+// THE VULNERABILITY is the save-file handler at the bottom of this file: it writes a
+// renderer-supplied path with renderer-supplied content and ZERO validation. Everything in this
+// block is only the booth-safe FLAG layer around it — it decides which flags to award by
+// inspecting real disk state AFTER the (fully unvalidated) write, and never restricts the write.
+//
+// The write accepts any path (honest); the flags recognize only these DVEA-owned targets under a
+// temp directory, so the demo is safe to run repeatedly. The /tmp-style location matches the
+// insecure-auto-update and XSS challenge conventions elsewhere in this file.
+const FILEWRITE_DIR = path.join(os.tmpdir(), 'dvea-file-write');
+const FILEWRITE_SAVE_DIR = path.join(FILEWRITE_DIR, 'saves'); // where the app PRETENDS writes go
+const FILEWRITE_MARKER = path.join(FILEWRITE_DIR, 'dvea-owned-note.txt'); // Task 2 overwrite target
+const FILEWRITE_CONFIG = path.join(FILEWRITE_DIR, 'dvea-app-config.json'); // Task 3 behavior file
+const FILEWRITE_MARKER_ORIGINAL =
+  'DVEA planted this file and owns it. Overwriting it proves file WRITE can replace an existing\n' +
+  'file, not just create a new one.\n';
+const FILEWRITE_CONFIG_ORIGINAL = { banner: 'DVEA — Insecure File Write' };
+const FILEWRITE_FLAGS = {
+  1: 'DVEA{arbitrary_path_write}',
+  2: 'DVEA{overwrite_existing_file}',
+  3: 'DVEA{write_to_rce}',
+};
+// Solved state, tracked in-memory so progress accumulates across writes and the gate can tell an
+// ACTUAL overwrite from a re-write of identical content.
+const fileWriteSolved = { 1: false, 2: false, 3: false };
+
+// (Re)plant the DVEA-owned targets to their original content and reset the challenge. Called when
+// the lab page loads, so the booth demo is repeatable — same idea as the insecure-auto-update
+// module's Reset. Returns recon: discloses only WHERE the app's own files live and what it
+// currently shows, never a working {path, content} payload.
+function initFileWriteLab() {
+  fs.mkdirSync(FILEWRITE_SAVE_DIR, { recursive: true });
+  fs.writeFileSync(FILEWRITE_MARKER, FILEWRITE_MARKER_ORIGINAL);
+  fs.writeFileSync(FILEWRITE_CONFIG, JSON.stringify(FILEWRITE_CONFIG_ORIGINAL, null, 2) + '\n');
+  fileWriteSolved[1] = fileWriteSolved[2] = fileWriteSolved[3] = false;
+  return fileWriteReconState();
+}
+
+// The banner the app shows is READ from the config file on disk every time — which is exactly why
+// overwriting that file (Task 3) changes the app's own behavior.
+function readFileWriteBanner() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(FILEWRITE_CONFIG, 'utf8'));
+    if (parsed && typeof parsed.banner === 'string') return { ok: true, banner: parsed.banner };
+    return { ok: false, banner: null, error: 'config has no string "banner" field' };
+  } catch (err) {
+    return { ok: false, banner: null, error: 'config is not valid JSON: ' + err.message };
+  }
+}
+
+function fileWriteFlagsForSolved() {
+  const out = {};
+  for (const n of [1, 2, 3]) if (fileWriteSolved[n]) out[n] = FILEWRITE_FLAGS[n];
+  return out;
+}
+
+function fileWriteReconState() {
+  return {
+    saveDir: FILEWRITE_SAVE_DIR,
+    markerPath: FILEWRITE_MARKER,
+    configPath: FILEWRITE_CONFIG,
+    banner: readFileWriteBanner(),
+    solved: { ...fileWriteSolved },
+    flags: fileWriteFlagsForSolved(),
+    progress: [1, 2, 3].filter((n) => fileWriteSolved[n]).length,
+  };
+}
+
+// Is `p` strictly inside `base`? Resolves both sides so relative paths and ../ sequences are
+// judged on the real target — the same reasoning the deep-link path-traversal fix uses.
+function isInsideDir(base, p) {
+  const rel = path.relative(path.resolve(base), path.resolve(p));
+  return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
+}
+
+// Decide which flags the just-completed write earned, from REAL disk state. Never gates the
+// write — that already happened, unvalidated, in the handler.
+function evaluateFileWriteTasks(rawPath) {
+  const resolved = path.resolve(rawPath);
+
+  // Task 1 — arbitrary path write: the write landed OUTSIDE DVEA's entire file-write area (not
+  // just outside the "intended" saves dir), i.e. a location with nothing to do with the app.
+  // Proof there is no path restriction at all.
+  if (!fileWriteSolved[1] && !isInsideDir(FILEWRITE_DIR, resolved) && fs.existsSync(resolved)) {
+    fileWriteSolved[1] = true;
+  }
+
+  // Task 2 — overwrite existing: the write targeted the DVEA-owned marker (which existed before),
+  // and its on-disk content is now different from what DVEA planted — a genuine replacement.
+  if (!fileWriteSolved[2] && resolved === path.resolve(FILEWRITE_MARKER)) {
+    try {
+      if (fs.readFileSync(FILEWRITE_MARKER, 'utf8') !== FILEWRITE_MARKER_ORIGINAL) {
+        fileWriteSolved[2] = true;
+      }
+    } catch (err) {}
+  }
+
+  // Task 3 — weaponize (bounded): the write targeted the config file the app reads to decide what
+  // to display, and the banner it now parses to differs from the original. Arbitrary file write
+  // has become control over the app's own behavior. Real-world equivalents (files the app
+  // require()s on next launch, autostart entries, package.json scripts) are in the writeup; this
+  // stays on a DVEA-owned temp file, safe to run over and over.
+  const banner = readFileWriteBanner();
+  if (
+    !fileWriteSolved[3] &&
+    resolved === path.resolve(FILEWRITE_CONFIG) &&
+    banner.ok &&
+    banner.banner !== FILEWRITE_CONFIG_ORIGINAL.banner
+  ) {
+    fileWriteSolved[3] = true;
+  }
+
+  return {
+    ok: true,
+    resolved,
+    outsideAppArea: !isInsideDir(FILEWRITE_DIR, resolved),
+    banner,
+    solved: { ...fileWriteSolved },
+    flags: fileWriteFlagsForSolved(),
+    progress: [1, 2, 3].filter((n) => fileWriteSolved[n]).length,
+  };
+}
+
 // Pick the dvea:// deep link out of a process argv list. Used for both the cold-start case
 // (our own process.argv) and the already-running case (the second instance's argv), since the
 // URL's position varies: `electron .` puts a path first in development, and the OS appends the
@@ -695,8 +820,31 @@ function main() {
   // Legacy open-url handler removed in favor of unified `handleDeepLink` above.
 }
 
+// THE VULNERABILITY (Insecure File Write): the renderer supplies BOTH the path and the content,
+// and the main process writes them with no validation — no canonicalization, no allowlist, no
+// confinement to any directory. A compromised renderer can write any file the app process can
+// write. Registered here at module-load time (outside main()), which is also why this handler is
+// invisible to the IPC Monitor — see the blind-spot note in CLAUDE.md.
 ipcMain.handle('save-file', async (event, data) => {
+  // The write itself: completely unvalidated, exactly as a real vulnerable app would do it.
   await fs.promises.writeFile(data.path, data.content);
+  // Flag bookkeeping only (see evaluateFileWriteTasks) — inspects real disk state to decide which
+  // DVEA-owned targets were hit. Wrapped so a bookkeeping error can never make a genuine,
+  // already-completed write look like it failed.
+  try {
+    return evaluateFileWriteTasks(data.path);
+  } catch (err) {
+    return { ok: true };
+  }
+});
+
+// Lab plumbing (not the vulnerability): (re)plant the DVEA-owned targets and return recon.
+ipcMain.handle('filewrite-init', async () => {
+  try {
+    return initFileWriteLab();
+  } catch (err) {
+    return { error: err && err.message ? err.message : String(err) };
+  }
 });
 
 // Deep links depend on this. Without the single-instance lock, launching a dvea:// link while
