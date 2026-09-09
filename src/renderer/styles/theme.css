@@ -1,0 +1,92 @@
+/* ============================================================================
+   DVEA — theme.css
+   The single source of design tokens. Per the design spec (docs/DESIGN_SPEC.md,
+   §04): nothing outside this file may name a color. Every other stylesheet and
+   page references these custom properties via var(--…) only.
+   ============================================================================ */
+
+/* ── Local fonts (bundled woff2, no remote requests; offline + strict CSP) ── */
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('../assets/fonts/orbitron-800.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/inter-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../assets/fonts/inter-600.woff2') format('woff2');
+}
+
+:root {
+  /* ── Surfaces & ink ─────────────────────────────────────────── */
+  --bg-app: #0a0b0d;
+  --bg-panel: #0c0d10;
+  --bg-raised: #101216;
+  --bg-code: #07080a;
+  --border-subtle: #191d24;
+  --border-default: #22262e;
+  --border-strong: #2c313a;
+  --text-primary: #f5f6f8;
+  --text-body: #c6cbd2;
+  --text-muted: #8a9099;
+  --text-faint: #4a5058;
+
+  /* ── Accent & semantic ──────────────────────────────────────── */
+  --accent: #e91841;
+  --accent-hover: #c4123a;
+  --accent-text: #ff4d6d;
+  --accent-wash: #160a0e;
+  --critical: #e5484d;
+  --warning: #f5a623;
+  --success: #16a75c;
+  --info: #3b82f6;
+  --diff-add: #4ed18c;
+  --diff-del: #ff8a8d;
+
+  /* Focus ring — crimson at 40%, always visible (§03 hard rule). */
+  --focus-ring: rgba(233, 24, 65, 0.4);
+  /* Semantic washes for callouts (derived tints; kept here so no other file names a color). */
+  --critical-wash: #17090a;
+  --warning-wash: #17110a;
+  --success-wash: #0a1410;
+  --diff-add-wash: #0c1712;
+  --diff-del-wash: #170b0c;
+
+  /* ── Type ───────────────────────────────────────────────────── */
+  --font-display: 'Orbitron', 'Arial Narrow', sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', 'Consolas', 'Liberation Mono', monospace;
+
+  /* Type ramp (§02). */
+  --fs-display: 32px;
+  --fs-lede: 16px;
+  --fs-body: 15.5px;
+  --fs-code: 13.5px;
+  --fs-log: 12px;
+  --fs-chrome: 11px;
+  --fs-eyebrow: 10.5px;
+
+  /* ── Space (4px grid) ───────────────────────────────────────── */
+  --space-section: 34px;
+  --space-block: 20px;
+  --page-pad-y: 28px;
+  --page-pad-x: 44px;
+  --measure: 800px;
+  --radius-control: 6px;
+
+  /* ── Motion ─────────────────────────────────────────────────── */
+  --motion-fast: 120ms;
+  --motion-slow: 180ms;
+  --ease: ease-out;
+}

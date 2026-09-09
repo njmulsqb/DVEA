@@ -2,23 +2,26 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('ipc', {
   onRedirect: (cb) => ipcRenderer.on('deeplink-redirect', cb),
+  onCaptured: (cb) => ipcRenderer.on('captured-credentials', cb),
 });
 
 contextBridge.exposeInMainWorld('api', {
-  openSystemXSS: () => ipcRenderer.send('open-system-xss'),
-  openXSSRCE: () => ipcRenderer.send('open-xss-rce-direct'),
+  openXSSContained: () => ipcRenderer.send('open-xss-contained'),
+  openXSSBridged: () => ipcRenderer.send('open-xss-bridged'),
+  openXSSOwned: () => ipcRenderer.send('open-xss-owned'),
   saveFile: (data) => ipcRenderer.invoke('save-file', data),
+  initFileWrite: () => ipcRenderer.invoke('filewrite-init'),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   openAnalytics: (name) => ipcRenderer.send('open-analytics', name),
+  submitStoredHtmliFlag: (token) => ipcRenderer.invoke('submit-stored-htmli-flag', token),
   startAutoUpdateServer: () => ipcRenderer.invoke('start-auto-update-server'),
   stopAutoUpdateServer: () => ipcRenderer.invoke('stop-auto-update-server'),
   checkForUpdate: (opts) => ipcRenderer.invoke('check-for-update', opts),
-  checkSentinel: () => ipcRenderer.invoke('check-sentinel'),
   resetAutoUpdate: () => ipcRenderer.invoke('reset-auto-update'),
-});
-
-contextBridge.exposeInMainWorld('systemapi', {
-  executeCode: (code) => ipcRenderer.invoke('xss-rce-direct', code),
+  simulateDeepLinkWindow: (target) => ipcRenderer.invoke('simulate-deeplink-window', target),
+  sendCapturedCredentials: (data) => ipcRenderer.send('captured-credentials', data),
+  simulateDeepLinkOpen: (path) => ipcRenderer.invoke('simulate-deeplink-open', path),
+  onDeepLinkOpen: (cb) => ipcRenderer.on('deeplink-open', cb),
 });
 
 // Send preload corroboration back to main so observability can record renderer-side values.

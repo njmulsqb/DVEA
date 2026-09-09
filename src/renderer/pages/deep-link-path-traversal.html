@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Deep Link → Path Traversal (Arbitrary File Read)</title>
+    <link rel="stylesheet" href="../styles/theme.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
+  </head>
+  <body>
+    <header class="page-header">
+      <a id="back-link" class="page-header-back" href="#">← Back</a>
+      <h1>Deep Link → Path Traversal</h1>
+      <p class="page-header-sub">Deep link reads an arbitrary file path supplied by the attacker.</p>
+    </header>
+
+    <div class="page-wrap">
+      <section class="panel">
+        <div class="panel-header"><h2>Route: Arbitrary File Read</h2></div>
+        <div class="panel-body">
+          <p>Some apps accept deep links that open files. If the main process reads the
+          supplied path with no validation, an attacker can craft a deep link that reads
+          sensitive host files.</p>
+          <p><strong>Objective:</strong> Craft a deep link that reads a file outside the app's intended
+          directory.</p>
+          <p><strong>How to try it:</strong> A real deep link has the shape
+          <code>dvea://open?path=&lt;file path&gt;</code> — whatever path you supply is read
+          straight from disk with no checks. Try a system file that has nothing to do with DVEA
+          (e.g. <code>/etc/passwd</code>) to prove the read isn't confined to the app at all — DVEA
+          also bundles a small marker file alongside its own pages if you want a reliable target to
+          confirm the read works before going further.</p>
+        </div>
+      </section>
+
+      <section class="panel demo-panel">
+        <div class="panel-header"><h2>Try It</h2></div>
+        <div class="panel-body">
+          <p>On an installed (packaged) build, the OS registers the <code>dvea://</code> scheme for
+          DVEA — opening a link like <code>dvea://open?path=/etc/passwd</code> from anywhere (a
+          browser address bar, an email, a terminal) drives this window to read and display that
+          file's contents.</p>
+          <p class="text-small text-gray">Running from source doesn't reliably register the scheme
+          with the OS, so a real <code>dvea://</code> link won't dispatch to the app during
+          development — use the simulator below instead.</p>
+
+          <div style="margin-top:1rem;">
+            <h4>File contents / result</h4>
+            <div id="file-output" class="io-box" style="min-height:6rem;"></div>
+          </div>
+
+          <details style="margin-top:1.25rem;">
+            <summary><strong>Running from source? Use the simulator instead</strong></summary>
+            <div style="margin-top:0.75rem;">
+              <p class="text-small text-gray">Exercises the identical vulnerable main-process
+              file-read path a real deep link would use, without needing the OS to route one.</p>
+              <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
+                <input id="path" type="text" style="flex:1;" placeholder="File path"/>
+                <button id="simulate-open" class="btn--primary">Simulate Deep Link</button>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+    </div>
+
+    <script>
+      (function () {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const from = params.get('from');
+          const back = document.getElementById('back-link');
+          if (!back) return;
+          if (from === 'index') {
+            back.href = 'index.html';
+            back.textContent = '← All Vulnerabilities';
+          } else if (from === 'parent') {
+            back.href = 'deep-link-hijacking.html';
+            back.textContent = '← Deep Link Hijacking';
+          } else {
+            back.href = 'deep-link-hijacking.html';
+            back.textContent = '← Deep Link Hijacking';
+          }
+        } catch (err) {}
+      })();
+    </script>
+    <script src="../js/vuln-openfile.js"></script>
+  </body>
+</html>

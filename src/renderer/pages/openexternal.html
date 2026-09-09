@@ -2,94 +2,290 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>openExternal Abuse</title>
-    <link rel="stylesheet" href="../styles/style.css" />
+    <title>openExternal Abuse · DVEA</title>
+    <link rel="stylesheet" href="../styles/theme.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
   </head>
-  <body>
-    <header class="page-header">
-      <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
-      <h1>openExternal Abuse</h1>
-      <p class="page-header-sub">Unvalidated URLs passed to shell.openExternal() trigger arbitrary OS protocol handlers</p>
-    </header>
+  <body class="page">
+    <div class="chrome-bar">
+      <span class="chrome-bar__mark">◆</span>
+      <span class="chrome-bar__word">DVEA</span>
+      <span class="chrome-bar__path">~/modules/openexternal-abuse</span>
+      <span class="chrome-bar__spacer"></span>
+      <span class="chrome-bar__meta">shell.openExternal · main-process</span>
+      <span class="chrome-bar__status"><span class="live-dot"></span>hooks armed</span>
+    </div>
 
-    <div class="page-wrap">
-      <section class="panel">
-        <div class="panel-header"><h2>Guide: What is happening?</h2></div>
-        <div class="panel-body">
-          <p>
-            The form below lets you specify any URL. When you click "Open Link", it is sent to
-            the main process which calls <code>shell.openExternal(url)</code>
-            <strong>without any validation or allowlist</strong>.
+    <div class="measure">
+      <a href="index.html" class="breadcrumb">../ all modules</a>
+
+      <h1 class="mod-title">openExternal Abuse <span class="mod-title__id">MOD.03</span></h1>
+      <div class="mod-meta">
+        <span class="tag">shell API</span>
+        <span class="mod-meta__sep">·</span>
+        <span class="tag">Protocol Handling</span>
+        <span class="mod-meta__sep">·</span>
+        <span class="meter meter--medium" aria-label="difficulty medium"><i></i><i></i><i></i></span>
+        <span class="meter__label">Medium</span>
+        <span class="mod-meta__sep">·</span>
+        <span>cf. CVE-2020-25019</span>
+      </div>
+      <p class="mod-lede">Unvalidated URLs passed to shell.openExternal() trigger arbitrary OS protocol handlers</p>
+
+      <!-- 01 GUIDE -->
+      <div class="sec sec--brand">
+        <span class="sec__num">01</span>
+        <span class="sec__label">Guide</span>
+        <span class="sec__hint">what is happening</span>
+        <span class="sec__rule"></span>
+      </div>
+      <div class="prose">
+        <p>
+          Deep links are the <strong>inbound</strong> half of Electron's protocol-handling trust
+          surface — an external, attacker-craftable link drives the app.
+          <code>shell.openExternal()</code> is the <strong>outbound</strong> mirror: instead of the
+          app receiving a URL, the app <em>hands one out</em> to the operating system, and the OS
+          launches whatever handler is registered for that URL's scheme — a browser for
+          <code>https:</code>, a mail client for <code>mailto:</code>, or any other app that has
+          claimed a custom scheme. Both directions are the same underlying failure — trusting a
+          URL's scheme/host to decide what gets launched, on either side of the process boundary.
+        </p>
+        <p>
+          The form below sends whatever URL you enter straight to the main process, which calls
+          <code>shell.openExternal(url)</code> <strong>without any validation or allowlist</strong>.
+          Electron does not restrict which schemes reach the OS this way — <code>https:</code>,
+          <code>mailto:</code>, <code>tel:</code>, <code>slack://</code>, <code>vscode://</code>,
+          <code>file://</code>, and any other OS-registered or app-installed custom scheme are all
+          handed off identically, with no inspection.
+        </p>
+        <p><strong>Objective:</strong> This app is written as if <code>shell.openExternal()</code>
+          only ever opens ordinary web links. Your job: prove it will launch far more than that —
+          get it to hand OS-level protocol handlers attacker-chosen input. The challenge isn't
+          "type a URL and click the button" — a plain <code>https:</code> link proves nothing.
+          It's to escape the "web links only" assumption entirely.</p>
+        <p><strong>How to try it:</strong> The input starts empty on purpose. Whatever string you
+          type is handed to <code>shell.openExternal()</code> exactly as given, with no inspection —
+          and every attempt you make is reported below the form, showing the scheme that actually
+          got launched and, where it's a recognizable one, what kind of handler that scheme maps
+          to. Use that feedback loop: start with something ordinary, then start reasoning about
+          what other kinds of URLs exist, what schemes are registered as protocol handlers on a
+          typical machine, and watch the result panel confirm the app hands each one off exactly
+          the same way, with zero discrimination between them.</p>
+        <p>
+          Real-world instance: CVE-2020-25019 (Jitsi Meet Electron) showed how unsafely passing
+          user-controllable URLs to <code>shell.openExternal</code> led to code execution. Positive
+          Security's "1-click RCE in Electron" research documents the same unsafe pattern across
+          many apps (Telegram, Nextcloud, VLC, Wireshark, Mumble, Bitcoin wallets).
+        </p>
+
+        <details style="margin-top:1rem;">
+          <summary><strong>How this is exploited in the real world (why typing it yourself still matters)</strong></summary>
+          <div style="margin-top:0.75rem;">
+            <p>
+              In a real attack, the victim never types the malicious URL — this lab's input
+              field is a stand-in for attacker-controlled input that reaches
+              <code>shell.openExternal()</code> through some other weakness elsewhere in the
+              app. This lab isolates one specific flaw: an unvalidated scheme lets the OS
+              launch whatever handler it's registered to. The mechanisms below are how
+              attacker input actually reaches that flaw in production apps — none of them
+              require the victim to type anything.
+            </p>
+            <ul>
+              <li>
+                <strong>XSS reaching an openExternal bridge.</strong> A cross-site-scripting
+                bug in a renderer that has access to an <code>openExternal</code>-backed API
+                lets injected script call it directly with an attacker URL, with zero user
+                input. This is literally <strong>CVE-2020-25019</strong> (Jitsi Meet Electron),
+                and the same pattern is documented across many apps in Positive Security's
+                "1-click RCE in Electron" research.
+              </li>
+              <li>
+                <strong>Rendered untrusted content.</strong> The app displays
+                attacker-controlled content — a chat message, an email body, a shared post —
+                and routes a link the victim clicks (or one embedded/auto-opened from that
+                content) through <code>shell.openExternal()</code> without checking its scheme
+                first. The victim clicks something that looks like an ordinary link; the app
+                is the one that decided what to hand to the OS.
+              </li>
+              <li>
+                <strong>Deep link forwarding.</strong> A custom-scheme handler receives a URL
+                parameter from an external <code>myapp://...</code> link — something the
+                attacker crafted and got the victim to click, not something the victim typed —
+                and forwards it straight into <code>shell.openExternal()</code>, chaining one
+                protocol-handling flaw into another. (Deep links themselves are the subject of
+                the separate Deep Link Hijacking module.)
+              </li>
+            </ul>
+          </div>
+        </details>
+
+        <p>
+          <strong>The real danger isn't <code>https:</code> or <code>mailto:</code> — it's custom
+          protocol handlers registered by other apps already installed on the machine</strong>
+          (<code>slack://</code>, <code>vscode://</code>, <code>zoommtg://</code>, and hundreds
+          more). Invoking one of those with attacker-controlled arguments, via a vulnerable
+          <code>shell.openExternal</code> call exactly like this one, is what led to code execution
+          in CVE-2020-25019. Every custom scheme is a potential pivot into whatever that other
+          app does with the input it receives — and DVEA's handler doesn't care which one you
+          pick.
+        </p>
+        <p class="muted text-small">
+          <strong>Discover what's actually registered on your own machine.</strong> On Linux,
+          registered schemes are declared in <code>.desktop</code> files as
+          <code>x-scheme-handler/&lt;scheme&gt;</code> MIME associations — the same enumeration
+          technique used in the Deep Link Hijacking module, just pointed at every app on the
+          system instead of one:
+        </p>
+      </div>
+
+      <div class="code">
+        <div class="code__title">
+          <span># list every custom scheme any installed app has registered, and which app owns it</span>
+          <button class="code__copy" type="button" data-copy='grep -rn "x-scheme-handler/" /usr/share/applications/ ~/.local/share/applications/'>copy</button>
+        </div>
+        <div class="code__body">
+          <div class="code__gutter">1</div>
+          <div class="code__lines">grep -rn "x-scheme-handler/" /usr/share/applications/ ~/.local/share/applications/</div>
+        </div>
+      </div>
+      <p class="prose muted text-small">
+        (macOS: check each app bundle's <code>Info.plist</code> for
+        <code>CFBundleURLSchemes</code>; Windows: <code>HKEY_CLASSES_ROOT</code> entries with a
+        <code>URL Protocol</code> value.) Pick a scheme that turns up, work out what a URL for it
+        looks like, and try launching it through this lab.
+      </p>
+
+      <!-- 02 IMPACT -->
+      <div class="sec sec--critical">
+        <span class="sec__num">02</span>
+        <span class="sec__label">Impact</span>
+        <span class="sec__rule"></span>
+      </div>
+      <div class="callout callout--critical">
+        <span class="callout__label">!! impact</span>
+        An attacker can make the app launch arbitrary URLs or OS protocol handlers on the victim's
+        machine, potentially triggering phishing pages, malware downloads, or OS-level
+        protocol-handler exploits. Custom protocol handlers registered by other installed apps can
+        be invoked with attacker-chosen arguments, pivoting the attack into whatever that handler
+        does with its input.
+      </div>
+
+      <!-- 04 REFERENCES -->
+      <div class="sec sec--muted">
+        <span class="sec__num">04</span>
+        <span class="sec__label">References</span>
+        <span class="sec__rule"></span>
+      </div>
+      <div class="prose">
+        <ul>
+          <li><a href="https://nvd.nist.gov/vuln/detail/CVE-2020-25019" target="_blank">CVE-2020-25019 — NVD</a></li>
+          <li><a href="https://positive.security/blog/url-open-rce" target="_blank">Positive Security — "1-click RCE in Electron"</a></li>
+        </ul>
+      </div>
+
+      <!-- 05 DEMO -->
+      <div class="sec sec--brand">
+        <span class="sec__num">05</span>
+        <span class="sec__label">Demo</span>
+        <span class="sec__rule"></span>
+      </div>
+      <div class="demo">
+        <form id="openexternal-form">
+          <label class="field-label" for="url">URL:</label>
+          <div class="demo__row" style="margin-bottom:0">
+            <input type="text" id="url" name="url" class="field" placeholder="Try a URL / scheme..." required style="flex:1" />
+            <button type="submit" class="btn btn--primary">Open Link</button>
+          </div>
+        </form>
+
+        <div style="margin-top:14px">
+          <div class="field-label" style="margin-bottom:2px">What just got handed to the OS</div>
+          <p class="muted text-small" style="margin:0 0 8px">
+            Every attempt is logged here, newest first — the scheme that was actually launched,
+            and what that scheme maps to when recognizable.
           </p>
-          <b>How can this be exploited?</b>
-          <ul>
-            <li>Trigger the user's browser to open a phishing or malware site.</li>
-            <li>
-              Abuse custom protocol handlers —
-              <code>mailto:</code>, <code>tel:</code>, <code>slack://</code>, <code>vscode://</code>.
-            </li>
-            <li>Exploit OS-level protocol handler vulnerabilities.</li>
-          </ul>
-          <p>
-            Real-world instance: CVE-2020-25019 (Jitsi Meet Electron) showed how unsafely passing
-            user-controllable URLs to <code>shell.openExternal</code> led to code execution. Positive
-            Security's "1-click RCE in Electron" research documents the same unsafe pattern across
-            many apps (Telegram, Nextcloud, VLC, Wireshark, Mumble, Bitcoin wallets).
-          </p>
-          <b>Example URLs to try:</b>
-          <pre><code>https://example.com
-mailto:attacker@example.com
-file:///etc/passwd</code></pre>
+          <div class="logtail" id="result-log-wrap">
+            <div id="result-log"><div class="empty-note">No attempts yet.</div></div>
+          </div>
         </div>
-        <div class="xss-explanation">
-          <strong>Impact:</strong> An attacker can open arbitrary URLs or system protocol handlers,
-          potentially triggering phishing, malware downloads, or OS-level exploits. Custom protocol
-          handlers can be abused to open local files or pivot to further attacks.<br /><br />
-          <strong>Fix:</strong> Validate against a strict protocol allowlist
-          (<code>https:</code> only, or a named set of known-safe schemes) — never use a denylist,
-          as it is easy to bypass with lesser-known schemes.
-        </div>
-      </section>
-
-      <section class="panel demo-panel">
-        <div class="panel-header"><h2>Demo</h2></div>
-        <div class="panel-body">
-          <form id="openexternal-form">
-            <label for="url">URL:</label>
-            <input
-              type="text"
-              id="url"
-              name="url"
-              value="file:///etc/passwd"
-              placeholder="file:///etc/passwd"
-              required
-            />
-            <button type="submit">Open Link</button>
-          </form>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-header"><h2>References</h2></div>
-        <div class="panel-body">
-          <ul>
-            <li><a href="https://nvd.nist.gov/vuln/detail/CVE-2020-25019" target="_blank">CVE-2020-25019 — NVD</a></li>
-            <li><a href="https://positive.security/blog/url-open-rce" target="_blank">Positive Security — "1-click RCE in Electron"</a></li>
-          </ul>
-        </div>
-      </section>
-
+      </div>
     </div>
 
     <script>
+      // Labels only for schemes DVEA can honestly recognize on sight — everything else is
+      // reported as "a registered handler, if one exists" rather than guessing.
+      const KNOWN_SCHEME_HANDLERS = {
+        'https:': 'default web browser (ordinary web link)',
+        'http:': 'default web browser (ordinary web link)',
+        'mailto:': 'default mail client',
+        'tel:': 'default phone/dialer handler',
+        'sms:': 'default messaging handler',
+        'file:': "OS's default handler for that file type",
+      };
+
+      function describeScheme(rawUrl) {
+        try {
+          const scheme = new URL(rawUrl).protocol;
+          return {
+            valid: true,
+            scheme,
+            label:
+              KNOWN_SCHEME_HANDLERS[scheme] ||
+              `a registered OS/app protocol handler for "${scheme}" (if one exists on this machine)`,
+          };
+        } catch (err) {
+          return { valid: false };
+        }
+      }
+
+      const resultLog = document.getElementById('result-log');
+      let loggedFirst = false;
+
+      function logResult(text, mod) {
+        const row = document.createElement('div');
+        row.className = 'logline logline--' + (mod || 'muted');
+        const ts = document.createElement('span');
+        ts.className = 'logline__ts';
+        ts.textContent = new Date().toLocaleTimeString();
+        const msg = document.createElement('span');
+        msg.className = 'logline__msg';
+        msg.textContent = text;
+        row.appendChild(ts);
+        row.appendChild(msg);
+        if (!loggedFirst) {
+          resultLog.textContent = '';
+          loggedFirst = true;
+        }
+        resultLog.prepend(row);
+      }
+
       document.getElementById('openexternal-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const url = document.getElementById('url').value;
+        const info = describeScheme(url);
+
+        if (info.valid) {
+          logResult(`scheme: ${info.scheme}  →  ${info.label}`, 'info');
+        } else {
+          logResult(`"${url}" did not parse as a URL — shell.openExternal() was still called with it, unmodified.`, 'warn');
+        }
+
         try {
           await window.api.openExternal(url);
         } catch (err) {
-          alert('Error: ' + (err && err.message ? err.message : err));
+          logResult(`↳ IPC error: ${err && err.message ? err.message : err}`, 'crit');
         }
+      });
+
+      // Copy affordance for code blocks (presentation only).
+      document.querySelectorAll('.code__copy').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const text = btn.getAttribute('data-copy') || '';
+          if (navigator.clipboard) navigator.clipboard.writeText(text);
+          const prev = btn.textContent;
+          btn.textContent = 'copied';
+          setTimeout(() => (btn.textContent = prev), 1200);
+        });
       });
     </script>
   </body>

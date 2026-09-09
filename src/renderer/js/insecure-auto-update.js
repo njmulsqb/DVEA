@@ -6,12 +6,74 @@ document.addEventListener('DOMContentLoaded', () => {
   const modeSelect = document.getElementById('mode');
   const checkBtn = document.getElementById('check-update');
   const logEl = document.getElementById('log');
-  const sentinelBtn = document.getElementById('check-sentinel');
-  const sentinelStatus = document.getElementById('sentinel-status');
+  const backdoorNote = document.getElementById('backdoor-note');
 
   function log(msg) {
     const now = new Date().toISOString();
     logEl.textContent = `[${now}] ${msg}\n` + logEl.textContent;
+  }
+
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value || '—';
+  };
+
+  // ---- Task / flag tracking (same contract as the other challenge pages' solveTask) ----
+  // Task 3 is a blocked-forgery outcome — it renders amber "Contained ✓", not green "Solved".
+  const CONTAINED_TASKS = new Set([3]);
+  const solved = { 1: false, 2: false, 3: false };
+
+  function renderTask(n, flag) {
+    if (solved[n] || !flag) return;
+    solved[n] = true;
+    const statusEl = document.getElementById('task-' + n + '-status');
+    if (statusEl) {
+      if (CONTAINED_TASKS.has(n)) {
+        statusEl.textContent = 'Contained ✓';
+        statusEl.className = 'checklist-item contained';
+      } else {
+        statusEl.textContent = 'Solved';
+        statusEl.className = 'checklist-item pass';
+      }
+    }
+    const item = document.getElementById('task-' + n);
+    const flagEl = item ? item.querySelector('.task-flag') : null;
+    if (flagEl) {
+      flagEl.hidden = false;
+      flagEl.textContent = 'Flag: ' + flag;
+    }
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const count = Object.values(solved).filter(Boolean).length;
+    const el = document.getElementById('flag-progress');
+    if (el) el.textContent = '(' + count + ' / 3 flags captured)';
+  }
+  updateProgress();
+
+  function applyFlags(flags) {
+    if (!flags) return;
+    for (const n of [1, 2, 3]) if (flags[n]) renderTask(n, flags[n]);
+  }
+
+  function resetTaskUI() {
+    for (const n of [1, 2, 3]) {
+      solved[n] = false;
+      const statusEl = document.getElementById('task-' + n + '-status');
+      if (statusEl) {
+        statusEl.textContent = 'Unsolved';
+        statusEl.className = 'checklist-item fail';
+      }
+      const item = document.getElementById('task-' + n);
+      const flagEl = item ? item.querySelector('.task-flag') : null;
+      if (flagEl) {
+        flagEl.hidden = true;
+        flagEl.textContent = '';
+      }
+    }
+    updateProgress();
+    if (backdoorNote) backdoorNote.textContent = 'No payload has executed yet.';
   }
 
   startBtn.addEventListener('click', async () => {
@@ -19,38 +81,16 @@ document.addEventListener('DOMContentLoaded', () => {
     log('Starting local feed server...');
     try {
       const info = await window.api.startAutoUpdateServer();
+      // Starting the server begins a fresh challenge (main resets its flags too).
+      resetTaskUI();
       log('Server started: HTTP port ' + info.httpPort + ', HTTPS port ' + info.httpsPort);
-      if (info.httpPoisonedManifest) {
-        log('HTTP poisoned manifest: ' + info.httpPoisonedManifest);
-        log('HTTP clean manifest: ' + info.httpCleanManifest);
-      }
-      if (info.httpsPoisonedManifest) {
-        log('HTTPS poisoned manifest: ' + info.httpsPoisonedManifest);
-        log('HTTPS clean manifest: ' + info.httpsCleanManifest);
-      }
-      // Prefer HTTP poisoned manifest by default (vulnerable demo). Use HTTPS variant for hardened tests.
-      feedInput.value = info.httpPoisonedManifest || info.httpsPoisonedManifest || '';
-
-      // Populate attack artifacts in the UI
-      try {
-        const pm = document.getElementById('poisoned-manifest');
-        const pp = document.getElementById('poisoned-payload');
-        const cm = document.getElementById('clean-manifest');
-        const cp = document.getElementById('clean-payload');
-        if (pm) pm.textContent = info.httpPoisonedManifestText || info.httpsPoisonedManifestText || '';
-        if (pp) pp.textContent = info.httpPoisonedPayloadText || info.httpsPoisonedPayloadText || '';
-        if (cm) cm.textContent = info.httpCleanManifestText || info.httpsCleanManifestText || '';
-        if (cp) cp.textContent = info.httpCleanPayloadText || info.httpsCleanPayloadText || '';
-        // Pretty-print JSON manifests if present
-        try {
-          if (pm && pm.textContent) pm.textContent = JSON.stringify(JSON.parse(pm.textContent), null, 2);
-        } catch (e) {}
-        try {
-          if (cm && cm.textContent) cm.textContent = JSON.stringify(JSON.parse(cm.textContent), null, 2);
-        } catch (e) {}
-      } catch (err) {
-        // ignore UI population errors
-      }
+      setText('recon-http-root', info.httpRoot);
+      setText('recon-http-clean', info.httpCleanManifest);
+      setText('recon-http-poisoned', info.httpPoisonedManifest);
+      setText('recon-https-root', info.httpsRoot);
+      setText('recon-https-clean', info.httpsCleanManifest);
+      setText('recon-https-poisoned', info.httpsPoisonedManifest);
+      setText('recon-wallet', info.walletPath);
       stopBtn.disabled = false;
     } catch (err) {
       log('Error starting server: ' + err);
@@ -73,57 +113,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   resetBtn.addEventListener('click', async () => {
     resetBtn.disabled = true;
-    log('Resetting demo (stop server + clear sentinels)...');
+    log('Resetting (stop server + clear sentinels + reset challenge)...');
     try {
       const res = await window.api.resetAutoUpdate();
-      if (res && res.ok) {
-        log('Reset complete.');
-        feedInput.value = '';
-      } else {
-        log('Reset failed: ' + (res && res.error ? res.error : JSON.stringify(res)));
-      }
+      log(res && res.ok ? 'Reset complete.' : 'Reset failed: ' + JSON.stringify(res));
     } catch (err) {
       log('Reset error: ' + err);
     } finally {
       resetBtn.disabled = false;
       startBtn.disabled = false;
       stopBtn.disabled = true;
-      // clear artifact displays
-      try {
-        const ids = ['poisoned-manifest','poisoned-payload','clean-manifest','clean-payload'];
-        ids.forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.textContent = '';
-        });
-      } catch (e) {}
+      feedInput.value = '';
+      resetTaskUI();
+      ['recon-http-root','recon-http-clean','recon-http-poisoned','recon-https-root','recon-https-clean','recon-https-poisoned','recon-wallet']
+        .forEach((id) => setText(id, null));
     }
   });
 
   checkBtn.addEventListener('click', async () => {
-    log('Checking for updates...');
     const feed = feedInput.value.trim();
     const mode = modeSelect.value;
     if (!feed) {
       log('Feed URL is empty');
       return;
     }
+    log(`Checking for updates (mode=${mode}) against ${feed} ...`);
     try {
       const res = await window.api.checkForUpdate({ feed, mode });
-      log('Result: ' + JSON.stringify(res));
+      if (res.success) {
+        log('Update APPLIED: ' + JSON.stringify({ success: res.success, applied: res.applied }));
+      } else {
+        log('Update rejected/failed: ' + (res.reason || 'unknown'));
+      }
+      if (res.backdoorNote && backdoorNote) {
+        backdoorNote.textContent = res.backdoorNote;
+      }
+      applyFlags(res.flags);
     } catch (err) {
       log('Error: ' + (err && err.message ? err.message : err));
     }
   });
 
-  sentinelBtn.addEventListener('click', async () => {
-    sentinelStatus.textContent = '';
-    try {
-      const exists = await window.api.checkSentinel();
-      sentinelStatus.textContent = exists ? 'Sentinel present — app was compromised.' : 'No sentinel present.';
-      sentinelStatus.style.color = exists ? 'red' : 'green';
-    } catch (err) {
-      sentinelStatus.textContent = 'Error: ' + err;
-      sentinelStatus.style.color = 'orange';
-    }
-  });
 });

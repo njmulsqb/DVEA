@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>What Can XSS Do in Electron?</title>
+    <link rel="stylesheet" href="../styles/theme.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
+  </head>
+  <body>
+    <header class="page-header">
+      <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
+      <h1>What Can XSS Do in Electron?</h1>
+      <p class="page-header-sub">The same injection, three configurations, three very different blast radii.</p>
+    </header>
+
+    <div class="page-wrap">
+      <section class="panel">
+        <div class="panel-header"><h2>Guide: What is happening?</h2></div>
+        <div class="panel-body">
+          <p>
+            In a browser, cross-site scripting is contained by the browser's own sandbox — the
+            worst a payload can usually do is act within that one page's origin. Electron runs
+            web code with a bridge to Node.js and the operating system, so <strong>the exact
+            same XSS payload</strong> can range from harmless in-page mischief to full remote
+            code execution on the host. Which one you get is determined entirely by the app's
+            <code>webPreferences</code> configuration — not by anything different in the
+            injected payload itself.
+          </p>
+        </div>
+        <div class="xss-explanation">
+          <strong>Objective:</strong> Show, hands-on, that "how bad is this XSS" is a property of
+          an Electron app's configuration, not of the injected payload — the same unsanitized
+          <code>innerHTML</code> injection is walled off in one window and becomes RCE in
+          another.
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Why config is the story</h2></div>
+        <div class="panel-body">
+          <p>
+            Electron security comes down to a small set of switches: <code>sandbox</code>,
+            <code>contextIsolation</code>, <code>nodeIntegration</code>, and what the preload
+            script chooses to expose through <code>contextBridge</code>. Set correctly, XSS
+            stays trapped in the renderer no matter how the attacker got their script onto the
+            page. Set incorrectly, the boundary between attacker-controlled JavaScript and the
+            operating system disappears.
+          </p>
+          <p>
+            The three challenges below are <strong>the identical bug</strong> — unsanitized
+            input rendered via <code>innerHTML</code> — placed at three different points on that
+            spectrum. Nothing about the injection changes between them; only the
+            <code>webPreferences</code> around it does.
+          </p>
+
+          <details>
+            <summary><strong>The switches, in detail</strong></summary>
+            <ul>
+              <li>
+                <strong><code>sandbox</code></strong> — when <code>true</code>, the renderer
+                process runs inside Chromium's OS-level sandbox and cannot touch Node.js or the
+                filesystem directly, regardless of what else is misconfigured.
+              </li>
+              <li>
+                <strong><code>contextIsolation</code></strong> — when <code>true</code>, the
+                preload script's JavaScript world is isolated from the page's own world; the
+                page can reach only whatever the preload deliberately exposes via
+                <code>contextBridge.exposeInMainWorld</code>.
+              </li>
+              <li>
+                <strong><code>nodeIntegration</code></strong> — when <code>false</code> (the safe
+                default), <code>require()</code> and Node globals are not reachable from page
+                script at all.
+              </li>
+              <li>
+                <strong>What the preload exposes</strong> — even with the three flags above all
+                set correctly, a preload that hands the page a privileged function (one that
+                shells out, reads arbitrary files, etc.) reopens the door XSS was supposed to be
+                locked out of. Correct core config plus one careless API is enough to undo it.
+              </li>
+            </ul>
+          </details>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Challenges</h2></div>
+        <div class="panel-body">
+          <p class="text-small text-gray">
+            Three window configurations, one injection. Click a challenge to open it.
+          </p>
+
+          <div class="vuln-sub-list">
+            <a href="#" onclick="window.api.openXSSContained(); return false;" class="vuln-sub-item">
+              Challenge 1 — Contained: hardened config; XSS is walled to the renderer
+            </a>
+            <a href="#" onclick="window.api.openXSSBridged(); return false;" class="vuln-sub-item">
+              Challenge 2 — Bridged: correct isolation, one overprivileged preload API
+            </a>
+            <a href="#" onclick="window.api.openXSSOwned(); return false;" class="vuln-sub-item">
+              Challenge 3 — Owned: main process evaluates renderer input with full Node access
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>How the challenges work</h2></div>
+        <div class="panel-body">
+          <p>
+            Each challenge sets out concrete tasks. Solving one proves a capability that its
+            configuration allows — reading page data, reaching a privileged API, executing a
+            shell command — and returns a flag in the form <code>DVEA{...}</code>.
+          </p>
+          <p>
+            Watch the <strong>config badges</strong> at the top of each challenge page and the
+            <strong>Config Inspector</strong> panel while you work — the difference in what's
+            achievable from challenge to challenge <em>is</em> the configuration difference, not
+            a different vulnerability. Pay attention to failures as much as successes: a wall you
+            hit in Challenge 1 trying to reach the filesystem is one you'll sail straight through
+            in Challenge 3 with the exact same attempted action.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Real-world grounding</h2></div>
+        <div class="panel-body">
+          <p>
+            This escalation is not contrived.
+            <a href="https://nvd.nist.gov/vuln/detail/CVE-2020-16608" target="_blank">CVE-2020-16608</a>
+            is exactly XSS escalating to RCE via Node access in a misconfigured Electron app —
+            the same shape as Challenge 3. The
+            <a href="https://www.electronjs.org/docs/latest/tutorial/security" target="_blank">Electron security checklist</a>
+            exists specifically to keep real apps out of Challenge 2 and Challenge 3 territory.
+          </p>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

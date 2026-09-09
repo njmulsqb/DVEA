@@ -2,83 +2,95 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Insecure Auto-Update (CVE-2024-39698)</title>
-    <link rel="stylesheet" href="../styles/style.css" />
+    <title>Insecure Auto-Update (cf. CVE-2024-39698)</title>
+    <link rel="stylesheet" href="../styles/theme.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
   </head>
   <body>
     <header class="page-header">
       <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
       <h1>Insecure Auto-Update — cf. CVE-2024-39698</h1>
-      <p class="page-header-sub">Simulated updater demonstrating insecure update feeds and missing signature verification.</p>
+      <p class="page-header-sub">An updater that trusts its feed executes attacker code in the main process — supply-chain RCE</p>
     </header>
 
     <div class="page-wrap">
       <div class="checklist">
-        <span class="checklist-item fail">✗ Feed transport: HTTP allowed</span>
-        <span class="checklist-item fail">✗ Signature/integrity: optional</span>
+        <span class="checklist-item fail">✗ Feed transport: plaintext HTTP allowed</span>
+        <span class="checklist-item fail">✗ Integrity: signature/hash unverified in VULNERABLE mode</span>
+        <span class="checklist-item pass">✓ HARDENED mode: HTTPS + hash + signature enforced</span>
       </div>
 
       <section class="panel">
         <div class="panel-header"><h2>Guide: What is happening?</h2></div>
         <div class="panel-body">
           <p>
-            This demo runs a bundled update-feed server locally and a vulnerable auto-updater in the main
-            process. In <strong>VULNERABLE</strong> mode the updater will fetch a manifest over HTTP with
-            no signature or integrity checks and then download and execute whatever payload the manifest
-            specifies. The attacker can serve a poisoned manifest and payload (no user interaction required).
+            A web page's "update" is just the server sending new HTML/JS that runs inside the
+            browser sandbox — worst case, a compromised web app. An Electron app's auto-updater is
+            categorically different: it fetches <strong>code that runs in the main process</strong>,
+            with full Node.js and OS privileges, outside any sandbox. So the question "is this
+            update authentic?" is the only thing standing between the network and code execution on
+            every user's machine.
           </p>
           <p>
-            In <strong>HARDENED</strong> mode the updater requires HTTPS and verifies a trusted HMAC signature
-            and payload hash; the poisoned manifest is rejected and nothing runs.
+            This module runs a bundled update-feed server locally (standing in for an attacker's
+            MITM feed) and a real, vulnerable updater in the main process. In
+            <strong>VULNERABLE</strong> mode the updater fetches a manifest over plaintext HTTP with
+            <em>no</em> transport security and <em>no</em> integrity check, then downloads and
+            <code>eval()</code>s whatever payload the manifest names. No user interaction is
+            required. In <strong>HARDENED</strong> mode the same updater requires HTTPS and verifies
+            a payload hash and a trusted HMAC signature before running anything.
           </p>
+          <p>
+            The danger isn't "run one payload" — it's the reach. A single poisoned feed (public
+            Wi-Fi MITM, DNS poisoning, a compromised CDN or update server) turns into remote code
+            execution across the entire user base, silently, with persistence and data theft
+            available to the payload because it runs with the app's own privileges.
+          </p>
+        </div>
+        <div class="xss-explanation">
+          <strong>Objective:</strong> This app ships an updater that behaves as if anything its feed
+          returns is trustworthy. Prove that's fatal: get it to (1) accept an update over plaintext
+          HTTP, and (2) execute an unsigned/forged payload so attacker code runs in the main
+          process. Then (3) switch on the hardening and confirm the same forged update is now
+          rejected. Work out <em>which</em> feed and mode to use yourself — nothing here hands you
+          the exploit.
+        </div>
+        <div class="xss-explanation xss-explanation--critical">
+          <strong>This genuinely runs code.</strong> Starting the server opens real local HTTP/HTTPS
+          listeners, and a successful VULNERABLE update <code>eval()</code>s a payload in the main
+          process that writes marker files under <code>/tmp</code> (and reads a planted decoy
+          wallet). The payloads are DVEA-controlled and safe to run repeatedly; <strong>Reset</strong>
+          stops the server and clears the markers.
         </div>
       </section>
 
       <section class="panel">
-        <div class="panel-header"><h2>Attack Scenario</h2></div>
+        <div class="panel-header"><h2>Recon: the update feed</h2></div>
         <div class="panel-body">
-          <p>
-            Real threat: an app that checks an HTTP update feed with no signature verification can be
-            MITM'd (public Wi‑Fi, DNS poisoning, compromised CDN). An attacker returns a manifest pointing
-            at their payload; the app downloads and runs it as a trusted update, enabling silent RCE across
-            users. The sentinel is a stand-in for arbitrary attacker code (reverse shell, credential exfiltration).
+          <p class="text-small text-gray">
+            Start the local feed server, then point the updater at one of its endpoints. The server
+            serves a manifest for two channels over both transports — the endpoint URLs appear here
+            once it's running. It also plants a decoy secret on the host that a payload with real
+            main-process access could read.
           </p>
-          <p>
-            Grounding: related issues include CVE-2024-39698 (electron-updater Windows signature bypass) and
-            Doyensec's publisherName string-comparison bypass. This module demonstrates the general pattern; it does
-            not reproduce that Windows-specific bug but is grounded in those real-world examples.
-          </p>
-
-          <div style="margin-top:1rem">
-            <div><strong>Poisoned manifest (attacker):</strong></div>
-            <pre id="poisoned-manifest" class="artifact-pre"></pre>
-          </div>
-
-          <div style="margin-top:1rem">
-            <div><strong>Poisoned payload (attacker JS):</strong></div>
-            <pre id="poisoned-payload" class="artifact-pre"></pre>
-          </div>
-
-          <div style="margin-top:1rem">
-            <div><strong>Clean manifest (trusted):</strong></div>
-            <pre id="clean-manifest" class="artifact-pre"></pre>
-          </div>
-
-          <div style="margin-top:1rem">
-            <div><strong>Clean payload (trusted JS):</strong></div>
-            <pre id="clean-payload" class="artifact-pre"></pre>
-          </div>
+          <ul class="text-small">
+            <li>HTTP root: <code id="recon-http-root">—</code></li>
+            <li>HTTP manifests: <code id="recon-http-clean">—</code> · <code id="recon-http-poisoned">—</code></li>
+            <li>HTTPS root: <code id="recon-https-root">—</code></li>
+            <li>HTTPS manifests: <code id="recon-https-clean">—</code> · <code id="recon-https-poisoned">—</code></li>
+            <li>Planted host secret (decoy): <code id="recon-wallet">—</code></li>
+          </ul>
         </div>
       </section>
 
       <section class="panel demo-panel">
         <div class="panel-header"><h2>Demo</h2></div>
         <div class="panel-body">
-          <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+          <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">
             <button id="start-server">Start Local Feed Server</button>
             <button id="stop-server" disabled>Stop Server</button>
             <button id="reset-server">Reset</button>
-            <label style="margin-left:1rem;">Mode:
+            <label style="margin-left:0.5rem;">Mode:
               <select id="mode">
                 <option value="vulnerable">VULNERABLE</option>
                 <option value="hardened">HARDENED</option>
@@ -87,22 +99,60 @@
           </div>
 
           <div style="margin-top:1rem">
-            <label>Feed URL:</label>
-            <input id="feed-url" style="width:80%" />
+            <label for="feed-url">Feed manifest URL:</label>
+            <input id="feed-url" style="width:100%" placeholder="Point the updater at a feed manifest…" autocomplete="off" />
           </div>
 
           <div style="margin-top:1rem">
-            <button id="check-update">Check For Updates</button>
+            <button id="check-update" class="btn--primary">Check For Updates</button>
           </div>
 
           <div style="margin-top:1rem">
-            <pre id="log" style="height:220px;overflow:auto;background:#111;color:#eee;padding:1rem"></pre>
+            <pre id="log" class="log-pre" style="height:200px"></pre>
           </div>
+        </div>
+      </section>
 
-          <div style="margin-top:1rem">
-            <button id="check-sentinel">Check Sentinel File</button>
-            <span id="sentinel-status" style="margin-left:1rem"></span>
-          </div>
+      <section class="panel">
+        <div class="panel-header"><h2>Attacker view — what the executed update did</h2></div>
+        <div class="panel-body">
+          <p class="text-small text-gray">
+            When an update executes, the payload leaves evidence on the host. This panel shows the
+            backdoor marker the poisoned payload writes — including anything it read from the host.
+          </p>
+          <pre id="backdoor-note" class="artifact-pre">No payload has executed yet.</pre>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><h2>Tasks <span id="flag-progress" class="text-small text-gray"></span></h2></div>
+        <div class="panel-body">
+          <ul class="task-list">
+            <li id="task-1" class="task-item">
+              <span id="task-1-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 1 — Apply an update over plaintext HTTP.</strong>
+              Get the updater to accept and apply an update fetched over an <code>http://</code>
+              feed, with no TLS — the precondition that makes this MITM-able.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+            <li id="task-2" class="task-item">
+              <span id="task-2-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 2 — Execute an unsigned payload (silent RCE).</strong>
+              Get a forged / unsigned update payload to actually run in the main process. Proof
+              lands in the attacker view above.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+            <li id="task-3" class="task-item">
+              <span id="task-3-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 3 — Confirm the fix (the capstone).</strong>
+              Switch on HARDENED mode and re-run the forged feed; confirm the updater rejects it and
+              nothing executes. Point it at the <em>HTTPS</em> forged feed to watch the signature
+              check specifically catch the forgery (over HTTP it's rejected earlier, for transport).
+              A blocked forgery is a different outcome from an exploit — it renders as
+              <em>Contained</em>, not Solved.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+          </ul>
         </div>
       </section>
 
@@ -110,7 +160,8 @@
         <div class="panel-header"><h2>References</h2></div>
         <div class="panel-body">
           <ul>
-            <li><a href="https://github.com/advisories/GHSA-9jxc-qjr9-vjxq" target="_blank">CVE-2024-39698 / GHSA-9jxc-qjr9-vjxq — GitHub Advisory</a></li>
+            <li><a href="https://github.com/advisories/GHSA-9jxc-qjr9-vjxq" target="_blank">CVE-2024-39698 / GHSA-9jxc-qjr9-vjxq — GitHub Advisory (electron-updater)</a></li>
+            <li><a href="https://www.electronjs.org/docs/latest/tutorial/updates" target="_blank">Electron — Updating Applications (autoUpdater / update server guidance)</a></li>
           </ul>
         </div>
       </section>

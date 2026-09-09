@@ -2,22 +2,44 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>DVEA Panel</title>
+    <title>DVEA · observability</title>
     <meta http-equiv="Content-Security-Policy" content="script-src 'self'" />
-    <style>
-      body { font-family: system-ui, sans-serif; margin: 0; padding: 1rem; background:#f6f8ff }
-      pre { background: #fff; border: 1px solid #e6eefb; padding: 10px; border-radius:6px; max-height:80vh; overflow:auto }
-    </style>
+    <link rel="stylesheet" href="../styles/theme.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
   </head>
-  <body>
-    <h1>Observability Panel (minimal)</h1>
-    <div id="lastUpdate">Waiting for updates…</div>
-    <h2>Config</h2>
-    <pre id="store">{}</pre>
-    <h2>IPC Log</h2>
-    <div id="ipc-log-container" style="border:1px solid #e6eefb; background:#fff; border-radius:6px; max-height:60vh; overflow:auto; padding:8px;">
-      <ol id="ipc-log" style="list-style:none; margin:0; padding:0; font-family: monospace; font-size:12px;"></ol>
+  <body class="page">
+    <div class="chrome-bar">
+      <span class="chrome-bar__mark">◆</span>
+      <span class="chrome-bar__word">DVEA</span>
+      <span class="chrome-bar__path">~/observability</span>
+      <span class="chrome-bar__spacer"></span>
+      <span class="chrome-bar__meta" id="ipc-count">0 events</span>
+      <span class="chrome-bar__status">
+        <span class="live-dot"></span>
+        <span id="last-update">waiting…</span>
+      </span>
     </div>
+
+    <div class="toolbody">
+      <div class="sec sec--brand">
+        <span class="sec__num">00</span>
+        <span class="sec__label">Config Inspector</span>
+        <span class="sec__hint">effective webPreferences · csp · versions</span>
+        <span class="sec__rule"></span>
+      </div>
+      <pre id="store" class="rawjson">{}</pre>
+
+      <div class="sec sec--muted">
+        <span class="sec__num">01</span>
+        <span class="sec__label">IPC Monitor</span>
+        <span class="sec__hint">every message crossing the boundary</span>
+        <span class="sec__rule"></span>
+      </div>
+      <div id="ipc-log-container" class="logtail" style="max-height:44vh">
+        <div id="ipc-log"></div>
+      </div>
+    </div>
+
     <script src="../js/panel.js"></script>
   </body>
 </html>
