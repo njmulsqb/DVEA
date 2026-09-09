@@ -10,9 +10,13 @@ This document reflects the `writeups` branch as of 2026-09-09. It was first writ
 from read-only analysis, then updated after a round of work on the same branch: the Renderer XSS
 module was rebuilt into three challenge windows, the Deep Link Hijacking module's real-link
 dispatch and OS scheme registration were fixed, the Insecure File Write lab was reworked into a
-challenge-style module with flag-gated tasks, a Playwright test suite was added, a packaged-build
-boot crash was fixed, and several dead dependencies were removed. Sections below reflect that
-current state; treat any specific commit count / line count as approximate and re-check with git.
+challenge-style module with flag-gated tasks, the Insecure Auto-Update lab was likewise reworked,
+a Playwright test suite was added, a packaged-build boot crash was fixed, and several dead
+dependencies were removed. A later pass rolled out the **terminal-manpage design system**
+(`docs/DESIGN_SPEC.md` → `theme.css` + `components.css`, bundled fonts) to every page and reframed
+**Stored HTML Injection into the flagship challenge** (solution withheld; §3). All of this is on the
+`writeups` branch (PR #38 → `main`). Sections below reflect that current state; treat any specific
+commit count / line count as approximate and re-check with git.
 
 ---
 
@@ -50,7 +54,9 @@ src/main/
 src/renderer/
   pages/*.html          — one file per module/route/page
   js/*.js               — one script per page, referenced via <script src>
-  styles/style.css       — single flat interim stylesheet (~430 lines)
+  styles/theme.css       — design tokens (the ONLY file that names a color) + @font-face
+  styles/components.css   — the "terminal manpage" component + legacy-retheme layer (tokens only)
+  assets/fonts/*.woff2     — bundled Orbitron 800 + Inter 400/600 (offline; no remote font requests)
 src/labs/insecure-auto-update/ — bundled local HTTP+HTTPS feed server + TLS cert/key for that demo
 vulnerable-versions/    — pinned-old-Electron CVE scenarios; lives on the `bind-hijack` branch
                           only (see §3, §5) — not present in this branch's tree.
@@ -212,7 +218,7 @@ see the note at the end of this section.
 | — XSS Challenge 1 — Contained | grouped card sub-item (`4 tasks`) | `openXSSContainedWindow()` — genuinely hardened `Window` (`sandbox`/`contextIsolation` true, `nodeIntegration` false, zero-exposure `preload-xss-contained.js`) | `xss-no-priv.html` / `xss-no-priv.js` | `innerHTML` injection with every hardening flag on — impact capped at browser-equivalent renderer XSS. Four tasks: DOM theft, localStorage read, in-page phishing harvest, and a genuine escape attempt that **fails** and renders a distinct amber "Contained ✓" state (a blocked escape is a different outcome from an exploit success). |
 | — XSS Challenge 2 — Bridged — cf. CVE-2020-25019 (shape) | grouped card sub-item (`3 tasks`) | `openXSSBridgedWindow()` — same hardened core as Ch1 **plus** `preload-xss-bridged.js` exposing `systemAPI.runCommand` → `ipcMain.handle('bridge-run-command', …)` which runs `child_process.exec` | `xss-system-api.html` / `xss-system-api.js` | Correct isolation, one overprivileged preload API. XSS → arbitrary shell command via the bridge despite `contextIsolation: true`. Three tasks: enumerate the bridge, round-trip a command through it, and read a planted OS secret (`/tmp/dvea-bridge-secret.txt`) — proof the bridge reaches the real OS. |
 | — XSS Challenge 3 — Owned — cf. CVE-2020-16608 | grouped card sub-item (`3 tasks`) | `openXSSOwnedWindow()` — `Window` with `nodeIntegration: true`, `contextIsolation: false`, `sandbox: false`, **no preload** | `xss-rce-direct.html` / `xss-rce-direct.js` | The classic cardinal-sin config: the renderer itself is Node, so injected script calls `require()` directly — no bridge, no IPC. Three tasks: prove Node in the renderer, run a real OS command, read a planted host file (`/tmp/dvea-rce-flag.txt`), each verified against ground truth main computes independently. **NB: the old `ipcMain.handle('xss-rce-direct', (e,code)=>eval(code))` main-process-eval handler no longer exists** — this challenge is now renderer-side Node via `nodeIntegration`. |
-| Stored HTML Injection → IPC Token Exfiltration | own card | `ipcMain.on('open-analytics', ...)` creates the analytics window; `ipcMain.handle('get-token', ...)` has no sender validation | `stored-htmli.html` → `analytics.html` (CSP `script-src *` via meta tag) → can be redirected via `<meta http-equiv="refresh">` to `attacker-grab-token.html` | CSP blocks inline-script XSS but not `<meta http-equiv="refresh">`; the preload (`preload-analytics.js`) is bound to the *window*, not the URL, so after the meta-refresh navigates away, the attacker page can still call `window.analyticsAPI.getToken()` and get a real (fake demo) JWT with zero sender/origin checks. |
+| Stored HTML Injection → IPC Token Exfiltration (**FLAGSHIP**) | flagship card | `ipcMain.on('open-analytics', ...)` creates the analytics window; `ipcMain.handle('get-token', ...)` has no sender validation (the vuln, unchanged); a `submit-stored-htmli-flag` handler validates a captured token → `DVEA{stored_html_to_ipc_exfil}` | `stored-htmli.html` (challenge landing: objective + scope + 3 revealable concept-hints + flag box, **no solution**) → `analytics.html` (CSP `script-src *` via meta tag; `analytics.js` renders the name via `innerHTML` and hoists any `<meta>` into `<head>`) → `attacker-grab-token.html` (minimal: "open DevTools", no walkthrough) | Same mechanics as before — CSP blocks inline-script XSS but not `<meta http-equiv="refresh">`; `preload-analytics.js` is bound to the *window*, not the URL, so an injected redirect's target can still call `window.analyticsAPI.getToken()`. **Reframed as the flagship (2026-09-09):** all solution content stripped from the app (guide/attack-chain/enumeration/why/fix removed; CSP banner nudge and giveaway comments neutralized); the token `get-token` returns is now **generated per launch** (`sess_live_<random>`, in-memory only, never a static literal or file — closes the grep-the-asar / read-from-source shortcut), and the solver submits the captured token on the landing page to earn the flag. The full solution writeup is deliberately **not** kept in the repo. |
 | Insecure File Write (IPC Abuse) | own card (`3 tasks`) | `ipcMain.handle('save-file', …)` — still `fs.promises.writeFile(data.path, data.content)` with zero validation, registered at module-load time (see §2 caveat). It now **also** returns a flag-evaluation result (`evaluateFileWriteTasks`), and a sibling `ipcMain.handle('filewrite-init', …)` plants/resets the DVEA-owned targets and returns recon. | `savefile.html` / `savefile.js` | **Challenge-style** (Objective + 3 flag-gated tasks, no on-page payloads; solution in `writeups/insecure-file-write.md`). The vuln is unchanged and honest — the write accepts *any* renderer-supplied path/content. The flag layer only inspects real disk state after the write and recognizes DVEA-controlled targets under `os.tmpdir()/dvea-file-write/` so the demo is booth-safe: Task 1 write outside the app area (`DVEA{arbitrary_path_write}`), Task 2 overwrite a planted file (`DVEA{overwrite_existing_file}`), Task 3 overwrite a config file the app re-reads so its displayed banner changes (`DVEA{write_to_rce}` — a bounded stand-in for overwriting files the app `require()`s / autostart / persistence, covered in the writeup). `filewrite-init` on page load re-plants the targets, so it's repeatable. |
 | openExternal Abuse — cf. CVE-2020-25019 | own card | `ipcMain.handle('open-external', (event, url) => shell.openExternal(url))` | `openexternal.html` (**challenge-style** — Objective + attempt log, no on-page payload; solution in `writeups/openexternal-abuse.md`) | Unvalidated URL/protocol handed to `shell.openExternal` — opens arbitrary URLs or OS protocol handlers (`mailto:`, `file://`, custom schemes). The outbound mirror of Deep Link Hijacking's inbound protocol-handling flaw. |
 | Insecure Auto-Update — cf. CVE-2024-39698 | own card (`3 tasks`) | `src/main/insecure-auto-update.js` — `check-for-update` still fetches a manifest over HTTP with no integrity check and `eval()`s the payload in the main process (vulnerable mode); `performUpdateCheck()` holds the vuln, and a flag layer (`evaluateAutoUpdateTasks`) is layered on top. Bundled HTTP+HTTPS feed server in `src/labs/insecure-auto-update/server.js`. | `insecure-auto-update.html` / `insecure-auto-update.js` | **Challenge-style** (Objective + 3 flag-gated tasks, no on-page payload source — the old page displayed the poisoned manifest/payload; that giveaway was removed; solution in `writeups/insecure-auto-update.md`). Vuln unchanged and honest. A **vulnerable/hardened mode toggle** (hardened requires HTTPS + SHA-256 hash + HMAC signature) is used as the "Contained" capstone. Feed server serves clean (valid HMAC) and poisoned (`signature: INVALID_SIGNATURE`) manifests+payloads; the poisoned payload drops `/tmp/dvea-backdoor.txt` and exfiltrates a planted decoy wallet (`/tmp/dvea-wallet.dat`). Tasks: apply an update over plaintext HTTP (`DVEA{update_over_plaintext_http}`), execute the unsigned payload → RCE + exfil (`DVEA{unsigned_payload_executed}`), and HARDENED mode rejecting the forged HTTPS feed on signature grounds → **Contained** (`DVEA{hardened_rejected_forgery}`). **Reset** stops the server, clears sentinels, and resets flags. Note: `cert.pem`/`key.pem` were regenerated — the previously-bundled pair was malformed, so HTTPS had been silently disabled. |
@@ -266,8 +272,9 @@ below; they have no Guide/walkthrough/fix content on the page at all.
 ### Challenge-style labs + repo-only writeups
 Now the standard for new/reworked modules — the two Deep Link Hijacking route pages, the three
 Renderer XSS challenges, Insecure File Write, and openExternal are all challenge-style, each with
-a repo-only writeup in `writeups/`. Insecure Auto-Update is now challenge-style too (flag-gated
-tasks). Stored HTML Injection is the last module still on the older in-page walkthrough style.
+a repo-only writeup in `writeups/`. Insecure Auto-Update is challenge-style too (flag-gated tasks),
+and Stored HTML Injection is now the **flagship** challenge (objective + revealable concept-hints,
+solution deliberately withheld — see its §3 row). Every module is now challenge-style.
 There are two sub-shapes:
 - **Deep-link shape** (the two route pages): Concept panel keeps only an **Objective** (imperative
   — "Craft a deep link that...") and a short **"How to try it"** note. The demo panel is retitled
@@ -317,16 +324,29 @@ re-plants the DVEA-owned targets on every page load, so the challenge is repeata
 plumbing, not a user-facing hardened toggle. Treat auto-update as the reference for a full
 vuln/hardened switch; don't assume other modules have one.
 
-### Styling
-- `docs/DESIGN_SPEC.md` **does not exist** — checked `docs/` (currently empty) on this branch and
-  searched all branches' git history; there is no design spec file anywhere yet. If one gets
-  written, it belongs in `docs/`.
-- Current styling is one flat stylesheet, `src/renderer/styles/style.css` (~430 lines), used by
-  every page via a relative `<link>`. It's lightly commented, utility-class-light (a handful of
-  `.text-small`, `.mt-4`, `.text-gray` helpers), and clearly interim scaffolding rather than a
-  designed system — treat any UI restyle as deferred/out-of-scope unless explicitly requested.
-- `spectre.css` was removed from `package.json` (it had never been referenced anywhere) — no CSS
-  framework is wired in; don't assume any framework classes are available.
+### Styling — the "terminal manpage" design system
+The old flat `style.css` is **deleted**. Styling is now a two-file token system implementing
+`docs/DESIGN_SPEC.md` (which now exists — it's the visual-direction spec):
+- `src/renderer/styles/theme.css` — every design token as `:root` custom properties, plus
+  `@font-face` for the bundled fonts. **The single source of color: nothing outside `theme.css`
+  may name a color** (enforced — no hex/rgb/named colors in components.css, any page, or any JS;
+  this fixes the old per-page-override bugs). Verify with a grep before adding CSS.
+- `src/renderer/styles/components.css` — the component layer (`.chrome-bar`, numbered `.sec`
+  headers, `.code`/`.diff`/`.callout`, `.tag`/`.meter`, `.btn`/`.field`, `.logline`, the dense
+  `.modtable`) **plus a legacy-retheme block** that redefines the shared class names the pages and
+  the challenge JS still use (`.panel`, `.panel-header`, `.checklist-item pass/fail/contained`,
+  `.xss-output`, `.xss-explanation`, `.step-*`, `.stat-*`, `.vuln-sub-*`, bare form elements, …) in
+  the token language. Every color references `var(--…)`.
+- Fonts (`src/renderer/assets/fonts/`): Orbitron 800 + Inter 400/600 as local woff2, `@font-face`
+  with `font-display:swap`, no remote requests (offline + strict CSP).
+- Every page links `theme.css` + `components.css` (no page links the old `style.css`). Module pages
+  keep their existing markup/IDs/scripts — the retheme brings them into the system by class, and
+  `.panel-header` sections auto-number (`01`, `02`, …) via a CSS counter. Reference screens (the
+  observability panel, `openexternal.html`, `index.html`) use the full section-header device
+  directly. Hard rules from the spec that are enforced: one crimson primary button per screen
+  (base `button` is neutral; add `.btn--primary`), threat state uses `--critical`/`--warning` not
+  brand crimson, zero border-radius except 6px on controls.
+- `spectre.css` was removed from `package.json` (never referenced) — no CSS framework is wired in.
 
 ### Build/packaging
 - `npm install`, then `npm start` (→ `electron-forge start`). Requires Node ≥20 (tested on 22).
