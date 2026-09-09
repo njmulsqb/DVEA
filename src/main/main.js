@@ -168,6 +168,18 @@ function main() {
     shell.openExternal(url);
   });
 
+  // On Linux this call shells out to `xdg-mime default <desktop-file> x-scheme-handler/dvea`,
+  // and Electron reads that <desktop-file> from the CHROME_DESKTOP environment variable — it is
+  // not derived from app.getName() (app.setDesktopName() was removed in Electron 40). With
+  // CHROME_DESKTOP unset the argument is empty and the call fails with
+  // "xdg-mime: application argument missing", leaving dvea:// unregistered.
+  //
+  // Note this only makes DVEA the DEFAULT for the scheme; the OS still has to know DVEA can
+  // handle it at all, which comes from MimeType=x-scheme-handler/dvea in the installed .desktop
+  // file (see the maker-deb mimeType config in forge.config.js).
+  if (process.platform === 'linux' && !process.env.CHROME_DESKTOP) {
+    process.env.CHROME_DESKTOP = 'dvea.desktop';
+  }
   if (!app.isDefaultProtocolClient('dvea')) {
     app.setAsDefaultProtocolClient('dvea');
   }

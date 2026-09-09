@@ -35,6 +35,11 @@
           DVEA — opening a link like <code>dvea://navigate?url=https://example.com</code> from
           anywhere (a browser address bar, an email, a terminal) pops open a new, native-looking
           DVEA window loading that URL, with no address bar and no confirmation.</p>
+          <p class="text-small text-gray">If your browser searches for the text instead of opening
+          DVEA, the scheme isn't registered with the OS — check with
+          <code>xdg-mime query default x-scheme-handler/dvea</code>, which should print
+          <code>dvea.desktop</code>. Browsers only hand a custom scheme to the OS when a handler
+          for it exists.</p>
           <p class="text-small text-gray">Running from source doesn't reliably register the scheme
           with the OS, so a real <code>dvea://</code> link won't dispatch to the app during
           development — use the simulator below instead.</p>

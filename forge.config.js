@@ -16,7 +16,13 @@ module.exports = {
     {
       name: '@electron-forge/maker-deb',
       platforms: ['linux'],
-      
+      config: {
+        // Without this the generated .desktop file has no MimeType line, so nothing in the
+        // desktop database claims x-scheme-handler/dvea — a browser or `xdg-open dvea://...`
+        // finds no handler and falls back to a web search. The whole Deep Link Hijacking
+        // module depends on the OS routing this scheme to DVEA.
+        mimeType: ['x-scheme-handler/dvea'],
+      },
     },
    
   ],
