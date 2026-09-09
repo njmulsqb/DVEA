@@ -479,7 +479,9 @@ label.field-label {
 .modrow--child .modrow__mod { padding-left: 22px; }
 .modrow--child .modrow__mod a { font-weight: 400; color: var(--text-body); }
 .modrow--child .modrow__mod a:hover { color: var(--accent-text); }
-.modrow__surface { white-space: nowrap; }
+/* Let multiple surface tags wrap within the fixed column instead of overflowing into the
+   difficulty cell (the flagship row has three tags). */
+.modrow__surface { white-space: normal; line-height: 2; }
 .modrow--flagship { background: var(--bg-raised); border-top: 1px solid var(--border-default); }
 .index-footer {
   font-family: var(--font-mono);
