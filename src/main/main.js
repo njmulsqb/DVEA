@@ -32,6 +32,18 @@ const BRIDGE_CALL_FLAG = 'DVEA{bridge_command_executed}';
 // openXSSOwnedWindow below).
 const RCE_SECRET_PATH = '/tmp/dvea-rce-flag.txt';
 const RCE_HOST_FLAG = 'DVEA{full_host_compromise}';
+// Escape untrusted text for the DIAGNOSTIC pages main builds (e.g. the "target failed to load"
+// page below). This is not a hardening of any lab — no vulnerable path uses it; it only stops a
+// malformed target string from mangling an error message the user needs to be able to read.
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Insecure auto-update demo (registers IPC handlers)
 let insecureAutoUpdate = null;
 try {
@@ -177,9 +189,55 @@ function main() {
         preload: path.join(__dirname, 'preload.js'),
       },
     });
-    // Vulnerable navigation: main process directly loads the attacker URL into a new window
-    win.loadURL(target);
-    win.once('ready-to-show', () => win.show());
+
+    // The window is created hidden so it can pop up fully painted. `ready-to-show` only fires
+    // once a document actually COMMITS, though — so if the navigation below fails (invalid URL,
+    // a scheme Chromium has no handler for, DNS/TLS failure), that event never arrives and the
+    // window stays hidden forever: the demo appears to do nothing at all, and leaks a hidden
+    // window per attempt. Reveal it on first paint OR on load failure, whichever happens.
+    let shown = false;
+    const reveal = () => {
+      if (shown || win.isDestroyed()) return;
+      shown = true;
+      win.show();
+    };
+    win.once('ready-to-show', reveal);
+
+    // Show WHY a target didn't load rather than failing silently. Guarded so the diagnostic
+    // page's own load can't re-enter this and loop.
+    let reported = false;
+    const reportLoadFailure = (reason) => {
+      if (reported || win.isDestroyed()) return;
+      reported = true;
+      const html = `<!doctype html><meta charset="utf-8">
+        <body style="font:14px system-ui;padding:1.5rem;color:#0f172a">
+          <h2 style="margin:0 0 .5rem">DVEA — target failed to load</h2>
+          <p style="margin:0 0 1rem;color:#475569">The main process passed this URL straight to
+          <code>loadURL()</code> with no validation, exactly as a real deep link would. Chromium
+          then refused to navigate to it.</p>
+          <p><strong>Target:</strong> <code>${escapeHtml(target)}</code></p>
+          <p><strong>Reason:</strong> <code>${escapeHtml(reason)}</code></p>
+          <p style="color:#475569">A bare hostname (<code>example.com</code>) is not a valid URL —
+          include a scheme. A <code>dvea://</code> link cannot be loaded into a window either;
+          that scheme is registered with the OS, not with Chromium.</p>
+        </body>`;
+      win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html)).catch(() => {});
+      reveal();
+    };
+
+    win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      // -3 is ERR_ABORTED, which is normal traffic (a superseded or cancelled navigation),
+      // not a failure worth reporting. Subframe failures aren't this window failing either.
+      if (!isMainFrame || errorCode === -3) return;
+      reportLoadFailure(errorDescription || 'errno ' + errorCode);
+    });
+
+    // Vulnerable navigation: main process directly loads the attacker URL into a new window.
+    // Still completely unvalidated — the catch only reports the outcome, it rejects nothing.
+    // (loadURL returns a promise; leaving it unhandled was what hid invalid-URL errors, since
+    // those reject without ever emitting did-fail-load.)
+    win.loadURL(target).catch((err) => reportLoadFailure(err && err.message ? err.message : String(err)));
+
     return win;
   }
 
@@ -221,12 +279,36 @@ function main() {
   // Create a new app window and navigate it to the attacker-supplied URL — the identical
   // vulnerable code path (openUntrustedNavigationWindow, above) that a real
   // dvea://navigate?url=... deep link uses.
-  ipcMain.handle('simulate-deeplink-window', (event, target) => {
+  ipcMain.handle('simulate-deeplink-window', (event, rawTarget) => {
     try {
-      if (!target) return;
+      const input = typeof rawTarget === 'string' ? rawTarget.trim() : '';
+      if (!input) return { ok: false, error: 'Enter a target URL first.' };
+
+      let target = input;
+
+      // The "Try It" panel above the simulator teaches the real link format, so pasting a whole
+      // dvea://navigate?url=... link in here is the natural thing to do. Unwrap it the same way
+      // handleDeepLink() does rather than handing 'dvea://...' to loadURL(), which can't resolve
+      // it — setAsDefaultProtocolClient registers that scheme with the OS, not with Chromium.
+      if (/^dvea:/i.test(target)) {
+        const inner = new URL(target).searchParams.get('url');
+        if (!inner) {
+          return { ok: false, error: 'That dvea:// link has no ?url= parameter to navigate to.' };
+        }
+        target = inner;
+      }
+
+      // A bare hostname isn't a valid absolute URL, so Chromium refuses it outright. Default the
+      // scheme like a browser address bar would, so the demo does the obvious thing.
+      if (!/^[a-z][a-z0-9+.-]*:/i.test(target)) {
+        target = 'https://' + target;
+      }
+
       openUntrustedNavigationWindow(target);
+      return { ok: true, target };
     } catch (err) {
       console.error('simulate-deeplink-window failed:', err);
+      return { ok: false, error: err && err.message ? err.message : String(err) };
     }
   });
 

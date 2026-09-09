@@ -300,6 +300,7 @@ code {
 .demo-panel { margin-top: 1.25rem; }
 .demo-panel .panel-body form { margin: 0; }
 .text-small { font-size: 0.84rem; }
+.simulate-status-error { color: #b91c1c; }
 
 /* ── Index page layout ───────────────────────────────────────── */
 .app-header {

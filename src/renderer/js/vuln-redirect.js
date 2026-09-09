@@ -5,14 +5,34 @@ document.addEventListener('DOMContentLoaded', () => {
   const targetInput = document.getElementById('target');
   const simulate = document.getElementById('simulate');
 
+  const status = document.getElementById('simulate-status');
+
+  function setStatus(text, ok) {
+    if (!status) return;
+    status.textContent = text;
+    status.className = 'text-small ' + (ok ? 'text-gray' : 'simulate-status-error');
+  }
+
   simulate?.addEventListener('click', async () => {
     const url = targetInput && targetInput.value;
-    if (!url) return;
+    if (!url) {
+      setStatus('Enter a target URL first.', false);
+      return;
+    }
+    setStatus('Opening…', true);
     try {
       // Same vulnerable main-process navigation path a real deep link would use.
-      await window.api.simulateDeepLinkWindow(url);
+      const res = await window.api.simulateDeepLinkWindow(url);
+      // Main reports what it actually did. Without this the invoke resolves to undefined
+      // whether a window opened or not, so a failed target looked identical to success.
+      if (res && res.ok) {
+        setStatus('Opened a new app window loading: ' + res.target, true);
+      } else {
+        setStatus((res && res.error) || 'Could not open that target.', false);
+      }
     } catch (err) {
       console.error('simulateDeepLinkWindow failed', err);
+      setStatus('Failed: ' + err.message, false);
     }
   });
 
