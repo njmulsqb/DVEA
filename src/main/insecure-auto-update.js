@@ -29,14 +29,15 @@ async function stopServer() {
   serverInstance = null;
 }
 
+const POISONED_SENTINEL = '/tmp/dvea-backdoor.txt';
+const CLEAN_SENTINEL = '/tmp/dvea-update-clean.txt';
+
 function clearSentinels() {
-  const poisoned = '/tmp/dvea-backdoor.txt';
-  const clean = '/tmp/dvea-update-clean.txt';
   try {
-    if (fs.existsSync(poisoned)) fs.unlinkSync(poisoned);
+    if (fs.existsSync(POISONED_SENTINEL)) fs.unlinkSync(POISONED_SENTINEL);
   } catch (err) {}
   try {
-    if (fs.existsSync(clean)) fs.unlinkSync(clean);
+    if (fs.existsSync(CLEAN_SENTINEL)) fs.unlinkSync(CLEAN_SENTINEL);
   } catch (err) {}
 }
 
@@ -59,59 +60,97 @@ function fetchUrl(url) {
   });
 }
 
+// ── Challenge flag layer (booth-safe) ────────────────────────────────────────
+// The vulnerability below (check-for-update fetching a manifest over HTTP with no integrity
+// check and eval'ing the payload in the main process) is unchanged and honest — the feed URL and
+// mode are whatever the renderer supplies. This layer ONLY awards flags, by inspecting the real
+// update result and the on-disk sentinels the DVEA-controlled payloads leave behind, so the demo
+// stays safe to run repeatedly while the vuln stays real.
+const AUTOUPDATE_FLAGS = {
+  1: 'DVEA{update_over_plaintext_http}',
+  2: 'DVEA{unsigned_payload_executed}',
+  3: 'DVEA{hardened_rejected_forgery}',
+};
+const autoUpdateSolved = { 1: false, 2: false, 3: false };
+
+function resetAutoUpdateChallenge() {
+  autoUpdateSolved[1] = autoUpdateSolved[2] = autoUpdateSolved[3] = false;
+}
+
+function autoUpdateFlagsForSolved() {
+  const out = {};
+  for (const n of [1, 2, 3]) if (autoUpdateSolved[n]) out[n] = AUTOUPDATE_FLAGS[n];
+  return out;
+}
+
+function readBackdoorNote() {
+  try {
+    return fs.readFileSync(POISONED_SENTINEL, 'utf8');
+  } catch (err) {
+    return null;
+  }
+}
+
+// Decide which flags this update run earned, from the real result + on-disk evidence. Never gates
+// the update — that already happened (or was rejected by the app's own hardened checks) above.
+function evaluateAutoUpdateTasks({ mode, feedProtocol, success, reason }) {
+  // Task 1 — the updater accepted and applied an update over plaintext HTTP: no transport
+  // security, which is the entire MITM precondition.
+  if (!autoUpdateSolved[1] && mode === 'vulnerable' && success && feedProtocol === 'http:') {
+    autoUpdateSolved[1] = true;
+  }
+
+  // Task 2 — an unsigned / forged-signature payload actually executed in the main process,
+  // dropping the backdoor sentinel. Missing integrity verification → silent RCE.
+  if (!autoUpdateSolved[2] && fs.existsSync(POISONED_SENTINEL)) {
+    autoUpdateSolved[2] = true;
+  }
+
+  // Task 3 (Contained) — hardened mode REJECTED the forged/unsafe update. Any hardened rejection
+  // counts: a poisoned HTTPS feed is rejected on integrity grounds ("signature verification
+  // failed" — the deeper lesson), a poisoned HTTP feed is rejected for transport ("feed must be
+  // HTTPS"). Both prove the fix refuses the update; the writeup covers the distinction. Accepting
+  // either also keeps the flag reliable if the local HTTPS server is flaky under resource
+  // pressure. Distinct outcome from an exploit: rendered as "Contained", not "Solved".
+  if (
+    !autoUpdateSolved[3] &&
+    mode === 'hardened' &&
+    !success &&
+    /^HARDENED:/.test(reason || '')
+  ) {
+    autoUpdateSolved[3] = true;
+  }
+
+  return {
+    solved: { ...autoUpdateSolved },
+    flags: autoUpdateFlagsForSolved(),
+    progress: [1, 2, 3].filter((n) => autoUpdateSolved[n]).length,
+    backdoorNote: readBackdoorNote(),
+  };
+}
+
 ipcMain.handle('start-auto-update-server', async () => {
+  // Starting the feed server begins a fresh challenge run.
+  resetAutoUpdateChallenge();
   const ports = await startServer();
   const host = 'localhost';
   const httpPort = ports.httpPort;
   const httpsPort = ports.httpsPort;
-  const urls = {
-    httpPoisonedManifest: `http://${host}:${httpPort}/poisoned/manifest.json`,
-    httpCleanManifest: `http://${host}:${httpPort}/clean/manifest.json`,
-    httpPoisonedPayload: `http://${host}:${httpPort}/poisoned/payload.js`,
-    httpCleanPayload: `http://${host}:${httpPort}/clean/payload.js`,
+
+  // Recon only: WHERE the feed server serves from. The manifest/payload SOURCE is deliberately
+  // not returned — the challenge is to understand the trust failure, not to be handed the payload.
+  return {
+    httpPort,
+    httpsPort,
     httpRoot: `http://${host}:${httpPort}/`,
-    httpsPoisonedManifest: httpsPort ? `https://${host}:${httpsPort}/poisoned/manifest.json` : null,
-    httpsCleanManifest: httpsPort ? `https://${host}:${httpsPort}/clean/manifest.json` : null,
+    httpCleanManifest: `http://${host}:${httpPort}/clean/manifest.json`,
+    httpPoisonedManifest: `http://${host}:${httpPort}/poisoned/manifest.json`,
     httpsRoot: httpsPort ? `https://${host}:${httpsPort}/` : null,
+    httpsCleanManifest: httpsPort ? `https://${host}:${httpsPort}/clean/manifest.json` : null,
+    httpsPoisonedManifest: httpsPort ? `https://${host}:${httpsPort}/poisoned/manifest.json` : null,
+    walletPath: '/tmp/dvea-wallet.dat',
+    flags: autoUpdateFlagsForSolved(),
   };
-
-  // Try to fetch manifest and payload bodies so the renderer can display attacker artifacts.
-  async function tryFetchText(u) {
-    try {
-      const res = await fetchUrl(u);
-      if (res && res.statusCode === 200) return res.body;
-    } catch (err) {}
-    return null;
-  }
-
-  const httpPoisonedManifestText = await tryFetchText(urls.httpPoisonedManifest);
-  const httpPoisonedPayloadText = await tryFetchText(urls.httpPoisonedPayload);
-  const httpCleanManifestText = await tryFetchText(urls.httpCleanManifest);
-  const httpCleanPayloadText = await tryFetchText(urls.httpCleanPayload);
-
-  const httpsPoisonedManifestText = urls.httpsPoisonedManifest ? await tryFetchText(urls.httpsPoisonedManifest) : null;
-  const httpsPoisonedPayloadText = urls.httpsPoisonedManifest ? await tryFetchText(urls.httpsPoisonedManifest.replace('/manifest.json','/payload.js')) : null;
-  const httpsCleanManifestText = urls.httpsCleanManifest ? await tryFetchText(urls.httpsCleanManifest) : null;
-  const httpsCleanPayloadText = urls.httpsCleanManifest ? await tryFetchText(urls.httpsCleanManifest.replace('/manifest.json','/payload.js')) : null;
-
-  return Object.assign({ httpPort, httpsPort,
-    httpPoisonedManifest: urls.httpPoisonedManifest,
-    httpCleanManifest: urls.httpCleanManifest,
-    httpPoisonedPayload: urls.httpPoisonedPayload,
-    httpCleanPayload: urls.httpCleanPayload,
-    httpRoot: urls.httpRoot,
-    httpsPoisonedManifest: urls.httpsPoisonedManifest,
-    httpsCleanManifest: urls.httpsCleanManifest,
-    httpsRoot: urls.httpsRoot,
-    httpPoisonedManifestText,
-    httpPoisonedPayloadText,
-    httpCleanManifestText,
-    httpCleanPayloadText,
-    httpsPoisonedManifestText,
-    httpsPoisonedPayloadText,
-    httpsCleanManifestText,
-    httpsCleanPayloadText,
-  });
 });
 
 ipcMain.handle('stop-auto-update-server', async () => {
@@ -119,81 +158,99 @@ ipcMain.handle('stop-auto-update-server', async () => {
   return true;
 });
 
-ipcMain.handle('check-for-update', async (event, { feed, mode }) => {
-  // mode: 'vulnerable' or 'hardened'
+// Run the (vulnerable) update check and return its raw result object. Kept as its own function so
+// the handler can layer flag bookkeeping on top without touching the vulnerable logic.
+async function performUpdateCheck({ feed, mode }) {
+  // Clear any existing sentinels so the result reflects only this run.
   try {
-    // Clear any existing sentinels so the result reflects only this run
-    try { clearSentinels(); } catch (err) {}
+    clearSentinels();
+  } catch (err) {}
 
-    const manifestRes = await fetchUrl(feed);
-    if (manifestRes.statusCode !== 200) throw new Error('Manifest fetch failed: ' + manifestRes.statusCode);
-    const manifest = JSON.parse(manifestRes.body);
+  const manifestRes = await fetchUrl(feed);
+  if (manifestRes.statusCode !== 200) throw new Error('Manifest fetch failed: ' + manifestRes.statusCode);
+  const manifest = JSON.parse(manifestRes.body);
 
-    // Hardened mode: require HTTPS and verify signature/hash
-    if (mode === 'hardened') {
-      const u = new URL(feed);
-      if (u.protocol !== 'https:') {
-        return { success: false, reason: 'HARDENED: feed must be HTTPS' };
-      }
+  // Hardened mode: require HTTPS transport before doing anything else.
+  if (mode === 'hardened') {
+    const u = new URL(feed);
+    if (u.protocol !== 'https:') {
+      return { success: false, reason: 'HARDENED: feed must be HTTPS' };
     }
-
-    // Download payload
-    const payloadRes = await fetchUrl(manifest.url);
-    if (payloadRes.statusCode !== 200) throw new Error('Payload fetch failed: ' + payloadRes.statusCode);
-    const payload = payloadRes.body;
-
-    if (mode === 'hardened') {
-      // verify hash
-      const actualHash = sha256hex(payload);
-      if (String(actualHash) !== String(manifest.hash)) {
-        return { success: false, reason: 'HARDENED: payload hash mismatch' };
-      }
-      // verify signature
-      const expectedSig = hmacHex(payload);
-      if (String(expectedSig) !== String(manifest.signature)) {
-        return { success: false, reason: 'HARDENED: signature verification failed' };
-      }
-    }
-
-    // VULNERABLE: execute payload with no verification
-    try {
-      // Execute payload in main process context (simulates insecure updater applying code)
-      eval(payload);
-      return { success: true, applied: true };
-    } catch (err) {
-      return { success: false, reason: 'Execution failed: ' + err.message };
-    }
-  } catch (err) {
-    return { success: false, reason: err.message };
   }
-});
 
-ipcMain.handle('check-sentinel', async () => {
-  const poisoned = '/tmp/dvea-backdoor.txt';
-  const clean = '/tmp/dvea-update-clean.txt';
+  // Download payload.
+  const payloadRes = await fetchUrl(manifest.url);
+  if (payloadRes.statusCode !== 200) throw new Error('Payload fetch failed: ' + payloadRes.statusCode);
+  const payload = payloadRes.body;
+
+  if (mode === 'hardened') {
+    // Verify hash.
+    const actualHash = sha256hex(payload);
+    if (String(actualHash) !== String(manifest.hash)) {
+      return { success: false, reason: 'HARDENED: payload hash mismatch' };
+    }
+    // Verify signature.
+    const expectedSig = hmacHex(payload);
+    if (String(expectedSig) !== String(manifest.signature)) {
+      return { success: false, reason: 'HARDENED: signature verification failed' };
+    }
+  }
+
+  // VULNERABLE: execute the payload with no verification (simulates an insecure updater applying
+  // downloaded update code directly in the main process).
   try {
-    const p = fs.existsSync(poisoned);
-    const c = fs.existsSync(clean);
-    return p || c;
+    eval(payload);
+    return { success: true, applied: true };
   } catch (err) {
-    return false;
+    return { success: false, reason: 'Execution failed: ' + err.message };
+  }
+}
+
+ipcMain.handle('check-for-update', async (event, { feed, mode }) => {
+  let feedProtocol = null;
+  try {
+    feedProtocol = new URL(feed).protocol;
+  } catch (err) {}
+
+  let result;
+  try {
+    result = await performUpdateCheck({ feed, mode });
+  } catch (err) {
+    result = { success: false, reason: err.message };
+  }
+
+  // Flag bookkeeping only — inspects the real result + on-disk sentinels. Wrapped so it can never
+  // turn a genuine update result into an error.
+  try {
+    const tasks = evaluateAutoUpdateTasks({
+      mode,
+      feedProtocol,
+      success: result.success,
+      reason: result.reason,
+    });
+    return { ...result, feedProtocol, ...tasks };
+  } catch (err) {
+    return { ...result, feedProtocol };
   }
 });
 
 ipcMain.handle('reset-auto-update', async () => {
   try {
-    // stop server if running and clear sentinels
-    try { await stopServer(); } catch (err) {}
-    try { clearSentinels(); } catch (err) {}
+    try {
+      await stopServer();
+    } catch (err) {}
+    try {
+      clearSentinels();
+    } catch (err) {}
+    resetAutoUpdateChallenge();
     return { ok: true };
   } catch (err) {
     return { ok: false, error: String(err) };
   }
 });
 
-// Bridge to preload: expose keys
+// Bridge to preload: expose server control for clean shutdown from main.
 module.exports = {
-  // Expose server control for clean shutdown from main
   startServer,
   stopServer,
 };
