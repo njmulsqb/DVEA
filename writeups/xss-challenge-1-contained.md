@@ -30,11 +30,12 @@ means there is nothing on the other side of that wall to reach.
 
 **Setup — why this window is actually isolated, not just labelled as such.** Every other page
 in DVEA that opens via a plain `<a href>` link loads inside the main window, which uses the
-app's default preload (`src/main/preload.js`) — and that preload exposes
-`window.systemapi.executeCode`, a direct line to `eval()` in the main process. Loading this
-challenge there would make Task 4 trivially "succeed" through that bridge, which would be a
-lie about what hardening actually buys you. So this challenge opens in its own dedicated
-`BrowserWindow`, created by `openXSSContainedWindow()`:
+app's default preload (`src/main/preload.js`) — built to serve the whole hub, not this
+specific challenge. Sharing it (or any preload not purpose-built for this window) would risk
+exposing some capability this challenge doesn't intend, making Task 4's "the escape is
+blocked" claim untrustworthy — the badges would be describing a window this page doesn't
+actually run in. So this challenge opens in its own dedicated `BrowserWindow`, created by
+`openXSSContainedWindow()`, with a preload built for exactly this window and nothing else:
 
 ```js
 // src/main/main.js
@@ -262,12 +263,13 @@ runs, and that difference is entirely `webPreferences`:
   `window.systemAPI.runCommand()` and get a real shell command executed with the main
   process's privileges. The exact same injection technique as this challenge; now there's
   something on the other side of the bridge worth reaching.
-- **Challenge 3 (Owned):** `ipcMain.handle('xss-rce-direct', (event, code) => eval(code))` in
-  `src/main/main.js` means the main process itself will `eval()` whatever string a renderer
-  sends it, over an IPC channel the default preload exposes as
-  `window.systemapi.executeCode`. No sandbox or isolation setting on the renderer matters at
-  that point, because the dangerous operation isn't happening in the renderer at all — it's
-  main process code voluntarily executing renderer-supplied input with full Node access. This
+- **Challenge 3 (Owned):** no hardened core at all — `openXSSOwnedWindow()` in
+  `src/main/main.js` sets `nodeIntegration: true`, `contextIsolation: false`,
+  `sandbox: false`, and no preload. `require`, `process`, and the rest of Node's globals are
+  injected directly into the page's own JavaScript world, so the injected script calls
+  `require('child_process')`/`require('fs')` itself, in the renderer — no bridge to discover,
+  no main-process channel to reach through. Task 4's `require(...)` doesn't fail here the way
+  it did above; it succeeds immediately, because this time `require` is simply present. This
   is the same shape as CVE-2020-16608.
 
 The thing to take away from a "failed" Task 4 here is not that escaping is hard — it's that

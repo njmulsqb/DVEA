@@ -252,11 +252,11 @@ and one preload decision:
   reach the OS?" question, succeeding for a completely different reason than Challenge 1's
   failed the same way for a completely different reason.
 - **Foreshadowing Challenge 3 (Owned):** this challenge's escalation still needs XSS to find
-  and call something main deliberately exposed. Challenge 3 removes even that requirement —
-  when the main process itself evaluates renderer-supplied input directly (no bridge to
-  discover, no function to call correctly), the renderer's `webPreferences` stop mattering at
-  all, because the dangerous operation isn't happening in the renderer's world in the first
-  place.
+  and call something main deliberately exposed — there's a bridge, and the injected script has
+  to discover and use it correctly. Challenge 3 removes even that requirement: with
+  `nodeIntegration: true`, the renderer's own JavaScript world simply *is* a Node environment,
+  so injected script calls `require()` directly — no bridge to discover, no function to call,
+  because nothing had to be exposed on purpose in the first place.
 
 The lesson isn't "the bridge is scary, avoid contextBridge." It's that `contextBridge` is a
 trust boundary exactly like an IPC handler or a network API — every function crossing it needs

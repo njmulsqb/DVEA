@@ -8,7 +8,7 @@ contextBridge.exposeInMainWorld('ipc', {
 contextBridge.exposeInMainWorld('api', {
   openXSSContained: () => ipcRenderer.send('open-xss-contained'),
   openXSSBridged: () => ipcRenderer.send('open-xss-bridged'),
-  openXSSRCE: () => ipcRenderer.send('open-xss-rce-direct'),
+  openXSSOwned: () => ipcRenderer.send('open-xss-owned'),
   saveFile: (data) => ipcRenderer.invoke('save-file', data),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   openAnalytics: (name) => ipcRenderer.send('open-analytics', name),
@@ -21,10 +21,6 @@ contextBridge.exposeInMainWorld('api', {
   sendCapturedCredentials: (data) => ipcRenderer.send('captured-credentials', data),
   simulateDeepLinkOpen: (path) => ipcRenderer.invoke('simulate-deeplink-open', path),
   onDeepLinkOpen: (cb) => ipcRenderer.on('deeplink-open', cb),
-});
-
-contextBridge.exposeInMainWorld('systemapi', {
-  executeCode: (code) => ipcRenderer.invoke('xss-rce-direct', code),
 });
 
 // Send preload corroboration back to main so observability can record renderer-side values.

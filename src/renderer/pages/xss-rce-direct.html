@@ -2,77 +2,112 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>XSS → RCE (Direct)</title>
+    <title>Challenge 3 — Owned</title>
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
   <body>
     <header class="page-header">
-      <a href="index.html" class="page-header-back">← All Vulnerabilities</a>
-      <h1>XSS → RCE (Direct)</h1>
-      <p class="page-header-sub">Renderer input eval'd in the main process — full Node.js access without disabling sandbox</p>
+      <a href="#" class="page-header-back" onclick="window.close(); return false;">✕ Close this window</a>
+      <h1>Challenge 3 — Owned</h1>
+      <p class="page-header-sub">No bridge, no main-process eval — the renderer itself is Node.</p>
     </header>
 
     <div class="page-wrap">
       <div class="checklist">
-        <span class="checklist-item pass">✓ NodeIntegration: false</span>
-        <span class="checklist-item pass">✓ ContextIsolation: true</span>
-        <span class="checklist-item pass">✓ Sandbox: true</span>
-        <span class="checklist-item fail">✗ IPC: passes input to eval()</span>
+        <span id="badge-sandbox" class="checklist-item">Sandbox: checking…</span>
+        <span id="badge-isolation" class="checklist-item">ContextIsolation: checking…</span>
+        <span id="badge-nodeintegration" class="checklist-item">NodeIntegration: checking…</span>
+        <span id="badge-preload" class="checklist-item">Privileged bridge: checking…</span>
       </div>
 
       <section class="panel">
         <div class="panel-header"><h2>Guide: What is happening?</h2></div>
         <div class="panel-body">
           <p>
-            User input is sent from the renderer to the main process via IPC. The main process
-            passes it directly to <code>eval()</code> — no sandbox is disabled and no new window
-            is created. The code executes in the privileged main process with full Node.js access.
+            Challenge 1 contained the XSS; Challenge 2 leaked it through one bridge. Here
+            there's no bridge to find and no main-process eval — <code>nodeIntegration</code>
+            is true, so the renderer itself has full Node.js. XSS in this window <em>is</em>
+            remote code execution, directly, with nothing in between. This is the single
+            most-warned-against Electron misconfiguration.
           </p>
           <p>
-            Real-world instance: CVE-2020-16608 described a markdown XSS payload that ultimately used
-            <code>require('electron').shell.openExternal</code> to reach code execution in an app with
-            Node integration — the same XSS-to-RCE via Node pattern demonstrated here.
+            Look at the badges above. <code>NodeIntegration: true</code> is the whole story —
+            once that's on (which also requires <code>contextIsolation: false</code> and
+            <code>sandbox: false</code> to actually take effect), every other protection stops
+            mattering. Notice <code>Privileged bridge: false</code>, too: unlike Challenge 2,
+            nothing had to be exposed on purpose. <code>require</code> is just... there.
           </p>
-          <b>Example payloads:</b>
-          <pre><code>require('os').platform()</code></pre>
-          <pre><code>require('child_process').execSync('whoami').toString()</code></pre>
-          <pre><code>process.env</code></pre>
+          <p>
+            The injection point below is the exact same sink as Challenges 1 and 2: whatever
+            you submit is rendered straight into the page via <code>innerHTML</code>,
+            unsanitized. What's different is that your injected script can now call
+            <code>require()</code> itself.
+          </p>
+          <p class="text-small text-gray">
+            This window never navigates anywhere else — its <code>nodeIntegration: true</code>
+            config would follow it to whatever loaded next. Close the window to return to the
+            rest of the app.
+          </p>
         </div>
         <div class="xss-explanation">
-          <strong>Impact:</strong> Full RCE in the main process — read/write files, execute system
-          commands, exfiltrate environment variables. The checklist shows all renderer security
-          features as enabled: they cannot protect against a vulnerable IPC handler that evaluates
-          untrusted input.
+          <strong>Objective:</strong> Using only the injection point below, prove Node.js is
+          running directly in this page, execute a real operating-system command, then read a
+          file off the host filesystem — all without any bridge or IPC channel. No payloads are
+          given here; craft your own and watch the attacker view and task list respond.
         </div>
       </section>
 
       <section class="panel demo-panel">
-        <div class="panel-header"><h2>Demo</h2></div>
+        <div class="panel-header"><h2>Demo: Injection Point</h2></div>
         <div class="panel-body">
-          <form id="rce-form">
-            <label for="code-input">Code to execute in main process:</label>
-            <input
-              type="text"
-              id="code-input"
-              name="code-input"
-              value="require('os').platform()"
-              placeholder="e.g. require('os').platform()"
-            />
-            <button type="submit">Execute</button>
+          <form id="xssForm3">
+            <label for="xssInput3">Message:</label>
+            <input type="text" id="xssInput3" placeholder="Type or paste your payload here" />
+            <button type="submit">Inject</button>
           </form>
-          <div id="result" class="xss-output"></div>
+          <div id="xssOutput3" class="xss-output"></div>
         </div>
       </section>
 
       <section class="panel">
-        <div class="panel-header"><h2>References</h2></div>
+        <div class="panel-header"><h2>Attacker view</h2></div>
         <div class="panel-body">
-          <ul>
-            <li><a href="https://nvd.nist.gov/vuln/detail/CVE-2020-16608" target="_blank">CVE-2020-16608 — NVD</a></li>
-          </ul>
+          <p class="text-small text-gray">
+            What an attacker watching this page would see arrive. Your injected script is
+            what has to put something here — nothing else writes to this panel.
+          </p>
+          <ul id="attacker-log" class="xss-output"></ul>
         </div>
       </section>
 
+      <section class="panel">
+        <div class="panel-header"><h2>Tasks <span id="flag-progress" class="text-small text-gray"></span></h2></div>
+        <div class="panel-body">
+          <ul class="task-list">
+            <li id="task-1" class="task-item">
+              <span id="task-1-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 1 — Prove Node in the renderer.</strong>
+              Use XSS to run code that only works with Node.js — directly in this page — and
+              surface the proof in the attacker view.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+            <li id="task-2" class="task-item">
+              <span id="task-2-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 2 — Execute an OS command.</strong>
+              Use XSS to run a real operating-system command directly from the renderer and
+              surface its real output.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+            <li id="task-3" class="task-item">
+              <span id="task-3-status" class="checklist-item fail">Unsolved</span>
+              <strong>Task 3 — Read a host file (the capstone).</strong>
+              Read a file off the real filesystem directly from the renderer — proof of full
+              host compromise with no bridge and no IPC involved.
+              <p class="task-flag text-small" hidden></p>
+            </li>
+          </ul>
+        </div>
+      </section>
     </div>
 
     <script src="../js/xss-rce-direct.js"></script>

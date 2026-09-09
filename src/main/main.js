@@ -9,7 +9,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 const { shell } = require('electron');
 const fs = require('fs');
-const { exec } = require('child_process');
+const { exec, execSync } = require('child_process');
 
 const Window = require('../main/windows/Window');
 const { sandboxed, contextIsolated } = require('process');
@@ -19,6 +19,11 @@ const observability = require('./observability');
 const BRIDGE_SECRET_PATH = '/tmp/dvea-bridge-secret.txt';
 const BRIDGE_OS_FLAG = 'DVEA{bridge_to_os_pivot}';
 const BRIDGE_CALL_FLAG = 'DVEA{bridge_command_executed}';
+// Challenge 3 — Owned: a file this window's own renderer reads directly via require('fs'),
+// since nodeIntegration: true gives it that access with nothing in between (see
+// openXSSOwnedWindow below).
+const RCE_SECRET_PATH = '/tmp/dvea-rce-flag.txt';
+const RCE_HOST_FLAG = 'DVEA{full_host_compromise}';
 // Insecure auto-update demo (registers IPC handlers)
 let insecureAutoUpdate = null;
 try {
@@ -241,14 +246,76 @@ function main() {
     }
   });
 
-  ipcMain.handle('xss-rce-direct', async (event, code) => {
+  // Challenge 3 — Owned: nodeIntegration: true, contextIsolation: false, sandbox: false — the
+  // renderer itself has full Node.js access. No bridge to find, no main-process channel to
+  // reach through: injected script calls require() directly, in this window. contextIsolation
+  // and sandbox both have to be off for nodeIntegration to actually reach the page (a
+  // sandboxed renderer never gets Node integration regardless of this flag, and
+  // contextIsolation:true would keep it in a separate world even if it did) — this is the
+  // classic, most-warned-against Electron misconfiguration, and the deliberate point of this
+  // window: no other setting matters once this one is wrong.
+  function openXSSOwnedWindow() {
+    const win = new Window({
+      file: path.join('src/renderer/pages', 'xss-rce-direct.html'),
+      webPreferences: {
+        preload: undefined,
+        nodeIntegration: true,
+        contextIsolation: false,
+        sandbox: false,
+      },
+    });
+
+    // This window's config is dangerous specifically to whatever it loads — nodeIntegration:
+    // true has to travel with the page, not the window. Block any navigation away from the
+    // lab page (a link click, `location.href = ...`, even from injected script) so that
+    // config can never carry over to another app page loaded into this same window. The page
+    // itself has no navigation UI either (see xss-rce-direct.html); the user returns by
+    // closing the window.
+    win.webContents.on('will-navigate', (event) => {
+      event.preventDefault();
+    });
+
+    // Plant a host file this window's own webPreferences would normally keep unreachable —
+    // reachable only because nodeIntegration:true hands the renderer real require('fs')
+    // access. Same convention as Challenge 2's secret file.
     try {
-      const result = eval(code);
-      return String(result);
-    } catch (err) {
-      return 'Error: ' + err.message;
-    }
-  });
+      fs.writeFileSync(RCE_SECRET_PATH, RCE_HOST_FLAG + '\n');
+    } catch (err) {}
+
+    // Ground truth for Tasks 1-2, computed independently by main (not via the renderer's own
+    // Node access) so the page can confirm a payload's output is genuinely real Node/OS
+    // access, not a fabricated string.
+    let realWhoami = '';
+    try {
+      realWhoami = execSync('id').toString().trim();
+    } catch (err) {}
+
+    // Same config push as Challenge 1/2: read this window's real effective webPreferences
+    // from the main process (getLastWebPreferences() — the same data the Config Inspector
+    // shows) and write it into the page via executeJavaScript, alongside the ground-truth
+    // values above.
+    win.webContents.on('did-finish-load', () => {
+      try {
+        const entry = observability.config.windows && observability.config.windows[win.id];
+        const effective = (entry && entry.effective) || {};
+        const cfg = {
+          sandbox: !!effective.sandbox,
+          contextIsolation: !!effective.contextIsolation,
+          nodeIntegration: !!effective.nodeIntegration,
+        };
+        const groundTruth = {
+          nodeVersion: process.versions.node,
+          whoami: realWhoami,
+        };
+        win.webContents.executeJavaScript(
+          `window.__dveaWindowConfig = ${JSON.stringify(cfg)}; window.__dveaGroundTruth = ${JSON.stringify(
+            groundTruth
+          )}; window.dispatchEvent(new Event('dvea-config-ready'));`
+        );
+      } catch (err) {}
+    });
+  }
+  ipcMain.on('open-xss-owned', openXSSOwnedWindow);
 
   // Challenge 2 — Bridged: the SAME hardened core as Challenge 1 (sandbox, contextIsolation,
   // no nodeIntegration) — the only deviation is a preload that exposes one privileged
@@ -263,6 +330,15 @@ function main() {
         contextIsolation: true,
         nodeIntegration: false,
       },
+    });
+
+    // This window's preload exposes a real command-execution bridge — navigating within it to
+    // another app page (e.g. back to the hub) would carry that same preload/webPreferences to
+    // whatever loads next, silently handing it the bridge too. Block any navigation away from
+    // the lab page; the page itself has no navigation UI either (see xss-system-api.html), so
+    // the user returns by closing the window.
+    win.webContents.on('will-navigate', (event) => {
+      event.preventDefault();
     });
 
     // Plant a genuine OS-level secret this challenge's Task 3 must retrieve via a real shell
@@ -324,6 +400,14 @@ function main() {
         contextIsolation: true,
         nodeIntegration: false,
       },
+    });
+
+    // This is a dedicated window, not a hub page — it should never navigate to another app
+    // page (that would carry this window's own webPreferences/preload to whatever loads
+    // next). Block any navigation away from the lab page; it has no navigation UI either (see
+    // xss-no-priv.html), so the user returns by closing the window.
+    win.webContents.on('will-navigate', (event) => {
+      event.preventDefault();
     });
 
     // The lab's config badges can't read window.process in this main world (that's the
