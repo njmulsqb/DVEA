@@ -558,6 +558,13 @@ select {
 input::placeholder, textarea::placeholder { color: var(--text-faint); }
 input:focus, textarea:focus, select:focus { border-color: var(--accent); outline: none; }
 label { font-family: var(--font-mono); font-size: var(--fs-chrome); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+/* Stacked demo forms (savefile, xss injection, stored-htmli name) lay out vertically. Scoped to
+   direct form children so flex-wrapped inputs on other pages (openexternal, deep-link) keep theirs. */
+form > label { display: block; margin: 0 0 5px; }
+form > input[type='text'],
+form > input[type='password'],
+form > input:not([type]),
+form > textarea { display: block; width: 100%; margin-bottom: 14px; }
 
 /* Module-page header + wrap → chrome-adjacent header + measured body */
 .page-header {
@@ -566,7 +573,8 @@ label { font-family: var(--font-mono); font-size: var(--fs-chrome); color: var(-
   padding: 18px var(--page-pad-x) 20px;
 }
 .page-header-back {
-  display: inline-block;
+  display: block;
+  width: fit-content;
   font-family: var(--font-mono);
   font-size: var(--fs-chrome);
   color: var(--text-muted);
