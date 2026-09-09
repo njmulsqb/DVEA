@@ -1,11 +1,19 @@
 'use strict';
-require('dotenv').config();
+// dotenv and electron-reload are devDependencies, so @electron/packager prunes them out of a
+// packaged build (.deb). Requiring either unguarded crashes the packaged app at load time with
+// "Cannot find module" before anything else runs. Both are source-run conveniences only —
+// nothing in the app depends on them, so a miss here is a no-op rather than a fatal error.
+try {
+  require('dotenv').config();
+} catch (err) {}
 const path = require('path');
 const { app, ipcMain, BrowserWindow } = require('electron');
 if (process.env.NODE_ENV === 'development') {
-  require('electron-reload')(path.join(__dirname, '..'), {
-    hardResetMethod: 'exit',
-  });
+  try {
+    require('electron-reload')(path.join(__dirname, '..'), {
+      hardResetMethod: 'exit',
+    });
+  } catch (err) {}
 }
 const { shell } = require('electron');
 const fs = require('fs');
