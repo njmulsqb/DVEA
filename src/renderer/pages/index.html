@@ -27,46 +27,18 @@
             An unauthenticated OS deep link (dvea://) can drive the trusted app window to
             attacker-controlled content when the main process navigates without validation.
           </div>
-          <div class="vuln-sub-list">
-            <a href="deep-link-untrusted-navigation.html?from=index" class="vuln-sub-item">Deep Link → Untrusted Navigation</a>
-            <a href="deep-link-path-traversal.html?from=index" class="vuln-sub-item">Deep Link → Path Traversal</a>
-          </div>
-        </div>
-
-        <div class="vuln-card vuln-card-group">
-          <a href="renderer-xss.html" class="vuln-card-title">What Can XSS Do in Electron? <span class="task-count">10 tasks</span></a>
-          <div class="vuln-card-desc">
-            The same injection, three configurations, three very different blast radii — the
-            same unsanitized <code>innerHTML</code> injection across three window configurations,
-            escalating from browser-equivalent XSS to full remote code execution.
-          </div>
-          <div class="vuln-sub-list">
-            <a href="#" onclick="window.api.openXSSContained(); return false;" class="vuln-sub-item">
-              <span class="task-count">4 tasks</span>Challenge 1 — Contained: hardened config; XSS is walled to the renderer
-            </a>
-            <a href="#" onclick="window.api.openXSSBridged(); return false;" class="vuln-sub-item">
-              <span class="task-count">3 tasks</span>Challenge 2 — Bridged: correct isolation, one overprivileged preload API
-            </a>
-            <a href="#" onclick="window.api.openXSSOwned(); return false;" class="vuln-sub-item">
-              <span class="task-count">3 tasks</span>Challenge 3 — Owned: main process evaluates renderer input with full Node access
-            </a>
-          </div>
-        </div>
-
-        <a href="stored-htmli.html" class="vuln-card">
-          <div class="vuln-card-title">Stored HTML Injection → IPC Token Exfiltration</div>
-          <div class="vuln-card-desc">
-            A stored display name is rendered via <code>innerHTML</code> in an analytics window.
-            A <code>&lt;meta http-equiv="refresh"&gt;</code> payload bypasses CSP and redirects
-            the window to an attacker page that calls an unvalidated IPC bridge to steal the
-            session token.
-          </div>
           <div class="vuln-tags">
-            <span class="vuln-tag">HTML Injection</span>
-            <span class="vuln-tag">CSP Bypass</span>
-            <span class="vuln-tag">IPC</span>
+            <span class="vuln-tag vuln-tag--difficulty difficulty-easy">Easy</span>
           </div>
-        </a>
+          <div class="vuln-sub-list">
+            <a href="deep-link-untrusted-navigation.html?from=index" class="vuln-sub-item">
+              <span class="vuln-tag vuln-tag--difficulty difficulty-easy">Easy</span>Deep Link → Untrusted Navigation
+            </a>
+            <a href="deep-link-path-traversal.html?from=index" class="vuln-sub-item">
+              <span class="vuln-tag vuln-tag--difficulty difficulty-medium">Medium</span>Deep Link → Path Traversal
+            </a>
+          </div>
+        </div>
 
         <a href="savefile.html" class="vuln-card">
           <div class="vuln-card-title">Insecure File Write <span class="task-count">3 tasks</span></div>
@@ -75,6 +47,7 @@
             validation, allowing arbitrary files to be overwritten on the host system.
           </div>
           <div class="vuln-tags">
+            <span class="vuln-tag vuln-tag--difficulty difficulty-medium">Medium</span>
             <span class="vuln-tag">IPC Abuse</span>
             <span class="vuln-tag">Filesystem</span>
           </div>
@@ -88,20 +61,70 @@
             the system.
           </div>
           <div class="vuln-tags">
+            <span class="vuln-tag vuln-tag--difficulty difficulty-medium">Medium</span>
             <span class="vuln-tag">Protocol Handling</span>
             <span class="vuln-tag">shell API</span>
           </div>
         </a>
 
+        <div class="vuln-card vuln-card-group">
+          <a href="renderer-xss.html" class="vuln-card-title">What Can XSS Do in Electron? <span class="task-count">10 tasks</span></a>
+          <div class="vuln-card-desc">
+            The same injection, three configurations, three very different blast radii — the
+            same unsanitized <code>innerHTML</code> injection across three window configurations,
+            escalating from browser-equivalent XSS to full remote code execution.
+          </div>
+          <div class="vuln-tags">
+            <span class="vuln-tag vuln-tag--difficulty difficulty-medium">Medium</span>
+          </div>
+          <div class="vuln-sub-list">
+            <a href="#" onclick="window.api.openXSSContained(); return false;" class="vuln-sub-item">
+              <span class="task-count">4 tasks</span><span class="vuln-tag vuln-tag--difficulty difficulty-medium">Medium</span>Challenge 1 — Contained: hardened config; XSS is walled to the renderer
+            </a>
+            <a href="#" onclick="window.api.openXSSBridged(); return false;" class="vuln-sub-item">
+              <span class="task-count">3 tasks</span><span class="vuln-tag vuln-tag--difficulty difficulty-hard">Hard</span>Challenge 2 — Bridged: correct isolation, one overprivileged preload API
+            </a>
+            <a href="#" onclick="window.api.openXSSOwned(); return false;" class="vuln-sub-item">
+              <span class="task-count">3 tasks</span><span class="vuln-tag vuln-tag--difficulty difficulty-hard">Hard</span>Challenge 3 — Owned: main process evaluates renderer input with full Node access
+            </a>
+          </div>
+        </div>
+
         <a href="insecure-auto-update.html" class="vuln-card">
-          <div class="vuln-card-title">Insecure Auto-Update — cf. CVE-2024-39698</div>
+          <div class="vuln-card-title">Insecure Auto-Update — cf. CVE-2024-39698 <span class="task-count">3 tasks</span></div>
           <div class="vuln-card-desc">
             Simulated auto-updater that downloads and executes updates from a configurable feed.
             Demonstrates insecure feed transport and missing signature/integrity checks.
           </div>
           <div class="vuln-tags">
+            <span class="vuln-tag vuln-tag--difficulty difficulty-hard">Hard</span>
             <span class="vuln-tag">Updater</span>
             <span class="vuln-tag">HTTP/HTTPS</span>
+          </div>
+        </a>
+
+      </div>
+
+      <p class="section-label section-label--flagship">Flagship Challenge</p>
+
+      <div class="vuln-list">
+
+        <a href="stored-htmli.html" class="vuln-card vuln-card--flagship">
+          <div class="vuln-card-title">
+            <span class="vuln-tag vuln-tag--flagship">★ Flagship</span>
+            Stored HTML Injection → IPC Token Exfiltration
+          </div>
+          <div class="vuln-card-desc">
+            A stored display name is rendered via <code>innerHTML</code> in an analytics window.
+            A <code>&lt;meta http-equiv="refresh"&gt;</code> payload bypasses CSP and redirects
+            the window to an attacker page that calls an unvalidated IPC bridge to steal the
+            session token.
+          </div>
+          <div class="vuln-tags">
+            <span class="vuln-tag vuln-tag--difficulty difficulty-insane">Insane</span>
+            <span class="vuln-tag">HTML Injection</span>
+            <span class="vuln-tag">CSP Bypass</span>
+            <span class="vuln-tag">IPC</span>
           </div>
         </a>
 

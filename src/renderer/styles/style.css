@@ -334,6 +334,7 @@ code {
   font-weight: 600;
   margin: 0 0 1rem;
 }
+.section-label--flagship { margin-top: 2rem; }
 
 .vuln-list {
   display: flex;
@@ -387,6 +388,19 @@ code {
   font-weight: 600;
   letter-spacing: 0.3px;
 }
+
+/* Difficulty indicator — same pill shape/weight as .vuln-tag, color-coded by level. */
+.vuln-tag--difficulty { font-weight: 700; }
+.vuln-tag--difficulty.difficulty-easy { background: #dcfce7; color: #15803d; }
+.vuln-tag--difficulty.difficulty-medium { background: #fef3c7; color: #92400e; }
+.vuln-tag--difficulty.difficulty-hard { background: #fee2e2; color: #b91c1c; }
+.vuln-tag--difficulty.difficulty-insane { background: #b91c1c; color: #fff; }
+.vuln-sub-item .vuln-tag--difficulty { float: right; margin-left: 0.4rem; }
+
+/* Flagship challenge — same pill as .vuln-tag, gold accent; card gets a matching border. */
+.vuln-tag--flagship { background: #fef9c3; color: #854d0e; margin-right: 0.5rem; vertical-align: middle; }
+.vuln-card--flagship { border-left-color: #d97706; }
+.vuln-card--flagship:hover { border-left-color: #b45309; }
 
 /* Static count of how many tasks a challenge has (not solved-progress). */
 .task-count {
